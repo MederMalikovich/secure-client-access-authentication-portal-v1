@@ -33,10 +33,10 @@ const hours = Array.from({ length: 12 }, (_, i) => i + 8); // 8:00 - 19:00
 export default function Calendar() {
   const { toast } = useToast();
   const [currentDate, setCurrentDate] = useState(new Date());
-  const [appointments, setAppointments] = useState<Appointment[]>([]);
-  const [clients, setClients] = useState<Client[]>([]);
-  const [pets, setPets] = useState<Pet[]>([]);
-  const [services, setServices] = useState<Service[]>([]);
+  const [appointments, setAppointments] = useState<any[]>([]);
+  const [clients, setClients] = useState<any[]>([]);
+  const [pets, setPets] = useState<any[]>([]);
+  const [services, setServices] = useState<any[]>([]);
   const [vets, setVets] = useState<Profile[]>([]);
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);

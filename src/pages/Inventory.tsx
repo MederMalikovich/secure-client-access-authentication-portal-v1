@@ -37,8 +37,8 @@ import { InventoryItem, InventoryCategory, MovementType } from '@/lib/types';
 
 export default function Inventory() {
   const { toast } = useToast();
-  const [items, setItems] = useState<InventoryItem[]>([]);
-  const [categories, setCategories] = useState<InventoryCategory[]>([]);
+  const [items, setItems] = useState<any[]>([]);
+  const [categories, setCategories] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [itemDialogOpen, setItemDialogOpen] = useState(false);
   const [categoryDialogOpen, setCategoryDialogOpen] = useState(false);

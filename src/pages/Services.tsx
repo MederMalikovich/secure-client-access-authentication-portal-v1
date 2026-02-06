@@ -36,8 +36,8 @@ import { Service, ServiceCategory } from '@/lib/types';
 
 export default function Services() {
   const { toast } = useToast();
-  const [services, setServices] = useState<Service[]>([]);
-  const [categories, setCategories] = useState<ServiceCategory[]>([]);
+  const [services, setServices] = useState<any[]>([]);
+  const [categories, setCategories] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [serviceDialogOpen, setServiceDialogOpen] = useState(false);
   const [categoryDialogOpen, setCategoryDialogOpen] = useState(false);

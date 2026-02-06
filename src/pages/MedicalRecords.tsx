@@ -38,9 +38,9 @@ import { ru } from 'date-fns/locale';
 export default function MedicalRecords() {
   const navigate = useNavigate();
   const { toast } = useToast();
-  const [records, setRecords] = useState<MedicalRecord[]>([]);
-  const [pets, setPets] = useState<Pet[]>([]);
-  const [vets, setVets] = useState<Profile[]>([]);
+  const [records, setRecords] = useState<any[]>([]);
+  const [pets, setPets] = useState<any[]>([]);
+  const [vets, setVets] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);

@@ -31,7 +31,7 @@ import { ru } from 'date-fns/locale';
 export default function Clients() {
   const navigate = useNavigate();
   const { toast } = useToast();
-  const [clients, setClients] = useState<Client[]>([]);
+  const [clients, setClients] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);

@@ -38,7 +38,7 @@ import { ru } from 'date-fns/locale';
 export default function Settings() {
   const { toast } = useToast();
   const { hasRole } = useAuth();
-  const [profiles, setProfiles] = useState<(Profile & { roles: UserRole[] })[]>([]);
+  const [profiles, setProfiles] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [roleDialogOpen, setRoleDialogOpen] = useState(false);
   const [selectedProfile, setSelectedProfile] = useState<Profile | null>(null);

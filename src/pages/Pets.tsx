@@ -38,8 +38,8 @@ import { ru } from 'date-fns/locale';
 export default function Pets() {
   const navigate = useNavigate();
   const { toast } = useToast();
-  const [pets, setPets] = useState<Pet[]>([]);
-  const [clients, setClients] = useState<Client[]>([]);
+  const [pets, setPets] = useState<any[]>([]);
+  const [clients, setClients] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);

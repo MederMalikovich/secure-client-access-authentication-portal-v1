@@ -37,7 +37,7 @@ export default function Calendar() {
   const [clients, setClients] = useState<any[]>([]);
   const [pets, setPets] = useState<any[]>([]);
   const [services, setServices] = useState<any[]>([]);
-  const [vets, setVets] = useState<Profile[]>([]);
+  const [vets, setVets] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [selectedAppointment, setSelectedAppointment] = useState<Appointment | null>(null);

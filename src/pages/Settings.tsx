@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Users, Shield, MoreVertical, Pencil, Trash2, UserPlus } from 'lucide-react';
+import { Users, Shield, MoreVertical, Pencil, UserPlus } from 'lucide-react';
 import { PageHeader } from '@/components/ui/page-header';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { DataTable, Column } from '@/components/ui/data-table';
@@ -20,6 +20,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import {
   Select,
@@ -28,21 +29,29 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { Switch } from '@/components/ui/switch';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { Profile, UserRole, AppRole, roleLabels } from '@/lib/types';
-import { useAuth } from '@/contexts/AuthContext';
 import { format } from 'date-fns';
 import { ru } from 'date-fns/locale';
 
 export default function Settings() {
   const { toast } = useToast();
-  const { hasRole } = useAuth();
   const [profiles, setProfiles] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [roleDialogOpen, setRoleDialogOpen] = useState(false);
+  const [profileDialogOpen, setProfileDialogOpen] = useState(false);
   const [selectedProfile, setSelectedProfile] = useState<Profile | null>(null);
   const [selectedRole, setSelectedRole] = useState<AppRole>('viewer');
+
+  const [profileForm, setProfileForm] = useState({
+    full_name: '',
+    email: '',
+    phone: '',
+    position: '',
+    is_active: true,
+  });
 
   useEffect(() => {
     fetchData();
@@ -85,10 +94,9 @@ export default function Settings() {
     if (!selectedProfile) return;
 
     try {
-      // Check if role already exists
       const existingRole = profiles
         .find(p => p.id === selectedProfile.id)
-        ?.roles.find(r => r.role === selectedRole);
+        ?.roles.find((r: any) => r.role === selectedRole);
 
       if (existingRole) {
         toast({
@@ -138,6 +146,47 @@ export default function Settings() {
     }
   };
 
+  const handleUpdateProfile = async () => {
+    if (!selectedProfile) return;
+
+    try {
+      const { error } = await supabase
+        .from('profiles')
+        .update({
+          full_name: profileForm.full_name,
+          email: profileForm.email,
+          phone: profileForm.phone,
+          position: profileForm.position,
+          is_active: profileForm.is_active,
+        })
+        .eq('id', selectedProfile.id);
+
+      if (error) throw error;
+
+      toast({ title: 'Успешно', description: 'Профиль обновлён' });
+      setProfileDialogOpen(false);
+      fetchData();
+    } catch (error: any) {
+      toast({
+        variant: 'destructive',
+        title: 'Ошибка',
+        description: error.message,
+      });
+    }
+  };
+
+  const openProfileEdit = (profile: Profile) => {
+    setSelectedProfile(profile);
+    setProfileForm({
+      full_name: profile.full_name,
+      email: profile.email || '',
+      phone: profile.phone || '',
+      position: profile.position || '',
+      is_active: profile.is_active,
+    });
+    setProfileDialogOpen(true);
+  };
+
   const getRoleBadgeVariant = (role: AppRole): 'default' | 'secondary' | 'destructive' | 'outline' => {
     const variants: Record<AppRole, 'default' | 'secondary' | 'destructive' | 'outline'> = {
       admin: 'destructive',
@@ -166,6 +215,13 @@ export default function Settings() {
       header: 'Должность',
       cell: (profile) => (
         <span className="text-muted-foreground">{profile.position || '—'}</span>
+      ),
+    },
+    {
+      key: 'phone',
+      header: 'Телефон',
+      cell: (profile) => (
+        <span className="text-muted-foreground">{profile.phone || '—'}</span>
       ),
     },
     {
@@ -227,7 +283,7 @@ export default function Settings() {
               <Shield className="h-4 w-4 mr-2" />
               Назначить роль
             </DropdownMenuItem>
-            <DropdownMenuItem>
+            <DropdownMenuItem onClick={() => openProfileEdit(profile)}>
               <Pencil className="h-4 w-4 mr-2" />
               Редактировать
             </DropdownMenuItem>
@@ -236,20 +292,6 @@ export default function Settings() {
       ),
     },
   ];
-
-  if (!hasRole('admin')) {
-    return (
-      <div className="flex items-center justify-center h-96">
-        <Card className="glass p-8 text-center">
-          <Shield className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-          <h2 className="text-xl font-semibold mb-2">Доступ запрещён</h2>
-          <p className="text-muted-foreground">
-            Только администраторы могут просматривать настройки
-          </p>
-        </Card>
-      </div>
-    );
-  }
 
   return (
     <div>
@@ -301,7 +343,7 @@ export default function Settings() {
                   <p className="text-sm text-muted-foreground">
                     Пользователей с этой ролью:{' '}
                     <span className="font-semibold text-foreground">
-                      {profiles.filter(p => p.roles.some(r => r.role === key)).length}
+                      {profiles.filter(p => p.roles.some((r: any) => r.role === key)).length}
                     </span>
                   </p>
                 </CardContent>
@@ -345,6 +387,59 @@ export default function Settings() {
               Отмена
             </Button>
             <Button onClick={handleAssignRole}>Назначить</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit Profile Dialog */}
+      <Dialog open={profileDialogOpen} onOpenChange={setProfileDialogOpen}>
+        <DialogContent className="glass">
+          <DialogHeader>
+            <DialogTitle>Редактировать профиль</DialogTitle>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="grid gap-2">
+              <Label>ФИО</Label>
+              <Input
+                value={profileForm.full_name}
+                onChange={(e) => setProfileForm({ ...profileForm, full_name: e.target.value })}
+              />
+            </div>
+            <div className="grid gap-2">
+              <Label>Email</Label>
+              <Input
+                type="email"
+                value={profileForm.email}
+                onChange={(e) => setProfileForm({ ...profileForm, email: e.target.value })}
+              />
+            </div>
+            <div className="grid gap-2">
+              <Label>Телефон</Label>
+              <Input
+                value={profileForm.phone}
+                onChange={(e) => setProfileForm({ ...profileForm, phone: e.target.value })}
+              />
+            </div>
+            <div className="grid gap-2">
+              <Label>Должность</Label>
+              <Input
+                value={profileForm.position}
+                onChange={(e) => setProfileForm({ ...profileForm, position: e.target.value })}
+              />
+            </div>
+            <div className="flex items-center gap-2">
+              <Switch
+                checked={profileForm.is_active}
+                onCheckedChange={(checked) => setProfileForm({ ...profileForm, is_active: checked })}
+              />
+              <Label>Активен</Label>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setProfileDialogOpen(false)}>
+              Отмена
+            </Button>
+            <Button onClick={handleUpdateProfile}>Сохранить</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

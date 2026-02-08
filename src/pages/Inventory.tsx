@@ -297,9 +297,9 @@ export default function Inventory() {
   };
 
   const formatCurrency = (value: number) => {
-    return new Intl.NumberFormat('ru-RU', {
+    return new Intl.NumberFormat('kk-KZ', {
       style: 'currency',
-      currency: 'RUB',
+      currency: 'KZT',
       maximumFractionDigits: 0,
     }).format(value);
   };
@@ -551,7 +551,7 @@ export default function Inventory() {
               />
             </div>
             <div className="grid gap-2">
-              <Label>Закупочная цена (₽)</Label>
+              <Label>Закупочная цена (₸)</Label>
               <Input
                 type="number"
                 value={itemForm.purchase_price}
@@ -559,7 +559,7 @@ export default function Inventory() {
               />
             </div>
             <div className="grid gap-2">
-              <Label>Цена продажи (₽)</Label>
+              <Label>Цена продажи (₸)</Label>
               <Input
                 type="number"
                 value={itemForm.sale_price}

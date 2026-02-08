@@ -190,9 +190,9 @@ export default function Finances() {
   };
 
   const formatCurrency = (value: number) => {
-    return new Intl.NumberFormat('ru-RU', {
+    return new Intl.NumberFormat('kk-KZ', {
       style: 'currency',
-      currency: 'RUB',
+      currency: 'KZT',
       maximumFractionDigits: 0,
     }).format(value);
   };
@@ -373,7 +373,7 @@ export default function Finances() {
               </Select>
             </div>
             <div className="grid gap-2">
-              <Label>Сумма (₽) *</Label>
+              <Label>Сумма (₸) *</Label>
               <Input
                 type="number"
                 value={formData.subtotal}
@@ -383,7 +383,7 @@ export default function Finances() {
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div className="grid gap-2">
-                <Label>Скидка (₽)</Label>
+                <Label>Скидка (₸)</Label>
                 <Input
                   type="number"
                   value={formData.discount}
@@ -391,7 +391,7 @@ export default function Finances() {
                 />
               </div>
               <div className="grid gap-2">
-                <Label>Налог (₽)</Label>
+                <Label>Налог (₸)</Label>
                 <Input
                   type="number"
                   value={formData.tax}
@@ -429,7 +429,7 @@ export default function Finances() {
           </DialogHeader>
           <div className="grid gap-4 py-4">
             <div className="grid gap-2">
-              <Label>Сумма (₽)</Label>
+              <Label>Сумма (₸)</Label>
               <Input
                 type="number"
                 value={paymentForm.amount}

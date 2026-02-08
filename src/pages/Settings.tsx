@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Users, Shield, MoreVertical, Pencil, UserPlus } from 'lucide-react';
+import { Users, Shield, MoreVertical, Pencil, UserPlus, Sun, Moon, Palette } from 'lucide-react';
 import { PageHeader } from '@/components/ui/page-header';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { DataTable, Column } from '@/components/ui/data-table';
@@ -33,11 +33,13 @@ import { Switch } from '@/components/ui/switch';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { Profile, UserRole, AppRole, roleLabels } from '@/lib/types';
+import { useTheme } from '@/contexts/ThemeContext';
 import { format } from 'date-fns';
 import { ru } from 'date-fns/locale';
 
 export default function Settings() {
   const { toast } = useToast();
+  const { theme, setTheme } = useTheme();
   const [profiles, setProfiles] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [roleDialogOpen, setRoleDialogOpen] = useState(false);
@@ -304,11 +306,51 @@ export default function Settings() {
         ]}
       />
 
-      <Tabs defaultValue="users" className="space-y-4">
-        <TabsList>
+      <Tabs defaultValue="appearance" className="space-y-4">
+        <TabsList className="flex-wrap">
+          <TabsTrigger value="appearance">Оформление</TabsTrigger>
           <TabsTrigger value="users">Пользователи</TabsTrigger>
           <TabsTrigger value="roles">Роли</TabsTrigger>
         </TabsList>
+
+        <TabsContent value="appearance">
+          <div className="grid gap-4 md:grid-cols-2">
+            <Card className="glass">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Palette className="h-5 w-5 text-primary" />
+                  Тема оформления
+                </CardTitle>
+                <CardDescription>
+                  Выберите цветовую схему интерфейса
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="flex gap-4">
+                  <Button
+                    variant={theme === 'dark' ? 'default' : 'outline'}
+                    className="flex-1 h-20 flex-col gap-2"
+                    onClick={() => setTheme('dark')}
+                  >
+                    <Moon className="h-6 w-6" />
+                    <span>Тёмная</span>
+                  </Button>
+                  <Button
+                    variant={theme === 'light' ? 'default' : 'outline'}
+                    className="flex-1 h-20 flex-col gap-2"
+                    onClick={() => setTheme('light')}
+                  >
+                    <Sun className="h-6 w-6" />
+                    <span>Светлая</span>
+                  </Button>
+                </div>
+                <p className="text-sm text-muted-foreground">
+                  Текущая тема: <span className="font-medium text-foreground">{theme === 'dark' ? 'Тёмная' : 'Светлая'}</span>
+                </p>
+              </CardContent>
+            </Card>
+          </div>
+        </TabsContent>
 
         <TabsContent value="users">
           <DataTable

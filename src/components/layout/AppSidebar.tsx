@@ -1,111 +1,93 @@
 import { useState } from 'react';
 import { useLocation } from 'react-router-dom';
-import {
-  LayoutDashboard,
-  Users,
-  PawPrint,
-  Stethoscope,
-  Calendar,
-  FileText,
-  DollarSign,
-  Package,
-  ShoppingCart,
-  BarChart3,
-  MessageSquare,
-  Settings,
-  ChevronLeft,
-  ChevronRight,
-  Heart,
-  Syringe,
-} from 'lucide-react';
+import { LayoutDashboard, Users, PawPrint, Stethoscope, Calendar, FileText, DollarSign, Package, ShoppingCart, BarChart3, MessageSquare, Settings, ChevronLeft, ChevronRight, Heart, Syringe } from 'lucide-react';
 import { NavLink } from '@/components/NavLink';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-
 interface NavItem {
   title: string;
   url: string;
   icon: React.ElementType;
 }
-
-const mainNavItems: NavItem[] = [
-  { title: 'Дашборд', url: '/dashboard', icon: LayoutDashboard },
-  { title: 'Клиенты', url: '/clients', icon: Users },
-  { title: 'Питомцы', url: '/pets', icon: PawPrint },
-  { title: 'Медкарты', url: '/medical-records', icon: FileText },
-  { title: 'Календарь', url: '/calendar', icon: Calendar },
-  { title: 'Услуги', url: '/services', icon: Stethoscope },
-  { title: 'Заболевания', url: '/diseases', icon: Syringe },
-];
-
-const businessNavItems: NavItem[] = [
-  { title: 'Финансы', url: '/finances', icon: DollarSign },
-  { title: 'Склад', url: '/inventory', icon: Package },
-  { title: 'Магазин', url: '/shop', icon: ShoppingCart },
-  { title: 'Отчёты', url: '/reports', icon: BarChart3 },
-];
-
-const systemNavItems: NavItem[] = [
-  { title: 'Отзывы', url: '/feedback', icon: MessageSquare },
-  { title: 'Настройки', url: '/settings', icon: Settings },
-];
-
+const mainNavItems: NavItem[] = [{
+  title: 'Дашборд',
+  url: '/dashboard',
+  icon: LayoutDashboard
+}, {
+  title: 'Клиенты',
+  url: '/clients',
+  icon: Users
+}, {
+  title: 'Питомцы',
+  url: '/pets',
+  icon: PawPrint
+}, {
+  title: 'Медкарты',
+  url: '/medical-records',
+  icon: FileText
+}, {
+  title: 'Календарь',
+  url: '/calendar',
+  icon: Calendar
+}, {
+  title: 'Услуги',
+  url: '/services',
+  icon: Stethoscope
+}, {
+  title: 'Заболевания',
+  url: '/diseases',
+  icon: Syringe
+}];
+const businessNavItems: NavItem[] = [{
+  title: 'Финансы',
+  url: '/finances',
+  icon: DollarSign
+}, {
+  title: 'Склад',
+  url: '/inventory',
+  icon: Package
+}, {
+  title: 'Магазин',
+  url: '/shop',
+  icon: ShoppingCart
+}, {
+  title: 'Отчёты',
+  url: '/reports',
+  icon: BarChart3
+}];
+const systemNavItems: NavItem[] = [{
+  title: 'Отзывы',
+  url: '/feedback',
+  icon: MessageSquare
+}, {
+  title: 'Настройки',
+  url: '/settings',
+  icon: Settings
+}];
 export function AppSidebar() {
   const [collapsed, setCollapsed] = useState(false);
   const location = useLocation();
-
   const renderNavItems = (items: NavItem[], label: string) => {
-    return (
-      <div className="space-y-1">
-        {!collapsed && (
-          <p className="px-3 py-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+    return <div className="space-y-1">
+        {!collapsed && <p className="px-3 py-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
             {label}
-          </p>
-        )}
-        {items.map((item) => (
-          <NavLink
-            key={item.url}
-            to={item.url}
-            className={cn(
-              'flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200',
-              'text-muted-foreground hover:text-foreground hover:bg-muted/50',
-              collapsed && 'justify-center'
-            )}
-            activeClassName="bg-primary/10 text-primary border-l-2 border-primary glow-sm"
-          >
+          </p>}
+        {items.map(item => <NavLink key={item.url} to={item.url} className={cn('flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200', 'text-muted-foreground hover:text-foreground hover:bg-muted/50', collapsed && 'justify-center')} activeClassName="bg-primary/10 text-primary border-l-2 border-primary glow-sm">
             <item.icon className="h-5 w-5 shrink-0" />
             {!collapsed && <span>{item.title}</span>}
-          </NavLink>
-        ))}
-      </div>
-    );
+          </NavLink>)}
+      </div>;
   };
-
-  return (
-    <aside
-      className={cn(
-        'fixed left-0 top-0 z-40 h-screen flex flex-col',
-        'bg-sidebar-background border-r border-sidebar-border',
-        'transition-all duration-300 ease-in-out',
-        collapsed ? 'w-16' : 'w-64'
-      )}
-    >
+  return <aside className={cn('fixed left-0 top-0 z-40 h-screen flex flex-col', 'bg-sidebar-background border-r border-sidebar-border', 'transition-all duration-300 ease-in-out', collapsed ? 'w-16' : 'w-64')}>
       {/* Header */}
       <div className="flex items-center justify-between p-4 border-b border-sidebar-border">
-        {!collapsed && (
-          <div className="flex items-center gap-2">
+        {!collapsed && <div className="flex items-center gap-2">
             <div className="w-8 h-8 rounded-lg gradient-primary flex items-center justify-center">
               <Heart className="h-5 w-5 text-primary-foreground" />
             </div>
             <span className="font-bold text-lg gradient-text">VetCRM</span>
-          </div>
-        )}
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={() => setCollapsed(!collapsed)}
-          className="h-8 w-8 text-muted-foreground hover:text-foreground"
-        >
+          </div>}
+        <Button variant="ghost" size="icon" onClick={() => setCollapsed(!collapsed)} className="h-8 w-8 text-muted-foreground hover:text-foreground">
           {collapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
         </Button>
       </div>
@@ -119,18 +101,15 @@ export function AppSidebar() {
 
       {/* Footer */}
       <div className="p-3 border-t border-sidebar-border">
-        {!collapsed && (
-          <div className="flex items-center gap-3 px-3 py-2">
+        {!collapsed && <div className="flex items-center gap-3 px-3 py-2">
             <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center">
               <span className="text-sm font-semibold text-primary">A</span>
             </div>
             <div className="flex-1 min-w-0">
               <p className="text-sm font-medium truncate">Администратор</p>
-              <p className="text-xs text-muted-foreground truncate">admin@vetcrm.ru</p>
+              <p className="text-xs text-muted-foreground truncate">admin@vetcrm.kz</p>
             </div>
-          </div>
-        )}
+          </div>}
       </div>
-    </aside>
-  );
+    </aside>;
 }

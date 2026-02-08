@@ -1,12 +1,13 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Users, PawPrint, Calendar, DollarSign, Plus, TrendingUp, Clock } from 'lucide-react';
+import { Users, PawPrint, Calendar, DollarSign, Plus, TrendingUp, Clock, FileText, Receipt } from 'lucide-react';
 import { PageHeader } from '@/components/ui/page-header';
 import { StatCard } from '@/components/ui/stat-card';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { supabase } from '@/integrations/supabase/client';
-import { DashboardStats, Appointment, appointmentStatusLabels } from '@/lib/types';
+import { DashboardStats, appointmentStatusLabels } from '@/lib/types';
+import { formatCurrency } from '@/lib/currency';
 import { format } from 'date-fns';
 import { ru } from 'date-fns/locale';
 import {
@@ -108,67 +109,74 @@ export default function Dashboard() {
     }
   };
 
-  const formatCurrency = (value: number) => {
-    return new Intl.NumberFormat('ru-RU', {
-      style: 'currency',
-      currency: 'RUB',
-      maximumFractionDigits: 0,
-    }).format(value);
-  };
+  // Currency formatting is now imported from @/lib/currency
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 md:space-y-6">
       <PageHeader
         title="Дашборд"
         description="Обзор ключевых показателей клиники"
         actions={
-          <div className="flex gap-2">
-            <Button variant="outline" onClick={() => navigate('/clients/new')}>
-              <Plus className="h-4 w-4 mr-2" />
-              Клиент
+          <div className="flex flex-wrap gap-2">
+            <Button variant="outline" size="sm" className="text-xs md:text-sm" onClick={() => navigate('/clients/new')}>
+              <Plus className="h-4 w-4 mr-1 md:mr-2" />
+              <span className="hidden sm:inline">Клиент</span>
+              <span className="sm:hidden">+</span>
             </Button>
-            <Button variant="outline" onClick={() => navigate('/pets/new')}>
-              <Plus className="h-4 w-4 mr-2" />
-              Питомец
+            <Button variant="outline" size="sm" className="text-xs md:text-sm" onClick={() => navigate('/pets/new')}>
+              <Plus className="h-4 w-4 mr-1 md:mr-2" />
+              <span className="hidden sm:inline">Питомец</span>
+              <span className="sm:hidden">+</span>
             </Button>
-            <Button onClick={() => navigate('/calendar')}>
-              <Calendar className="h-4 w-4 mr-2" />
-              Новая запись
+            <Button variant="outline" size="sm" className="text-xs md:text-sm" onClick={() => navigate('/medical-records')}>
+              <FileText className="h-4 w-4 mr-1 md:mr-2" />
+              <span className="hidden sm:inline">Медкарта</span>
+              <span className="sm:hidden">+</span>
+            </Button>
+            <Button variant="outline" size="sm" className="text-xs md:text-sm" onClick={() => navigate('/finances')}>
+              <Receipt className="h-4 w-4 mr-1 md:mr-2" />
+              <span className="hidden sm:inline">Счёт</span>
+              <span className="sm:hidden">+</span>
+            </Button>
+            <Button size="sm" className="text-xs md:text-sm" onClick={() => navigate('/calendar')}>
+              <Calendar className="h-4 w-4 mr-1 md:mr-2" />
+              <span className="hidden sm:inline">Новая запись</span>
+              <span className="sm:hidden">Запись</span>
             </Button>
           </div>
         }
       />
 
       {/* Stats Grid */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-3 md:gap-4 grid-cols-2 lg:grid-cols-4">
         <StatCard
           title="Клиенты"
           value={stats.totalClients}
-          icon={<Users className="h-5 w-5" />}
+          icon={<Users className="h-4 w-4 md:h-5 md:w-5" />}
           description="Всего в базе"
         />
         <StatCard
           title="Питомцы"
           value={stats.totalPets}
-          icon={<PawPrint className="h-5 w-5" />}
+          icon={<PawPrint className="h-4 w-4 md:h-5 md:w-5" />}
           description="Всего в базе"
         />
         <StatCard
           title="Приёмы сегодня"
           value={stats.todayAppointments}
-          icon={<Calendar className="h-5 w-5" />}
+          icon={<Calendar className="h-4 w-4 md:h-5 md:w-5" />}
           description={format(new Date(), 'd MMMM', { locale: ru })}
         />
         <StatCard
           title="Выручка за месяц"
           value={formatCurrency(stats.monthlyRevenue)}
-          icon={<DollarSign className="h-5 w-5" />}
+          icon={<DollarSign className="h-4 w-4 md:h-5 md:w-5" />}
           description={format(new Date(), 'LLLL yyyy', { locale: ru })}
         />
       </div>
 
       {/* Charts and Appointments */}
-      <div className="grid gap-6 lg:grid-cols-3">
+      <div className="grid gap-4 md:gap-6 lg:grid-cols-3">
         {/* Revenue Chart */}
         <Card className="lg:col-span-2 glass">
           <CardHeader>

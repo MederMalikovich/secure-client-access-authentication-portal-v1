@@ -240,9 +240,9 @@ export default function Services() {
   };
 
   const formatCurrency = (value: number) => {
-    return new Intl.NumberFormat('ru-RU', {
+    return new Intl.NumberFormat('kk-KZ', {
       style: 'currency',
-      currency: 'RUB',
+      currency: 'KZT',
       maximumFractionDigits: 0,
     }).format(value);
   };
@@ -477,7 +477,7 @@ export default function Services() {
               </Select>
             </div>
             <div className="grid gap-2">
-              <Label>Цена (₽) *</Label>
+              <Label>Цена (₸) *</Label>
               <Input
                 type="number"
                 value={serviceForm.price}

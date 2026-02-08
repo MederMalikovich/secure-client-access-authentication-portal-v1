@@ -130,9 +130,9 @@ export default function Reports() {
   };
 
   const formatCurrency = (value: number) => {
-    return new Intl.NumberFormat('ru-RU', {
+    return new Intl.NumberFormat('kk-KZ', {
       style: 'currency',
-      currency: 'RUB',
+      currency: 'KZT',
       maximumFractionDigits: 0,
     }).format(value);
   };

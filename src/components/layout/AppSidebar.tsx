@@ -56,10 +56,6 @@ const businessNavItems: NavItem[] = [{
   icon: BarChart3
 }];
 const systemNavItems: NavItem[] = [{
-  title: 'Отзывы',
-  url: '/feedback',
-  icon: MessageSquare
-}, {
   title: 'Настройки',
   url: '/settings',
   icon: Settings

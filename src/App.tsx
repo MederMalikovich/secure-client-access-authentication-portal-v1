@@ -39,7 +39,7 @@ function AppRoutes() {
       <Route path="/shop" element={<MainLayout><Shop /></MainLayout>} />
       <Route path="/finances" element={<MainLayout><Finances /></MainLayout>} />
       <Route path="/reports" element={<MainLayout><Reports /></MainLayout>} />
-      <Route path="/feedback" element={<MainLayout><Feedback /></MainLayout>} />
+      
       <Route path="/settings" element={<MainLayout><Settings /></MainLayout>} />
       <Route path="*" element={<NotFound />} />
     </Routes>

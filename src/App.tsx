@@ -18,7 +18,7 @@ import Inventory from "./pages/Inventory";
 import Shop from "./pages/Shop";
 import Finances from "./pages/Finances";
 import Reports from "./pages/Reports";
-import Feedback from "./pages/Feedback";
+
 import Settings from "./pages/Settings";
 import NotFound from "./pages/NotFound";
 

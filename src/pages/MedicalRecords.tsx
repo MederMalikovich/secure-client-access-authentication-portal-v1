@@ -344,7 +344,18 @@ export default function MedicalRecords() {
                   <SelectValue placeholder="Выберите питомца" />
                 </SelectTrigger>
                 <SelectContent>
-                  {pets.map((pet) => (
+                  <div className="p-2">
+                    <Input
+                      placeholder="Поиск по кличке..."
+                      value={petSearch}
+                      onChange={(e) => setPetSearch(e.target.value)}
+                      className="mb-2"
+                    />
+                  </div>
+                  {(petSearch
+                    ? pets.filter(p => p.name.toLowerCase().includes(petSearch.toLowerCase()))
+                    : pets
+                  ).map((pet) => (
                     <SelectItem key={pet.id} value={pet.id}>
                       {pet.name} ({(pet as any).client?.full_name})
                     </SelectItem>

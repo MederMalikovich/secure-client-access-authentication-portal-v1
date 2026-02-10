@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { Phone, Mail, MapPin, MoreVertical, Pencil, Trash2, Eye } from 'lucide-react';
+import { useLocation, useNavigate } from 'react-router-dom';
+import { Phone, Mail, MapPin, MoreVertical, Pencil, Trash2, Eye, PawPrint } from 'lucide-react';
 import { PageHeader } from '@/components/ui/page-header';
 import { DataTable, Column } from '@/components/ui/data-table';
 import { Button } from '@/components/ui/button';
@@ -22,6 +22,8 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Separator } from '@/components/ui/separator';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { Client } from '@/lib/types';
@@ -30,12 +32,15 @@ import { ru } from 'date-fns/locale';
 
 export default function Clients() {
   const navigate = useNavigate();
+  const location = useLocation();
   const { toast } = useToast();
   const [clients, setClients] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [detailDialogOpen, setDetailDialogOpen] = useState(false);
   const [selectedClient, setSelectedClient] = useState<Client | null>(null);
+  const [detailClient, setDetailClient] = useState<any>(null);
   const [formData, setFormData] = useState({
     full_name: '',
     phone: '',
@@ -48,13 +53,22 @@ export default function Clients() {
     fetchClients();
   }, []);
 
+  useEffect(() => {
+    if ((location.state as any)?.openNew) {
+      resetForm();
+      setDialogOpen(true);
+      // Clear the state so it doesn't re-trigger
+      window.history.replaceState({}, document.title);
+    }
+  }, [location.state]);
+
   const fetchClients = async () => {
     try {
       const { data, error } = await supabase
         .from('clients')
         .select(`
           *,
-          pets:pets(id)
+          pets:pets(id, name, species, breed)
         `)
         .order('created_at', { ascending: false });
 
@@ -140,6 +154,11 @@ export default function Clients() {
     setDialogOpen(true);
   };
 
+  const openDetailDialog = (client: any) => {
+    setDetailClient(client);
+    setDetailDialogOpen(true);
+  };
+
   const resetForm = () => {
     setSelectedClient(null);
     setFormData({
@@ -152,6 +171,15 @@ export default function Clients() {
   };
 
   const columns: Column<Client>[] = [
+    {
+      key: 'client_number',
+      header: 'ID',
+      cell: (client) => (
+        <Badge variant="outline" className="font-mono">
+          {(client as any).client_number || '—'}
+        </Badge>
+      ),
+    },
     {
       key: 'full_name',
       header: 'ФИО',
@@ -211,7 +239,7 @@ export default function Clients() {
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
-            <DropdownMenuItem onClick={() => navigate(`/clients/${client.id}`)}>
+            <DropdownMenuItem onClick={() => openDetailDialog(client)}>
               <Eye className="h-4 w-4 mr-2" />
               Просмотр
             </DropdownMenuItem>
@@ -256,14 +284,99 @@ export default function Clients() {
           setDialogOpen(true);
         }}
         addLabel="Добавить клиента"
-        onRowClick={(client) => navigate(`/clients/${client.id}`)}
+        onRowClick={(client) => openDetailDialog(client)}
         isLoading={loading}
         emptyMessage="Нет клиентов"
       />
 
+      {/* Detail Dialog */}
+      <Dialog open={detailDialogOpen} onOpenChange={setDetailDialogOpen}>
+        <DialogContent className="glass max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-3">
+              <span>{detailClient?.full_name}</span>
+              {detailClient?.client_number && (
+                <Badge variant="outline" className="font-mono">ID: {detailClient.client_number}</Badge>
+              )}
+            </DialogTitle>
+          </DialogHeader>
+          {detailClient && (
+            <div className="space-y-4">
+              <div className="grid gap-3 md:grid-cols-2">
+                <div className="flex items-center gap-2">
+                  <Phone className="h-4 w-4 text-muted-foreground" />
+                  <span>{detailClient.phone}</span>
+                </div>
+                {detailClient.email && (
+                  <div className="flex items-center gap-2">
+                    <Mail className="h-4 w-4 text-muted-foreground" />
+                    <span>{detailClient.email}</span>
+                  </div>
+                )}
+                {detailClient.address && (
+                  <div className="flex items-center gap-2 md:col-span-2">
+                    <MapPin className="h-4 w-4 text-muted-foreground" />
+                    <span>{detailClient.address}</span>
+                  </div>
+                )}
+              </div>
+              
+              {detailClient.notes && (
+                <>
+                  <Separator />
+                  <div>
+                    <p className="text-sm font-medium mb-1">Комментарии</p>
+                    <p className="text-sm text-muted-foreground">{detailClient.notes}</p>
+                  </div>
+                </>
+              )}
+
+              <Separator />
+              <div>
+                <h4 className="font-medium mb-3 flex items-center gap-2">
+                  <PawPrint className="h-4 w-4" />
+                  Питомцы ({detailClient.pets?.length || 0})
+                </h4>
+                {detailClient.pets?.length > 0 ? (
+                  <div className="space-y-2">
+                    {detailClient.pets.map((pet: any) => (
+                      <Card key={pet.id} className="glass">
+                        <CardContent className="p-3 flex items-center justify-between">
+                          <div>
+                            <p className="font-medium">{pet.name}</p>
+                            <p className="text-xs text-muted-foreground">
+                              {pet.species} {pet.breed && `• ${pet.breed}`}
+                            </p>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-sm text-muted-foreground">Нет питомцев</p>
+                )}
+              </div>
+
+              <div className="text-xs text-muted-foreground">
+                Зарегистрирован: {format(new Date(detailClient.created_at), 'd MMMM yyyy', { locale: ru })}
+              </div>
+            </div>
+          )}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => {
+              setDetailDialogOpen(false);
+              if (detailClient) openEditDialog(detailClient);
+            }}>
+              <Pencil className="h-4 w-4 mr-2" />
+              Редактировать
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       {/* Add/Edit Dialog */}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent className="glass">
+        <DialogContent className="glass max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>
               {selectedClient ? 'Редактировать клиента' : 'Новый клиент'}
@@ -271,7 +384,7 @@ export default function Clients() {
             <DialogDescription>
               {selectedClient
                 ? 'Измените данные клиента'
-                : 'Заполните данные нового клиента'}
+                : 'Заполните данные нового клиента. ID будет присвоен автоматически.'}
             </DialogDescription>
           </DialogHeader>
           <div className="grid gap-4 py-4">

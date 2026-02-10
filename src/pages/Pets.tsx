@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { MoreVertical, Pencil, Trash2, Eye, FileText } from 'lucide-react';
+import { useLocation } from 'react-router-dom';
+import { MoreVertical, Pencil, Trash2, Eye, FileText, Phone } from 'lucide-react';
 import { PageHeader } from '@/components/ui/page-header';
 import { DataTable, Column } from '@/components/ui/data-table';
 import { Button } from '@/components/ui/button';
@@ -22,6 +22,8 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { Card, CardContent } from '@/components/ui/card';
+import { Separator } from '@/components/ui/separator';
 import {
   Select,
   SelectContent,
@@ -36,14 +38,17 @@ import { format } from 'date-fns';
 import { ru } from 'date-fns/locale';
 
 export default function Pets() {
-  const navigate = useNavigate();
+  const location = useLocation();
   const { toast } = useToast();
   const [pets, setPets] = useState<any[]>([]);
   const [clients, setClients] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [detailDialogOpen, setDetailDialogOpen] = useState(false);
   const [selectedPet, setSelectedPet] = useState<Pet | null>(null);
+  const [detailPet, setDetailPet] = useState<any>(null);
+  const [clientSearch, setClientSearch] = useState('');
   const [formData, setFormData] = useState({
     client_id: '',
     name: '',
@@ -60,6 +65,14 @@ export default function Pets() {
     fetchData();
   }, []);
 
+  useEffect(() => {
+    if ((location.state as any)?.openNew) {
+      resetForm();
+      setDialogOpen(true);
+      window.history.replaceState({}, document.title);
+    }
+  }, [location.state]);
+
   const fetchData = async () => {
     try {
       const [petsRes, clientsRes] = await Promise.all([
@@ -67,10 +80,10 @@ export default function Pets() {
           .from('pets')
           .select(`
             *,
-            client:clients(id, full_name)
+            client:clients(id, full_name, phone, client_number)
           `)
           .order('created_at', { ascending: false }),
-        supabase.from('clients').select('id, full_name').order('full_name'),
+        supabase.from('clients').select('id, full_name, client_number').order('full_name'),
       ]);
 
       if (petsRes.error) throw petsRes.error;
@@ -168,8 +181,14 @@ export default function Pets() {
     setDialogOpen(true);
   };
 
+  const openDetailDialog = (pet: any) => {
+    setDetailPet(pet);
+    setDetailDialogOpen(true);
+  };
+
   const resetForm = () => {
     setSelectedPet(null);
+    setClientSearch('');
     setFormData({
       client_id: '',
       name: '',
@@ -195,6 +214,24 @@ export default function Pets() {
     };
     return emojis[species];
   };
+
+  const getAge = (birthDate: string | null | undefined) => {
+    if (!birthDate) return null;
+    const birth = new Date(birthDate);
+    const now = new Date();
+    const years = now.getFullYear() - birth.getFullYear();
+    const months = now.getMonth() - birth.getMonth();
+    const ageInMonths = years * 12 + months;
+    if (ageInMonths < 12) return `${ageInMonths} мес.`;
+    return `${Math.floor(ageInMonths / 12)} лет`;
+  };
+
+  const filteredClients = clientSearch
+    ? clients.filter(c => 
+        c.full_name.toLowerCase().includes(clientSearch.toLowerCase()) ||
+        c.client_number?.includes(clientSearch)
+      )
+    : clients;
 
   const columns: Column<Pet>[] = [
     {
@@ -242,16 +279,8 @@ export default function Pets() {
       key: 'birth_date',
       header: 'Возраст',
       cell: (pet) => {
-        if (!pet.birth_date) return <span className="text-muted-foreground">—</span>;
-        const birth = new Date(pet.birth_date);
-        const now = new Date();
-        const years = now.getFullYear() - birth.getFullYear();
-        const months = now.getMonth() - birth.getMonth();
-        const ageInMonths = years * 12 + months;
-        if (ageInMonths < 12) {
-          return <span>{ageInMonths} мес.</span>;
-        }
-        return <span>{Math.floor(ageInMonths / 12)} лет</span>;
+        const age = getAge(pet.birth_date);
+        return <span className="text-muted-foreground">{age || '—'}</span>;
       },
     },
     {
@@ -265,13 +294,9 @@ export default function Pets() {
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
-            <DropdownMenuItem onClick={() => navigate(`/pets/${pet.id}`)}>
+            <DropdownMenuItem onClick={() => openDetailDialog(pet)}>
               <Eye className="h-4 w-4 mr-2" />
               Карточка
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => navigate(`/pets/${pet.id}/medical`)}>
-              <FileText className="h-4 w-4 mr-2" />
-              Медкарта
             </DropdownMenuItem>
             <DropdownMenuItem onClick={() => openEditDialog(pet)}>
               <Pencil className="h-4 w-4 mr-2" />
@@ -314,13 +339,96 @@ export default function Pets() {
           setDialogOpen(true);
         }}
         addLabel="Добавить питомца"
+        onRowClick={(pet) => openDetailDialog(pet)}
         isLoading={loading}
         emptyMessage="Нет питомцев"
       />
 
+      {/* Detail Dialog */}
+      <Dialog open={detailDialogOpen} onOpenChange={setDetailDialogOpen}>
+        <DialogContent className="glass max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <span className="text-2xl">{detailPet && getSpeciesEmoji(detailPet.species)}</span>
+              {detailPet?.name}
+            </DialogTitle>
+          </DialogHeader>
+          {detailPet && (
+            <div className="space-y-4">
+              <div className="grid gap-3 md:grid-cols-2">
+                <div>
+                  <p className="text-sm text-muted-foreground">Вид</p>
+                  <p>{speciesLabels[detailPet.species as PetSpecies]}</p>
+                </div>
+                {detailPet.breed && (
+                  <div>
+                    <p className="text-sm text-muted-foreground">Порода</p>
+                    <p>{detailPet.breed}</p>
+                  </div>
+                )}
+                <div>
+                  <p className="text-sm text-muted-foreground">Пол</p>
+                  <p>{genderLabels[detailPet.gender as PetGender]}</p>
+                </div>
+                {detailPet.weight && (
+                  <div>
+                    <p className="text-sm text-muted-foreground">Вес</p>
+                    <p>{detailPet.weight} кг</p>
+                  </div>
+                )}
+                {detailPet.birth_date && (
+                  <div>
+                    <p className="text-sm text-muted-foreground">Возраст</p>
+                    <p>{getAge(detailPet.birth_date)} ({format(new Date(detailPet.birth_date), 'd MMM yyyy', { locale: ru })})</p>
+                  </div>
+                )}
+                {detailPet.color && (
+                  <div>
+                    <p className="text-sm text-muted-foreground">Окрас</p>
+                    <p>{detailPet.color}</p>
+                  </div>
+                )}
+              </div>
+
+              <Separator />
+              <div>
+                <p className="text-sm font-medium mb-1">Владелец</p>
+                <div className="flex items-center gap-2">
+                  <span>{detailPet.client?.full_name}</span>
+                  {detailPet.client?.phone && (
+                    <span className="text-sm text-muted-foreground flex items-center gap-1">
+                      <Phone className="h-3 w-3" /> {detailPet.client.phone}
+                    </span>
+                  )}
+                </div>
+              </div>
+
+              {detailPet.notes && (
+                <>
+                  <Separator />
+                  <div>
+                    <p className="text-sm font-medium mb-1">Комментарии</p>
+                    <p className="text-sm text-muted-foreground">{detailPet.notes}</p>
+                  </div>
+                </>
+              )}
+            </div>
+          )}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => {
+              setDetailDialogOpen(false);
+              if (detailPet) openEditDialog(detailPet);
+            }}>
+              <Pencil className="h-4 w-4 mr-2" />
+              Редактировать
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       {/* Add/Edit Dialog */}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent className="glass max-w-2xl">
+        <DialogContent className="glass max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>
               {selectedPet ? 'Редактировать питомца' : 'Новый питомец'}
@@ -337,9 +445,17 @@ export default function Pets() {
                   <SelectValue placeholder="Выберите владельца" />
                 </SelectTrigger>
                 <SelectContent>
-                  {clients.map((client) => (
+                  <div className="p-2">
+                    <Input
+                      placeholder="Поиск клиента..."
+                      value={clientSearch}
+                      onChange={(e) => setClientSearch(e.target.value)}
+                      className="mb-2"
+                    />
+                  </div>
+                  {filteredClients.map((client) => (
                     <SelectItem key={client.id} value={client.id}>
-                      {client.full_name}
+                      {client.full_name} {client.client_number && `(${client.client_number})`}
                     </SelectItem>
                   ))}
                 </SelectContent>

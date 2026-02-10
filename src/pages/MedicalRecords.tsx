@@ -44,7 +44,10 @@ export default function MedicalRecords() {
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [detailDialogOpen, setDetailDialogOpen] = useState(false);
   const [selectedRecord, setSelectedRecord] = useState<MedicalRecord | null>(null);
+  const [detailRecord, setDetailRecord] = useState<any>(null);
+  const [petSearch, setPetSearch] = useState('');
 
   const [formData, setFormData] = useState({
     pet_id: '',

@@ -361,7 +361,7 @@ export default function Calendar() {
 
       {/* Appointment Dialog */}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent className="glass max-w-2xl">
+        <DialogContent className="glass max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>
               {selectedAppointment ? 'Редактировать запись' : 'Новая запись'}
@@ -374,13 +374,22 @@ export default function Calendar() {
                 value={formData.client_id}
                 onValueChange={(v) => {
                   setFormData({ ...formData, client_id: v, pet_id: '' });
+                  setClientSearch('');
                 }}
               >
                 <SelectTrigger>
                   <SelectValue placeholder="Выберите клиента" />
                 </SelectTrigger>
                 <SelectContent>
-                  {clients.map((client) => (
+                  <div className="p-2">
+                    <Input
+                      placeholder="Поиск клиента..."
+                      value={clientSearch}
+                      onChange={(e) => setClientSearch(e.target.value)}
+                      className="mb-2"
+                    />
+                  </div>
+                  {searchedClients.map((client) => (
                     <SelectItem key={client.id} value={client.id}>
                       {client.full_name}
                     </SelectItem>
@@ -392,18 +401,34 @@ export default function Calendar() {
               <Label>Питомец *</Label>
               <Select
                 value={formData.pet_id}
-                onValueChange={(v) => setFormData({ ...formData, pet_id: v })}
+                onValueChange={(v) => {
+                  setFormData({ ...formData, pet_id: v });
+                  setPetSearch('');
+                }}
                 disabled={!formData.client_id}
               >
                 <SelectTrigger>
-                  <SelectValue placeholder="Выберите питомца" />
+                  <SelectValue placeholder={formData.client_id ? "Выберите питомца" : "Сначала выберите клиента"} />
                 </SelectTrigger>
                 <SelectContent>
-                  {filteredPets.map((pet) => (
+                  <div className="p-2">
+                    <Input
+                      placeholder="Поиск по кличке..."
+                      value={petSearch}
+                      onChange={(e) => setPetSearch(e.target.value)}
+                      className="mb-2"
+                    />
+                  </div>
+                  {searchedPets.map((pet) => (
                     <SelectItem key={pet.id} value={pet.id}>
                       {pet.name}
                     </SelectItem>
                   ))}
+                  {searchedPets.length === 0 && (
+                    <div className="p-2 text-center text-sm text-muted-foreground">
+                      {formData.client_id ? 'Нет питомцев у этого клиента' : 'Выберите клиента'}
+                    </div>
+                  )}
                 </SelectContent>
               </Select>
             </div>
@@ -510,13 +535,39 @@ export default function Calendar() {
               />
             </div>
           </div>
-          <DialogFooter>
+          <DialogFooter className="flex-col sm:flex-row gap-2">
+            {selectedAppointment && (
+              <Button
+                variant="destructive"
+                className="sm:mr-auto"
+                onClick={() => {
+                  setDialogOpen(false);
+                  setDeleteDialogOpen(true);
+                }}
+              >
+                Удалить
+              </Button>
+            )}
             <Button variant="outline" onClick={() => setDialogOpen(false)}>
               Отмена
             </Button>
             <Button onClick={handleSubmit}>
               {selectedAppointment ? 'Сохранить' : 'Создать'}
             </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Dialog */}
+      <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <DialogContent className="glass">
+          <DialogHeader>
+            <DialogTitle>Удалить запись?</DialogTitle>
+          </DialogHeader>
+          <p className="text-sm text-muted-foreground">Это действие нельзя отменить.</p>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setDeleteDialogOpen(false)}>Отмена</Button>
+            <Button variant="destructive" onClick={handleDeleteAppointment}>Удалить</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

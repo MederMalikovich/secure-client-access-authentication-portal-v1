@@ -220,6 +220,31 @@ export default function Calendar() {
   const filteredPets = formData.client_id
     ? pets.filter((p) => p.client_id === formData.client_id)
     : pets;
+  
+  const searchedPets = petSearch
+    ? filteredPets.filter(p => p.name.toLowerCase().includes(petSearch.toLowerCase()))
+    : filteredPets;
+
+  const searchedClients = clientSearch
+    ? clients.filter(c => c.full_name.toLowerCase().includes(clientSearch.toLowerCase()))
+    : clients;
+
+  const handleDeleteAppointment = async () => {
+    if (!selectedAppointment) return;
+    try {
+      const { error } = await supabase
+        .from('appointments')
+        .delete()
+        .eq('id', selectedAppointment.id);
+      if (error) throw error;
+      toast({ title: 'Успешно', description: 'Запись удалена' });
+      setDeleteDialogOpen(false);
+      setSelectedAppointment(null);
+      fetchData();
+    } catch (error: any) {
+      toast({ variant: 'destructive', title: 'Ошибка', description: error.message });
+    }
+  };
 
   return (
     <div>

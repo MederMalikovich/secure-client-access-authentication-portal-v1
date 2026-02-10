@@ -118,12 +118,12 @@ export default function Dashboard() {
         description="Обзор ключевых показателей клиники"
         actions={
           <div className="flex flex-wrap gap-2">
-            <Button variant="outline" size="sm" className="text-xs md:text-sm" onClick={() => navigate('/clients/new')}>
+            <Button variant="outline" size="sm" className="text-xs md:text-sm" onClick={() => navigate('/clients', { state: { openNew: true } })}>
               <Plus className="h-4 w-4 mr-1 md:mr-2" />
               <span className="hidden sm:inline">Клиент</span>
               <span className="sm:hidden">+</span>
             </Button>
-            <Button variant="outline" size="sm" className="text-xs md:text-sm" onClick={() => navigate('/pets/new')}>
+            <Button variant="outline" size="sm" className="text-xs md:text-sm" onClick={() => navigate('/pets', { state: { openNew: true } })}>
               <Plus className="h-4 w-4 mr-1 md:mr-2" />
               <span className="hidden sm:inline">Питомец</span>
               <span className="sm:hidden">+</span>

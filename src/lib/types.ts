@@ -32,6 +32,7 @@ export interface UserRole {
 
 export interface Client {
   id: string;
+  client_number?: string;
   full_name: string;
   phone: string;
   email?: string;

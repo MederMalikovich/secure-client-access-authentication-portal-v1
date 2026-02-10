@@ -274,7 +274,10 @@ export default function MedicalRecords() {
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
-            <DropdownMenuItem onClick={() => navigate(`/medical-records/${record.id}`)}>
+            <DropdownMenuItem onClick={() => {
+                  setDetailRecord(record);
+                  setDetailDialogOpen(true);
+                }}>
               <Eye className="h-4 w-4 mr-2" />
               Просмотр
             </DropdownMenuItem>

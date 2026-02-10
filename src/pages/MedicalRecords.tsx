@@ -485,6 +485,38 @@ export default function MedicalRecords() {
         </DialogContent>
       </Dialog>
 
+      {/* Detail Dialog */}
+      <Dialog open={detailDialogOpen} onOpenChange={setDetailDialogOpen}>
+        <DialogContent className="glass max-w-3xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Запись от {detailRecord && format(new Date(detailRecord.visit_date), 'd MMMM yyyy, HH:mm', { locale: ru })}</DialogTitle>
+          </DialogHeader>
+          {detailRecord && (
+            <div className="space-y-3 text-sm">
+              <div className="grid gap-2 md:grid-cols-2">
+                <div><span className="text-muted-foreground">Питомец:</span> {detailRecord.pet?.name}</div>
+                <div><span className="text-muted-foreground">Владелец:</span> {detailRecord.pet?.client?.full_name}</div>
+                <div><span className="text-muted-foreground">Врач:</span> {detailRecord.veterinarian?.full_name || '—'}</div>
+                {detailRecord.weight_at_visit && <div><span className="text-muted-foreground">Вес:</span> {detailRecord.weight_at_visit} кг</div>}
+                {detailRecord.temperature && <div><span className="text-muted-foreground">Температура:</span> {detailRecord.temperature}°C</div>}
+              </div>
+              {detailRecord.chief_complaint && <div><p className="text-muted-foreground font-medium">Жалобы</p><p>{detailRecord.chief_complaint}</p></div>}
+              {detailRecord.examination_notes && <div><p className="text-muted-foreground font-medium">Осмотр</p><p>{detailRecord.examination_notes}</p></div>}
+              {detailRecord.diagnosis && <div><p className="text-muted-foreground font-medium">Диагноз</p><p>{detailRecord.diagnosis}</p></div>}
+              {detailRecord.treatment && <div><p className="text-muted-foreground font-medium">Лечение</p><p>{detailRecord.treatment}</p></div>}
+              {detailRecord.prescriptions && <div><p className="text-muted-foreground font-medium">Назначения</p><p>{detailRecord.prescriptions}</p></div>}
+              {detailRecord.lab_results && <div><p className="text-muted-foreground font-medium">Анализы</p><p>{detailRecord.lab_results}</p></div>}
+              {detailRecord.doctor_notes && <div><p className="text-muted-foreground font-medium">Комментарии врача</p><p>{detailRecord.doctor_notes}</p></div>}
+            </div>
+          )}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => { setDetailDialogOpen(false); if (detailRecord) openEditDialog(detailRecord); }}>
+              Редактировать
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       {/* Delete Dialog */}
       <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <DialogContent className="glass">

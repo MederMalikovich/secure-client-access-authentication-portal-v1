@@ -40,6 +40,17 @@ export default function Calendar() {
   const [vets, setVets] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [selectedAppointment, setSelectedAppointment] = useState<Appointment | null>(null);
+  const [view, setView] = useState<'week' | 'day'>('week');
+  const [clientSearch, setClientSearch] = useState('');
+  const [petSearch, setPetSearch] = useState('');
+  const [clients, setClients] = useState<any[]>([]);
+  const [pets, setPets] = useState<any[]>([]);
+  const [services, setServices] = useState<any[]>([]);
+  const [vets, setVets] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [dialogOpen, setDialogOpen] = useState(false);
   const [selectedAppointment, setSelectedAppointment] = useState<Appointment | null>(null);
   const [view, setView] = useState<'week' | 'day'>('week');
 

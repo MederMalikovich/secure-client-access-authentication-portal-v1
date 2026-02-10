@@ -17,7 +17,6 @@ const navItems = [
   { icon: Package, label: 'Склад', href: '/inventory' },
   { icon: ShoppingCart, label: 'Магазин', href: '/shop' },
   { icon: BarChart3, label: 'Отчёты', href: '/reports' },
-  { icon: MessageSquare, label: 'Отзывы', href: '/feedback' },
   { icon: Settings, label: 'Настройки', href: '/settings' },
 ];
 

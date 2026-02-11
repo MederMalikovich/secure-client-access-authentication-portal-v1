@@ -88,40 +88,99 @@ export default function Reports() {
         avgCheck,
       });
 
-      // Generate revenue chart data (mock for visualization)
-      const days = [];
+      // Generate revenue chart data from real invoices
+      const revenueByDay: Record<string, { revenue: number; appointments: number }> = {};
       let currentDate = new Date(dateFrom);
       const endDate = new Date(dateTo);
       while (currentDate <= endDate) {
-        days.push({
-          date: format(currentDate, 'd MMM', { locale: ru }),
-          revenue: Math.floor(Math.random() * 30000) + 5000,
-          appointments: Math.floor(Math.random() * 10) + 2,
-        });
+        const key = format(currentDate, 'yyyy-MM-dd');
+        revenueByDay[key] = { revenue: 0, appointments: 0 };
         currentDate.setDate(currentDate.getDate() + 1);
       }
-      setRevenueData(days.slice(0, 14)); // Limit to 14 days for readability
 
-      // Fetch services usage
-      const { data: services } = await supabase
-        .from('services')
-        .select('id, name')
-        .eq('is_active', true)
-        .limit(5);
+      // Fill revenue per day
+      invoices?.forEach((inv) => {
+        const day = format(new Date(inv.issued_at), 'yyyy-MM-dd');
+        if (revenueByDay[day]) {
+          revenueByDay[day].revenue += Number(inv.total);
+        }
+      });
 
-      setServicesData(
-        services?.map(s => ({
+      // Fill appointments per day
+      const { data: appointmentsList } = await supabase
+        .from('appointments')
+        .select('scheduled_at')
+        .gte('scheduled_at', dateFrom)
+        .lte('scheduled_at', dateTo + 'T23:59:59');
+
+      appointmentsList?.forEach((apt) => {
+        const day = format(new Date(apt.scheduled_at), 'yyyy-MM-dd');
+        if (revenueByDay[day]) {
+          revenueByDay[day].appointments += 1;
+        }
+      });
+
+      const chartData = Object.entries(revenueByDay).map(([date, vals]) => ({
+        date: format(new Date(date), 'd MMM', { locale: ru }),
+        revenue: vals.revenue,
+        appointments: vals.appointments,
+      }));
+      setRevenueData(chartData.length > 31 ? chartData.slice(0, 31) : chartData);
+
+      // Fetch real services usage from medical_record_services
+      const { data: serviceUsage } = await supabase
+        .from('medical_record_services')
+        .select('service_id, service:services(name)')
+        .not('service_id', 'is', null);
+
+      // Also count from appointments
+      const { data: aptServices } = await supabase
+        .from('appointments')
+        .select('service_id, service:services(name)')
+        .gte('scheduled_at', dateFrom)
+        .lte('scheduled_at', dateTo + 'T23:59:59')
+        .not('service_id', 'is', null);
+
+      const serviceCounts: Record<string, { name: string; count: number }> = {};
+      [...(serviceUsage || []), ...(aptServices || [])].forEach((item: any) => {
+        const id = item.service_id;
+        const name = item.service?.name || 'Неизвестно';
+        if (!serviceCounts[id]) serviceCounts[id] = { name, count: 0 };
+        serviceCounts[id].count += 1;
+      });
+
+      const sortedServices = Object.values(serviceCounts)
+        .sort((a, b) => b.count - a.count)
+        .slice(0, 5)
+        .map(s => ({
           name: s.name.length > 15 ? s.name.substring(0, 15) + '...' : s.name,
-          value: Math.floor(Math.random() * 50) + 10,
-        })) || []
-      );
+          value: s.count,
+        }));
+      setServicesData(sortedServices);
 
-      // Appointments by status
-      setAppointmentsByStatus([
-        { name: 'Завершено', value: Math.floor(Math.random() * 50) + 30 },
-        { name: 'Запланировано', value: Math.floor(Math.random() * 20) + 10 },
-        { name: 'Отменено', value: Math.floor(Math.random() * 10) + 5 },
-      ]);
+      // Real appointments by status
+      const { data: statusData } = await supabase
+        .from('appointments')
+        .select('status')
+        .gte('scheduled_at', dateFrom)
+        .lte('scheduled_at', dateTo + 'T23:59:59');
+
+      const statusCounts: Record<string, number> = {};
+      const statusLabels: Record<string, string> = {
+        scheduled: 'Запланировано',
+        confirmed: 'Подтверждено',
+        in_progress: 'В процессе',
+        completed: 'Завершено',
+        cancelled: 'Отменено',
+        no_show: 'Неявка',
+      };
+      statusData?.forEach((a) => {
+        const label = statusLabels[a.status] || a.status;
+        statusCounts[label] = (statusCounts[label] || 0) + 1;
+      });
+      setAppointmentsByStatus(
+        Object.entries(statusCounts).map(([name, value]) => ({ name, value }))
+      );
     } catch (error) {
       console.error('Error fetching report data:', error);
     } finally {

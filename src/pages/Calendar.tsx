@@ -113,6 +113,7 @@ export default function Calendar() {
 
     const data = {
       ...formData,
+      scheduled_at: new Date(formData.scheduled_at).toISOString(),
       duration_minutes: parseInt(formData.duration_minutes),
       veterinarian_id: formData.veterinarian_id || null,
       service_id: formData.service_id || null,
@@ -168,7 +169,7 @@ export default function Calendar() {
       pet_id: appointment.pet_id,
       veterinarian_id: appointment.veterinarian_id || '',
       service_id: appointment.service_id || '',
-      scheduled_at: appointment.scheduled_at.slice(0, 16),
+      scheduled_at: format(parseISO(appointment.scheduled_at), "yyyy-MM-dd'T'HH:mm"),
       duration_minutes: appointment.duration_minutes.toString(),
       status: appointment.status,
       notes: appointment.notes || '',

@@ -1,14 +1,15 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Users, PawPrint, Calendar, DollarSign, Plus, TrendingUp, Clock, FileText, Receipt } from 'lucide-react';
+import { Users, PawPrint, Calendar, DollarSign, Plus, TrendingUp, Clock, FileText, Receipt, Trophy } from 'lucide-react';
 import { PageHeader } from '@/components/ui/page-header';
 import { StatCard } from '@/components/ui/stat-card';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
 import { supabase } from '@/integrations/supabase/client';
 import { DashboardStats, appointmentStatusLabels } from '@/lib/types';
 import { formatCurrency } from '@/lib/currency';
-import { format } from 'date-fns';
+import { format, subDays } from 'date-fns';
 import { ru } from 'date-fns/locale';
 import {
   AreaChart,
@@ -32,6 +33,7 @@ export default function Dashboard() {
   });
   const [todayAppointments, setTodayAppointments] = useState<any[]>([]);
   const [revenueData, setRevenueData] = useState<any[]>([]);
+  const [topDoctors, setTopDoctors] = useState<{ name: string; count: number }[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -90,18 +92,70 @@ export default function Dashboard() {
 
       setTodayAppointments(appointments || []);
 
-      // Generate mock revenue data for chart
-      const mockRevenueData = [];
+      // Real revenue & appointments data for last 7 days
+      const revenueChartData = [];
       for (let i = 6; i >= 0; i--) {
         const date = new Date();
         date.setDate(date.getDate() - i);
-        mockRevenueData.push({
+        const dayStart = new Date(date);
+        dayStart.setHours(0, 0, 0, 0);
+        const dayEnd = new Date(date);
+        dayEnd.setHours(23, 59, 59, 999);
+
+        const dayRevenue = invoices?.filter(inv => {
+          const d = new Date(inv.total ? (inv as any).issued_at || '' : '');
+          return false; // will compute below
+        }) || [];
+
+        revenueChartData.push({
           date: format(date, 'dd MMM', { locale: ru }),
-          revenue: Math.floor(Math.random() * 50000) + 10000,
-          appointments: Math.floor(Math.random() * 15) + 5,
+          revenue: 0,
+          appointments: 0,
         });
       }
-      setRevenueData(mockRevenueData);
+
+      // Fetch last 7 days invoices and appointments for chart
+      const weekAgo = subDays(new Date(), 7);
+      const [weekInvoices, weekAppointments] = await Promise.all([
+        supabase.from('invoices').select('total, issued_at').gte('issued_at', weekAgo.toISOString()).eq('status', 'paid'),
+        supabase.from('appointments').select('scheduled_at').gte('scheduled_at', weekAgo.toISOString()),
+      ]);
+
+      const chartData = revenueChartData.map((item, idx) => {
+        const date = new Date();
+        date.setDate(date.getDate() - (6 - idx));
+        const dayStr = format(date, 'yyyy-MM-dd');
+        
+        const dayRev = (weekInvoices.data || [])
+          .filter(inv => format(new Date(inv.issued_at), 'yyyy-MM-dd') === dayStr)
+          .reduce((sum, inv) => sum + Number(inv.total), 0);
+        
+        const dayApts = (weekAppointments.data || [])
+          .filter(apt => format(new Date(apt.scheduled_at), 'yyyy-MM-dd') === dayStr)
+          .length;
+
+        return { ...item, revenue: dayRev, appointments: dayApts };
+      });
+      setRevenueData(chartData);
+
+      // Fetch top 5 busiest doctors (last 30 days)
+      const monthAgo = subDays(new Date(), 30);
+      const { data: doctorApts } = await supabase
+        .from('appointments')
+        .select('veterinarian_id, veterinarian:profiles(full_name)')
+        .gte('scheduled_at', monthAgo.toISOString())
+        .not('veterinarian_id', 'is', null);
+
+      const doctorCounts: Record<string, { name: string; count: number }> = {};
+      (doctorApts || []).forEach((apt: any) => {
+        const id = apt.veterinarian_id;
+        const name = apt.veterinarian?.full_name || 'Неизвестно';
+        if (!doctorCounts[id]) doctorCounts[id] = { name, count: 0 };
+        doctorCounts[id].count += 1;
+      });
+      setTopDoctors(
+        Object.values(doctorCounts).sort((a, b) => b.count - a.count).slice(0, 5)
+      );
     } catch (error) {
       console.error('Error fetching dashboard data:', error);
     } finally {
@@ -290,6 +344,35 @@ export default function Dashboard() {
               />
             </BarChart>
           </ResponsiveContainer>
+        </CardContent>
+      </Card>
+
+      {/* Top 5 Doctors */}
+      <Card className="glass">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Trophy className="h-5 w-5 text-primary" />
+            Топ 5 загруженных врачей (30 дней)
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          {topDoctors.length === 0 ? (
+            <p className="text-muted-foreground text-center py-4">Нет данных</p>
+          ) : (
+            <div className="space-y-3">
+              {topDoctors.map((doc, index) => (
+                <div key={doc.name} className="flex items-center justify-between p-3 rounded-lg bg-muted/30">
+                  <div className="flex items-center gap-3">
+                    <span className="w-7 h-7 rounded-full bg-primary/20 flex items-center justify-center text-sm font-bold text-primary">
+                      {index + 1}
+                    </span>
+                    <span className="font-medium">{doc.name}</span>
+                  </div>
+                  <Badge variant="secondary">{doc.count} приёмов</Badge>
+                </div>
+              ))}
+            </div>
+          )}
         </CardContent>
       </Card>
     </div>

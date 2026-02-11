@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { MoreVertical, Pencil, Trash2, FolderPlus } from 'lucide-react';
+import { MoreVertical, Pencil, Trash2, FolderPlus, Trophy } from 'lucide-react';
 import { PageHeader } from '@/components/ui/page-header';
 import { DataTable, Column } from '@/components/ui/data-table';
 import { Button } from '@/components/ui/button';
@@ -33,6 +33,16 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { Service, ServiceCategory } from '@/lib/types';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { subDays } from 'date-fns';
+
+type PeriodKey = '7d' | '30d' | '90d' | '365d';
+const periodLabels: Record<PeriodKey, string> = {
+  '7d': '7 дней',
+  '30d': '30 дней',
+  '90d': '90 дней',
+  '365d': 'Год',
+};
 
 export default function Services() {
   const { toast } = useToast();
@@ -45,6 +55,8 @@ export default function Services() {
   const [selectedService, setSelectedService] = useState<Service | null>(null);
   const [selectedCategory, setSelectedCategory] = useState<ServiceCategory | null>(null);
   const [deleteType, setDeleteType] = useState<'service' | 'category'>('service');
+  const [topServices, setTopServices] = useState<{ name: string; count: number }[]>([]);
+  const [topPeriod, setTopPeriod] = useState<PeriodKey>('30d');
 
   const [serviceForm, setServiceForm] = useState({
     name: '',
@@ -63,6 +75,40 @@ export default function Services() {
   useEffect(() => {
     fetchData();
   }, []);
+
+  useEffect(() => {
+    fetchTopServices();
+  }, [topPeriod]);
+
+  const fetchTopServices = async () => {
+    const days = parseInt(topPeriod);
+    const dateFrom = subDays(new Date(), days).toISOString();
+    try {
+      const [aptRes, mrRes] = await Promise.all([
+        supabase
+          .from('appointments')
+          .select('service_id, service:services(name)')
+          .gte('scheduled_at', dateFrom)
+          .not('service_id', 'is', null),
+        supabase
+          .from('medical_record_services')
+          .select('service_id, service:services(name)')
+          .not('service_id', 'is', null),
+      ]);
+      const counts: Record<string, { name: string; count: number }> = {};
+      [...(aptRes.data || []), ...(mrRes.data || [])].forEach((item: any) => {
+        const id = item.service_id;
+        const name = item.service?.name || 'Неизвестно';
+        if (!counts[id]) counts[id] = { name, count: 0 };
+        counts[id].count += 1;
+      });
+      setTopServices(
+        Object.values(counts).sort((a, b) => b.count - a.count).slice(0, 5)
+      );
+    } catch (error) {
+      console.error('Error fetching top services:', error);
+    }
+  };
 
   const fetchData = async () => {
     try {
@@ -397,6 +443,49 @@ export default function Services() {
           </Button>
         }
       />
+
+      {/* Top 5 Services */}
+      <Card className="glass mb-6">
+        <CardHeader>
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+            <CardTitle className="flex items-center gap-2">
+              <Trophy className="h-5 w-5 text-primary" />
+              Топ 5 популярных услуг
+            </CardTitle>
+            <div className="flex gap-1 flex-wrap">
+              {(Object.keys(periodLabels) as PeriodKey[]).map((key) => (
+                <Button
+                  key={key}
+                  variant={topPeriod === key ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => setTopPeriod(key)}
+                >
+                  {periodLabels[key]}
+                </Button>
+              ))}
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent>
+          {topServices.length === 0 ? (
+            <p className="text-muted-foreground text-center py-4">Нет данных за выбранный период</p>
+          ) : (
+            <div className="space-y-3">
+              {topServices.map((svc, index) => (
+                <div key={svc.name} className="flex items-center justify-between p-3 rounded-lg bg-muted/30">
+                  <div className="flex items-center gap-3">
+                    <span className="w-7 h-7 rounded-full bg-primary/20 flex items-center justify-center text-sm font-bold text-primary">
+                      {index + 1}
+                    </span>
+                    <span className="font-medium">{svc.name}</span>
+                  </div>
+                  <Badge variant="secondary">{svc.count} раз</Badge>
+                </div>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
 
       <Tabs defaultValue="services" className="space-y-4">
         <TabsList>

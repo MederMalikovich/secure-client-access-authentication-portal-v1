@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { ShoppingCart, Package, MoreVertical, Eye, Plus, Minus, Trash2 } from 'lucide-react';
+import { ShoppingCart, Package, MoreVertical, Eye, Plus, Minus, Trash2, Trophy } from 'lucide-react';
 import { PageHeader } from '@/components/ui/page-header';
 import { StatCard } from '@/components/ui/stat-card';
 import { DataTable, Column } from '@/components/ui/data-table';
@@ -49,6 +49,7 @@ export default function Shop() {
   const [loading, setLoading] = useState(true);
   const [saleDialogOpen, setSaleDialogOpen] = useState(false);
   const [cart, setCart] = useState<CartItem[]>([]);
+  const [topProducts, setTopProducts] = useState<{ name: string; total_qty: number; total_revenue: number }[]>([]);
 
   const [formData, setFormData] = useState({
     client_id: '',
@@ -62,7 +63,7 @@ export default function Shop() {
 
   const fetchData = async () => {
     try {
-      const [salesRes, itemsRes, clientsRes] = await Promise.all([
+      const [salesRes, itemsRes, clientsRes, topRes] = await Promise.all([
         supabase
           .from('shop_sales')
           .select(`
@@ -79,6 +80,9 @@ export default function Shop() {
           .gt('sale_price', 0)
           .order('name'),
         supabase.from('clients').select('id, full_name').order('full_name'),
+        supabase
+          .from('shop_sale_items')
+          .select('quantity, total, item:inventory_items(name)'),
       ]);
 
       if (salesRes.error) throw salesRes.error;
@@ -86,6 +90,20 @@ export default function Shop() {
       setSales(salesRes.data || []);
       setInventoryItems(itemsRes.data || []);
       setClients(clientsRes.data || []);
+
+      // Calculate top 5 products
+      const productMap: Record<string, { name: string; total_qty: number; total_revenue: number }> = {};
+      (topRes.data || []).forEach((item: any) => {
+        const name = item.item?.name || 'Неизвестно';
+        if (!productMap[name]) productMap[name] = { name, total_qty: 0, total_revenue: 0 };
+        productMap[name].total_qty += Number(item.quantity);
+        productMap[name].total_revenue += Number(item.total);
+      });
+      setTopProducts(
+        Object.values(productMap)
+          .sort((a, b) => b.total_qty - a.total_qty)
+          .slice(0, 5)
+      );
     } catch (error) {
       console.error('Error fetching data:', error);
     } finally {
@@ -343,6 +361,38 @@ export default function Shop() {
           description={format(new Date(), 'LLLL yyyy', { locale: ru })}
         />
       </div>
+
+      {/* Top 5 Products */}
+      <Card className="glass mb-6">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Trophy className="h-5 w-5 text-primary" />
+            Топ 5 продаваемых товаров
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          {topProducts.length === 0 ? (
+            <p className="text-muted-foreground text-center py-4">Нет данных о продажах</p>
+          ) : (
+            <div className="space-y-3">
+              {topProducts.map((product, index) => (
+                <div key={product.name} className="flex items-center justify-between p-3 rounded-lg bg-muted/30">
+                  <div className="flex items-center gap-3">
+                    <span className="w-7 h-7 rounded-full bg-primary/20 flex items-center justify-center text-sm font-bold text-primary">
+                      {index + 1}
+                    </span>
+                    <span className="font-medium">{product.name}</span>
+                  </div>
+                  <div className="text-right">
+                    <div className="font-semibold">{product.total_qty} шт.</div>
+                    <div className="text-xs text-muted-foreground">{formatCurrency(product.total_revenue)}</div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
 
       <DataTable
         data={sales}

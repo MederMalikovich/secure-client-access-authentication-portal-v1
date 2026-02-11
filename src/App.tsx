@@ -18,7 +18,7 @@ import Inventory from "./pages/Inventory";
 import Shop from "./pages/Shop";
 import Finances from "./pages/Finances";
 import Reports from "./pages/Reports";
-
+import Doctors from "./pages/Doctors";
 import Settings from "./pages/Settings";
 import NotFound from "./pages/NotFound";
 
@@ -39,6 +39,7 @@ function AppRoutes() {
       <Route path="/shop" element={<MainLayout><Shop /></MainLayout>} />
       <Route path="/finances" element={<MainLayout><Finances /></MainLayout>} />
       <Route path="/reports" element={<MainLayout><Reports /></MainLayout>} />
+      <Route path="/doctors" element={<MainLayout><Doctors /></MainLayout>} />
       
       <Route path="/settings" element={<MainLayout><Settings /></MainLayout>} />
       <Route path="*" element={<NotFound />} />

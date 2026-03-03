@@ -1,144 +1,118 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Users, PawPrint, Calendar, DollarSign, Plus, TrendingUp, Clock, FileText, Receipt, Trophy } from 'lucide-react';
+import { Users, PawPrint, Calendar, DollarSign, Plus, TrendingUp, Clock, FileText, Receipt, Trophy, Bell } from 'lucide-react';
 import { PageHeader } from '@/components/ui/page-header';
 import { StatCard } from '@/components/ui/stat-card';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
 import { supabase } from '@/integrations/supabase/client';
 import { DashboardStats, appointmentStatusLabels } from '@/lib/types';
 import { formatCurrency } from '@/lib/currency';
-import { format, subDays } from 'date-fns';
+import { format, subDays, addDays, startOfDay, endOfDay } from 'date-fns';
 import { ru } from 'date-fns/locale';
 import {
-  AreaChart,
-  Area,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-  BarChart,
-  Bar,
+  AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar,
 } from 'recharts';
+
+type PeriodPreset = '1d' | '7d' | '30d' | '365d' | 'custom';
+const presetLabels: Record<Exclude<PeriodPreset, 'custom'>, string> = {
+  '1d': '1 день',
+  '7d': 'Неделя',
+  '30d': '30 дней',
+  '365d': 'Год',
+};
+
+function getDateRange(preset: PeriodPreset, customFrom?: string, customTo?: string): { from: Date; to: Date } {
+  const to = customTo ? endOfDay(new Date(customTo)) : endOfDay(new Date());
+  if (preset === 'custom' && customFrom) {
+    return { from: startOfDay(new Date(customFrom)), to };
+  }
+  const days = preset === '1d' ? 1 : preset === '7d' ? 7 : preset === '30d' ? 30 : 365;
+  return { from: startOfDay(subDays(new Date(), days - 1)), to };
+}
+
+function PeriodSelector({ value, onChange, customFrom, customTo, onCustomFromChange, onCustomToChange, showYear = false }: {
+  value: PeriodPreset;
+  onChange: (v: PeriodPreset) => void;
+  customFrom: string;
+  customTo: string;
+  onCustomFromChange: (v: string) => void;
+  onCustomToChange: (v: string) => void;
+  showYear?: boolean;
+}) {
+  const keys = showYear ? ['1d', '7d', '30d', '365d'] : ['1d', '7d', '30d'];
+  return (
+    <div className="flex flex-wrap gap-1 items-center">
+      {(keys as Exclude<PeriodPreset, 'custom'>[]).map(k => (
+        <Button key={k} variant={value === k ? 'default' : 'outline'} size="sm" onClick={() => onChange(k)}>
+          {presetLabels[k]}
+        </Button>
+      ))}
+      <Button variant={value === 'custom' ? 'default' : 'outline'} size="sm" onClick={() => onChange('custom')}>
+        С—По
+      </Button>
+      {value === 'custom' && (
+        <div className="flex gap-1 items-center ml-1">
+          <Input type="date" className="h-8 w-auto text-xs" value={customFrom} onChange={e => onCustomFromChange(e.target.value)} />
+          <span className="text-muted-foreground text-xs">—</span>
+          <Input type="date" className="h-8 w-auto text-xs" value={customTo} onChange={e => onCustomToChange(e.target.value)} />
+        </div>
+      )}
+    </div>
+  );
+}
 
 export default function Dashboard() {
   const navigate = useNavigate();
-  const [stats, setStats] = useState<DashboardStats>({
-    totalClients: 0,
-    totalPets: 0,
-    todayAppointments: 0,
-    monthlyRevenue: 0,
-  });
+  const [stats, setStats] = useState<DashboardStats>({ totalClients: 0, totalPets: 0, todayAppointments: 0, monthlyRevenue: 0 });
   const [todayAppointments, setTodayAppointments] = useState<any[]>([]);
-  const [revenueData, setRevenueData] = useState<any[]>([]);
   const [topDoctors, setTopDoctors] = useState<{ name: string; count: number }[]>([]);
+  const [upcomingNotifs, setUpcomingNotifs] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    fetchDashboardData();
-  }, []);
+  // Revenue period
+  const [revPeriod, setRevPeriod] = useState<PeriodPreset>('7d');
+  const [revFrom, setRevFrom] = useState(format(subDays(new Date(), 6), 'yyyy-MM-dd'));
+  const [revTo, setRevTo] = useState(format(new Date(), 'yyyy-MM-dd'));
+  const [revenueData, setRevenueData] = useState<any[]>([]);
 
-  const fetchDashboardData = async () => {
+  // Appointments period
+  const [aptPeriod, setAptPeriod] = useState<PeriodPreset>('7d');
+  const [aptFrom, setAptFrom] = useState(format(subDays(new Date(), 6), 'yyyy-MM-dd'));
+  const [aptTo, setAptTo] = useState(format(new Date(), 'yyyy-MM-dd'));
+  const [appointmentsData, setAppointmentsData] = useState<any[]>([]);
+
+  useEffect(() => { fetchStats(); }, []);
+  useEffect(() => { fetchRevenueChart(); }, [revPeriod, revFrom, revTo]);
+  useEffect(() => { fetchAppointmentsChart(); }, [aptPeriod, aptFrom, aptTo]);
+
+  const fetchStats = async () => {
     try {
-      // Fetch clients count
-      const { count: clientsCount } = await supabase
-        .from('clients')
-        .select('*', { count: 'exact', head: true });
+      const [clientsRes, petsRes] = await Promise.all([
+        supabase.from('clients').select('*', { count: 'exact', head: true }),
+        supabase.from('pets').select('*', { count: 'exact', head: true }),
+      ]);
 
-      // Fetch pets count
-      const { count: petsCount } = await supabase
-        .from('pets')
-        .select('*', { count: 'exact', head: true });
-
-      // Fetch today's appointments
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
-      const tomorrow = new Date(today);
-      tomorrow.setDate(tomorrow.getDate() + 1);
+      const today = startOfDay(new Date());
+      const tomorrow = addDays(today, 1);
 
       const { data: appointments, count: appointmentsCount } = await supabase
         .from('appointments')
-        .select(`
-          *,
-          client:clients(full_name),
-          pet:pets(name),
-          service:services(name)
-        `, { count: 'exact' })
+        .select(`*, client:clients(full_name), pet:pets(name), service:services(name)`, { count: 'exact' })
         .gte('scheduled_at', today.toISOString())
         .lt('scheduled_at', tomorrow.toISOString())
         .order('scheduled_at', { ascending: true });
 
-      // Fetch monthly revenue
-      const monthStart = new Date();
-      monthStart.setDate(1);
-      monthStart.setHours(0, 0, 0, 0);
-
-      const { data: invoices } = await supabase
-        .from('invoices')
-        .select('total')
-        .gte('issued_at', monthStart.toISOString())
-        .eq('status', 'paid');
-
+      const monthStart = new Date(); monthStart.setDate(1); monthStart.setHours(0, 0, 0, 0);
+      const { data: invoices } = await supabase.from('invoices').select('total').gte('issued_at', monthStart.toISOString()).eq('status', 'paid');
       const monthlyRevenue = invoices?.reduce((sum, inv) => sum + Number(inv.total), 0) || 0;
 
-      setStats({
-        totalClients: clientsCount || 0,
-        totalPets: petsCount || 0,
-        todayAppointments: appointmentsCount || 0,
-        monthlyRevenue,
-      });
-
+      setStats({ totalClients: clientsRes.count || 0, totalPets: petsRes.count || 0, todayAppointments: appointmentsCount || 0, monthlyRevenue });
       setTodayAppointments(appointments || []);
 
-      // Real revenue & appointments data for last 7 days
-      const revenueChartData = [];
-      for (let i = 6; i >= 0; i--) {
-        const date = new Date();
-        date.setDate(date.getDate() - i);
-        const dayStart = new Date(date);
-        dayStart.setHours(0, 0, 0, 0);
-        const dayEnd = new Date(date);
-        dayEnd.setHours(23, 59, 59, 999);
-
-        const dayRevenue = invoices?.filter(inv => {
-          const d = new Date(inv.total ? (inv as any).issued_at || '' : '');
-          return false; // will compute below
-        }) || [];
-
-        revenueChartData.push({
-          date: format(date, 'dd MMM', { locale: ru }),
-          revenue: 0,
-          appointments: 0,
-        });
-      }
-
-      // Fetch last 7 days invoices and appointments for chart
-      const weekAgo = subDays(new Date(), 7);
-      const [weekInvoices, weekAppointments] = await Promise.all([
-        supabase.from('invoices').select('total, issued_at').gte('issued_at', weekAgo.toISOString()).eq('status', 'paid'),
-        supabase.from('appointments').select('scheduled_at').gte('scheduled_at', weekAgo.toISOString()),
-      ]);
-
-      const chartData = revenueChartData.map((item, idx) => {
-        const date = new Date();
-        date.setDate(date.getDate() - (6 - idx));
-        const dayStr = format(date, 'yyyy-MM-dd');
-        
-        const dayRev = (weekInvoices.data || [])
-          .filter(inv => format(new Date(inv.issued_at), 'yyyy-MM-dd') === dayStr)
-          .reduce((sum, inv) => sum + Number(inv.total), 0);
-        
-        const dayApts = (weekAppointments.data || [])
-          .filter(apt => format(new Date(apt.scheduled_at), 'yyyy-MM-dd') === dayStr)
-          .length;
-
-        return { ...item, revenue: dayRev, appointments: dayApts };
-      });
-      setRevenueData(chartData);
-
-      // Fetch top 5 busiest doctors (last 30 days)
+      // Top 5 doctors (30 days)
       const monthAgo = subDays(new Date(), 30);
       const { data: doctorApts } = await supabase
         .from('appointments')
@@ -153,9 +127,19 @@ export default function Dashboard() {
         if (!doctorCounts[id]) doctorCounts[id] = { name, count: 0 };
         doctorCounts[id].count += 1;
       });
-      setTopDoctors(
-        Object.values(doctorCounts).sort((a, b) => b.count - a.count).slice(0, 5)
-      );
+      setTopDoctors(Object.values(doctorCounts).sort((a, b) => b.count - a.count).slice(0, 5));
+
+      // Upcoming notifications (due tomorrow = scheduled_for between tomorrow start and end)
+      const tomorrowStart = startOfDay(addDays(new Date(), 1));
+      const tomorrowEnd = endOfDay(addDays(new Date(), 1));
+      const { data: notifs } = await supabase
+        .from('notifications')
+        .select('*, client:clients(full_name)')
+        .eq('type', 'pet_reminder')
+        .gte('scheduled_for', tomorrowStart.toISOString())
+        .lte('scheduled_for', tomorrowEnd.toISOString())
+        .order('scheduled_for');
+      setUpcomingNotifs(notifs || []);
     } catch (error) {
       console.error('Error fetching dashboard data:', error);
     } finally {
@@ -163,7 +147,62 @@ export default function Dashboard() {
     }
   };
 
-  // Currency formatting is now imported from @/lib/currency
+  const fetchRevenueChart = async () => {
+    const { from, to } = getDateRange(revPeriod, revFrom, revTo);
+    try {
+      const { data: invoices } = await supabase
+        .from('invoices')
+        .select('total, issued_at')
+        .gte('issued_at', from.toISOString())
+        .lte('issued_at', to.toISOString())
+        .eq('status', 'paid');
+
+      const dayCount = Math.ceil((to.getTime() - from.getTime()) / (1000 * 60 * 60 * 24));
+      const chartData = [];
+      for (let i = 0; i < dayCount; i++) {
+        const date = addDays(from, i);
+        const dayStr = format(date, 'yyyy-MM-dd');
+        const dayRev = (invoices || [])
+          .filter(inv => format(new Date(inv.issued_at), 'yyyy-MM-dd') === dayStr)
+          .reduce((sum, inv) => sum + Number(inv.total), 0);
+        chartData.push({
+          date: dayCount > 60 ? format(date, 'dd.MM', { locale: ru }) : format(date, 'dd MMM', { locale: ru }),
+          revenue: dayRev,
+        });
+      }
+      setRevenueData(chartData);
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  const fetchAppointmentsChart = async () => {
+    const { from, to } = getDateRange(aptPeriod, aptFrom, aptTo);
+    try {
+      const { data: apts } = await supabase
+        .from('appointments')
+        .select('scheduled_at')
+        .gte('scheduled_at', from.toISOString())
+        .lte('scheduled_at', to.toISOString());
+
+      const dayCount = Math.ceil((to.getTime() - from.getTime()) / (1000 * 60 * 60 * 24));
+      const chartData = [];
+      for (let i = 0; i < dayCount; i++) {
+        const date = addDays(from, i);
+        const dayStr = format(date, 'yyyy-MM-dd');
+        const count = (apts || []).filter(a => format(new Date(a.scheduled_at), 'yyyy-MM-dd') === dayStr).length;
+        chartData.push({
+          date: dayCount > 60 ? format(date, 'dd.MM', { locale: ru }) : format(date, 'dd MMM', { locale: ru }),
+          appointments: count,
+        });
+      }
+      setAppointmentsData(chartData);
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  const extractNotifTitle = (raw: string) => raw.replace(/^\[.*?\]\s*/, '');
 
   return (
     <div className="space-y-4 md:space-y-6">
@@ -173,71 +212,77 @@ export default function Dashboard() {
         actions={
           <div className="flex flex-wrap gap-2">
             <Button variant="outline" size="sm" className="text-xs md:text-sm" onClick={() => navigate('/clients', { state: { openNew: true } })}>
-              <Plus className="h-4 w-4 mr-1 md:mr-2" />
-              <span className="hidden sm:inline">Клиент</span>
-              <span className="sm:hidden">+</span>
+              <Plus className="h-4 w-4 mr-1 md:mr-2" /><span className="hidden sm:inline">Клиент</span><span className="sm:hidden">+</span>
             </Button>
             <Button variant="outline" size="sm" className="text-xs md:text-sm" onClick={() => navigate('/pets', { state: { openNew: true } })}>
-              <Plus className="h-4 w-4 mr-1 md:mr-2" />
-              <span className="hidden sm:inline">Питомец</span>
-              <span className="sm:hidden">+</span>
+              <Plus className="h-4 w-4 mr-1 md:mr-2" /><span className="hidden sm:inline">Питомец</span><span className="sm:hidden">+</span>
             </Button>
             <Button variant="outline" size="sm" className="text-xs md:text-sm" onClick={() => navigate('/medical-records')}>
-              <FileText className="h-4 w-4 mr-1 md:mr-2" />
-              <span className="hidden sm:inline">Медкарта</span>
-              <span className="sm:hidden">+</span>
+              <FileText className="h-4 w-4 mr-1 md:mr-2" /><span className="hidden sm:inline">Медкарта</span><span className="sm:hidden">+</span>
             </Button>
             <Button variant="outline" size="sm" className="text-xs md:text-sm" onClick={() => navigate('/finances')}>
-              <Receipt className="h-4 w-4 mr-1 md:mr-2" />
-              <span className="hidden sm:inline">Счёт</span>
-              <span className="sm:hidden">+</span>
+              <Receipt className="h-4 w-4 mr-1 md:mr-2" /><span className="hidden sm:inline">Счёт</span><span className="sm:hidden">+</span>
             </Button>
             <Button size="sm" className="text-xs md:text-sm" onClick={() => navigate('/calendar')}>
-              <Calendar className="h-4 w-4 mr-1 md:mr-2" />
-              <span className="hidden sm:inline">Новая запись</span>
-              <span className="sm:hidden">Запись</span>
+              <Calendar className="h-4 w-4 mr-1 md:mr-2" /><span className="hidden sm:inline">Новая запись</span><span className="sm:hidden">Запись</span>
             </Button>
           </div>
         }
       />
 
-      {/* Stats Grid */}
+      {/* Stats */}
       <div className="grid gap-3 md:gap-4 grid-cols-2 lg:grid-cols-4">
-        <StatCard
-          title="Клиенты"
-          value={stats.totalClients}
-          icon={<Users className="h-4 w-4 md:h-5 md:w-5" />}
-          description="Всего в базе"
-        />
-        <StatCard
-          title="Питомцы"
-          value={stats.totalPets}
-          icon={<PawPrint className="h-4 w-4 md:h-5 md:w-5" />}
-          description="Всего в базе"
-        />
-        <StatCard
-          title="Приёмы сегодня"
-          value={stats.todayAppointments}
-          icon={<Calendar className="h-4 w-4 md:h-5 md:w-5" />}
-          description={format(new Date(), 'd MMMM', { locale: ru })}
-        />
-        <StatCard
-          title="Выручка за месяц"
-          value={formatCurrency(stats.monthlyRevenue)}
-          icon={<DollarSign className="h-4 w-4 md:h-5 md:w-5" />}
-          description={format(new Date(), 'LLLL yyyy', { locale: ru })}
-        />
+        <StatCard title="Клиенты" value={stats.totalClients} icon={<Users className="h-4 w-4 md:h-5 md:w-5" />} description="Всего в базе" />
+        <StatCard title="Питомцы" value={stats.totalPets} icon={<PawPrint className="h-4 w-4 md:h-5 md:w-5" />} description="Всего в базе" />
+        <StatCard title="Приёмы сегодня" value={stats.todayAppointments} icon={<Calendar className="h-4 w-4 md:h-5 md:w-5" />} description={format(new Date(), 'd MMMM', { locale: ru })} />
+        <StatCard title="Выручка за месяц" value={formatCurrency(stats.monthlyRevenue)} icon={<DollarSign className="h-4 w-4 md:h-5 md:w-5" />} description={format(new Date(), 'LLLL yyyy', { locale: ru })} />
       </div>
 
-      {/* Charts and Appointments */}
-      <div className="grid gap-4 md:gap-6 lg:grid-cols-3">
-        {/* Revenue Chart */}
-        <Card className="lg:col-span-2 glass">
+      {/* Upcoming Notifications */}
+      {upcomingNotifs.length > 0 && (
+        <Card className="glass border-primary/30">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <TrendingUp className="h-5 w-5 text-primary" />
-              Выручка за неделю
+              <Bell className="h-5 w-5 text-primary" />
+              Напоминания на завтра
             </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-2">
+              {upcomingNotifs.map(n => (
+                <div key={n.id} className="flex items-center justify-between p-3 rounded-lg bg-muted/30">
+                  <div>
+                    <p className="text-sm font-medium">{extractNotifTitle(n.title)}</p>
+                    <p className="text-xs text-muted-foreground">{n.message}</p>
+                  </div>
+                  {n.client?.full_name && (
+                    <Badge variant="outline">{n.client.full_name}</Badge>
+                  )}
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Revenue & Today's Appointments */}
+      <div className="grid gap-4 md:gap-6 lg:grid-cols-3">
+        <Card className="lg:col-span-2 glass">
+          <CardHeader>
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+              <CardTitle className="flex items-center gap-2">
+                <TrendingUp className="h-5 w-5 text-primary" />
+                Выручка
+              </CardTitle>
+              <PeriodSelector
+                value={revPeriod}
+                onChange={setRevPeriod}
+                customFrom={revFrom}
+                customTo={revTo}
+                onCustomFromChange={setRevFrom}
+                onCustomToChange={setRevTo}
+              />
+            </div>
           </CardHeader>
           <CardContent>
             <ResponsiveContainer width="100%" height={300}>
@@ -249,23 +294,13 @@ export default function Dashboard() {
                   </linearGradient>
                 </defs>
                 <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                <XAxis dataKey="date" stroke="hsl(var(--muted-foreground))" />
+                <XAxis dataKey="date" stroke="hsl(var(--muted-foreground))" tick={{ fontSize: 11 }} />
                 <YAxis stroke="hsl(var(--muted-foreground))" />
                 <Tooltip
-                  contentStyle={{
-                    backgroundColor: 'hsl(var(--card))',
-                    border: '1px solid hsl(var(--border))',
-                    borderRadius: '8px',
-                  }}
+                  contentStyle={{ backgroundColor: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: '8px' }}
                   formatter={(value: number) => [formatCurrency(value), 'Выручка']}
                 />
-                <Area
-                  type="monotone"
-                  dataKey="revenue"
-                  stroke="hsl(var(--primary))"
-                  fillOpacity={1}
-                  fill="url(#colorRevenue)"
-                />
+                <Area type="monotone" dataKey="revenue" stroke="hsl(var(--primary))" fillOpacity={1} fill="url(#colorRevenue)" />
               </AreaChart>
             </ResponsiveContainer>
           </CardContent>
@@ -281,33 +316,19 @@ export default function Dashboard() {
           </CardHeader>
           <CardContent>
             {todayAppointments.length === 0 ? (
-              <p className="text-muted-foreground text-center py-8">
-                Нет запланированных приёмов
-              </p>
+              <p className="text-muted-foreground text-center py-8">Нет запланированных приёмов</p>
             ) : (
               <div className="space-y-3">
                 {todayAppointments.slice(0, 5).map((apt) => (
-                  <div
-                    key={apt.id}
-                    className="p-3 rounded-lg bg-muted/30 hover:bg-muted/50 transition-colors cursor-pointer"
-                    onClick={() => navigate(`/calendar`)}
-                  >
+                  <div key={apt.id} className="p-3 rounded-lg bg-muted/30 hover:bg-muted/50 transition-colors cursor-pointer" onClick={() => navigate('/calendar')}>
                     <div className="flex items-center justify-between">
-                      <span className="font-medium">
-                        {format(new Date(apt.scheduled_at), 'HH:mm')}
-                      </span>
+                      <span className="font-medium">{format(new Date(apt.scheduled_at), 'HH:mm')}</span>
                       <span className="text-xs px-2 py-1 rounded-full bg-primary/20 text-primary">
                         {appointmentStatusLabels[apt.status as keyof typeof appointmentStatusLabels]}
                       </span>
                     </div>
-                    <p className="text-sm text-muted-foreground mt-1">
-                      {apt.client?.full_name} - {apt.pet?.name}
-                    </p>
-                    {apt.service?.name && (
-                      <p className="text-xs text-muted-foreground">
-                        {apt.service.name}
-                      </p>
-                    )}
+                    <p className="text-sm text-muted-foreground mt-1">{apt.client?.full_name} - {apt.pet?.name}</p>
+                    {apt.service?.name && <p className="text-xs text-muted-foreground">{apt.service.name}</p>}
                   </div>
                 ))}
               </div>
@@ -319,29 +340,30 @@ export default function Dashboard() {
       {/* Appointments Chart */}
       <Card className="glass">
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Calendar className="h-5 w-5 text-primary" />
-            Приёмы за неделю
-          </CardTitle>
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+            <CardTitle className="flex items-center gap-2">
+              <Calendar className="h-5 w-5 text-primary" />
+              Приёмы
+            </CardTitle>
+            <PeriodSelector
+              value={aptPeriod}
+              onChange={setAptPeriod}
+              customFrom={aptFrom}
+              customTo={aptTo}
+              onCustomFromChange={setAptFrom}
+              onCustomToChange={setAptTo}
+              showYear
+            />
+          </div>
         </CardHeader>
         <CardContent>
           <ResponsiveContainer width="100%" height={200}>
-            <BarChart data={revenueData}>
+            <BarChart data={appointmentsData}>
               <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-              <XAxis dataKey="date" stroke="hsl(var(--muted-foreground))" />
+              <XAxis dataKey="date" stroke="hsl(var(--muted-foreground))" tick={{ fontSize: 11 }} />
               <YAxis stroke="hsl(var(--muted-foreground))" />
-              <Tooltip
-                contentStyle={{
-                  backgroundColor: 'hsl(var(--card))',
-                  border: '1px solid hsl(var(--border))',
-                  borderRadius: '8px',
-                }}
-              />
-              <Bar
-                dataKey="appointments"
-                fill="hsl(var(--secondary))"
-                radius={[4, 4, 0, 0]}
-              />
+              <Tooltip contentStyle={{ backgroundColor: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: '8px' }} />
+              <Bar dataKey="appointments" fill="hsl(var(--secondary))" radius={[4, 4, 0, 0]} />
             </BarChart>
           </ResponsiveContainer>
         </CardContent>
@@ -363,9 +385,7 @@ export default function Dashboard() {
               {topDoctors.map((doc, index) => (
                 <div key={doc.name} className="flex items-center justify-between p-3 rounded-lg bg-muted/30">
                   <div className="flex items-center gap-3">
-                    <span className="w-7 h-7 rounded-full bg-primary/20 flex items-center justify-center text-sm font-bold text-primary">
-                      {index + 1}
-                    </span>
+                    <span className="w-7 h-7 rounded-full bg-primary/20 flex items-center justify-center text-sm font-bold text-primary">{index + 1}</span>
                     <span className="font-medium">{doc.name}</span>
                   </div>
                   <Badge variant="secondary">{doc.count} приёмов</Badge>

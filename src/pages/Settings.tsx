@@ -365,32 +365,81 @@ export default function Settings() {
 
         <TabsContent value="roles">
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {Object.entries(roleLabels).map(([key, label]) => (
-              <Card key={key} className="glass">
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Shield className="h-5 w-5 text-primary" />
-                    {label}
-                  </CardTitle>
-                  <CardDescription>
-                    {key === 'admin' && 'Полный доступ ко всем функциям системы'}
-                    {key === 'veterinarian' && 'Приёмы, медкарты, лечение, склад'}
-                    {key === 'registrar' && 'Клиенты, питомцы, записи, продажи'}
-                    {key === 'accountant' && 'Финансы, счета, платежи, отчёты'}
-                    {key === 'manager' && 'Управление персоналом и отчётность'}
-                    {key === 'viewer' && 'Только просмотр данных'}
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-sm text-muted-foreground">
-                    Пользователей с этой ролью:{' '}
-                    <span className="font-semibold text-foreground">
-                      {profiles.filter(p => p.roles.some((r: any) => r.role === key)).length}
-                    </span>
-                  </p>
-                </CardContent>
-              </Card>
-            ))}
+            {Object.entries(roleLabels).map(([key, label]) => {
+              const roleUsers = profiles.filter(p => p.roles.some((r: any) => r.role === key));
+              const nonRoleUsers = profiles.filter(p => !p.roles.some((r: any) => r.role === key));
+              return (
+                <Card key={key} className="glass">
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <Shield className="h-5 w-5 text-primary" />
+                      {label}
+                    </CardTitle>
+                    <CardDescription>
+                      {key === 'admin' && 'Полный доступ ко всем функциям системы'}
+                      {key === 'veterinarian' && 'Приёмы, медкарты, лечение, склад'}
+                      {key === 'registrar' && 'Клиенты, питомцы, записи, продажи'}
+                      {key === 'accountant' && 'Финансы, счета, платежи, отчёты'}
+                      {key === 'manager' && 'Управление персоналом и отчётность'}
+                      {key === 'viewer' && 'Только просмотр данных'}
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-3">
+                    {roleUsers.length > 0 ? (
+                      <div className="space-y-2">
+                        {roleUsers.map(u => {
+                          const roleRecord = u.roles.find((r: any) => r.role === key);
+                          return (
+                            <div key={u.id} className="flex items-center justify-between p-2 rounded-md bg-muted/30">
+                              <span className="text-sm font-medium">{u.full_name}</span>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="h-7 text-destructive hover:text-destructive"
+                                onClick={() => roleRecord && handleRemoveRole(u, roleRecord.id)}
+                              >
+                                ×
+                              </Button>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    ) : (
+                      <p className="text-sm text-muted-foreground">Нет пользователей</p>
+                    )}
+                    {nonRoleUsers.length > 0 && (
+                      <Select
+                        value=""
+                        onValueChange={async (userId) => {
+                          try {
+                            const { error } = await supabase.from('user_roles').insert({
+                              user_id: userId,
+                              role: key as AppRole,
+                            });
+                            if (error) throw error;
+                            toast({ title: 'Успешно', description: `Роль «${label}» назначена` });
+                            fetchData();
+                          } catch (error: any) {
+                            toast({ variant: 'destructive', title: 'Ошибка', description: error.message });
+                          }
+                        }}
+                      >
+                        <SelectTrigger className="h-8 text-sm">
+                          <SelectValue placeholder="+ Добавить пользователя" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {nonRoleUsers.map(u => (
+                            <SelectItem key={u.user_id} value={u.user_id}>
+                              {u.full_name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    )}
+                  </CardContent>
+                </Card>
+              );
+            })}
           </div>
         </TabsContent>
       </Tabs>

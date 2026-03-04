@@ -196,7 +196,6 @@ export default function Dashboard() {
       }
       setAppointmentsData(chartData);
     } catch (e) {
-      console.error(e);
     }
   };
 

@@ -182,7 +182,6 @@ export default function Reports() {
         Object.entries(statusCounts).map(([name, value]) => ({ name, value }))
       );
     } catch (error) {
-      console.error('Error fetching report data:', error);
     } finally {
       setLoading(false);
     }

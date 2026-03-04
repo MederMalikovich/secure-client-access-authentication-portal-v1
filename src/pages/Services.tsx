@@ -126,7 +126,6 @@ export default function Services() {
       setServices(servicesRes.data || []);
       setCategories(categoriesRes.data || []);
     } catch (error) {
-      console.error('Error fetching data:', error);
       toast({
         variant: 'destructive',
         title: 'Ошибка',

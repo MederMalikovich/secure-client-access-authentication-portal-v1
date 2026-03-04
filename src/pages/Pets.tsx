@@ -94,7 +94,6 @@ export default function Pets() {
       setPets(petsRes.data || []);
       setClients(clientsRes.data || []);
     } catch (error) {
-      console.error('Error fetching data:', error);
       toast({ variant: 'destructive', title: 'Ошибка', description: 'Не удалось загрузить данные' });
     } finally {
       setLoading(false);

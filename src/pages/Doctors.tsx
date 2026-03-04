@@ -132,7 +132,6 @@ export default function Doctors() {
           .slice(0, 5)
       );
     } catch (error) {
-      console.error('Error fetching top doctors:', error);
     }
   };
 

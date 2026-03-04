@@ -99,8 +99,8 @@ export const invoiceSchema = z.object({
 export function validateForm<T>(schema: z.ZodSchema<T>, data: unknown): { success: true; data: T } | { success: false; error: string } {
   const result = schema.safeParse(data);
   if (result.success) {
-    return { success: true, data: result.data };
+    return { success: true as const, data: result.data };
   }
   const firstError = result.error.errors[0];
-  return { success: false, error: firstError?.message || 'Ошибка валидации' };
+  return { success: false as const, error: firstError?.message || 'Ошибка валидации' };
 }

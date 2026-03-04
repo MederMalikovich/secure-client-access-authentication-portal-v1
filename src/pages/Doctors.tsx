@@ -192,7 +192,7 @@ export default function Doctors() {
       setSelectedDoctor(null);
       fetchDoctors();
     } catch (error: any) {
-      toast({ variant: 'destructive', title: 'Ошибка', description: error.message });
+      toast({ variant: 'destructive', title: 'Ошибка', description: getUserFriendlyError(error) });
     }
   };
 

@@ -421,7 +421,7 @@ export default function Settings() {
                             toast({ title: 'Успешно', description: `Роль «${label}» назначена` });
                             fetchData();
                           } catch (error: any) {
-                            toast({ variant: 'destructive', title: 'Ошибка', description: error.message });
+                            toast({ variant: 'destructive', title: 'Ошибка', description: getUserFriendlyError(error) });
                           }
                         }}
                       >

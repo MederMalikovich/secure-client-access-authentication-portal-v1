@@ -236,7 +236,7 @@ export default function Calendar() {
       setSelectedAppointment(null);
       fetchData();
     } catch (error: any) {
-      toast({ variant: 'destructive', title: 'Ошибка', description: error.message });
+      toast({ variant: 'destructive', title: 'Ошибка', description: getUserFriendlyError(error) });
     }
   };
 

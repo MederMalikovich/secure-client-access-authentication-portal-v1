@@ -77,7 +77,6 @@ export default function Clients() {
       if (error) throw error;
       setClients(data || []);
     } catch (error) {
-      console.error('Error fetching clients:', error);
       toast({
         variant: 'destructive',
         title: 'Ошибка',

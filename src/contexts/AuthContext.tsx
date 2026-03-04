@@ -83,7 +83,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setRoles(rolesData.map(r => r.role as AppRole));
       }
     } catch (error) {
-      console.error('Error fetching user data:', error);
     } finally {
       setLoading(false);
     }

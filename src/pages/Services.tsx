@@ -107,7 +107,6 @@ export default function Services() {
         Object.values(counts).sort((a, b) => b.count - a.count).slice(0, 5)
       );
     } catch (error) {
-      console.error('Error fetching top services:', error);
     }
   };
 
@@ -127,7 +126,6 @@ export default function Services() {
       setServices(servicesRes.data || []);
       setCategories(categoriesRes.data || []);
     } catch (error) {
-      console.error('Error fetching data:', error);
       toast({
         variant: 'destructive',
         title: 'Ошибка',

@@ -141,7 +141,6 @@ export default function Dashboard() {
         .order('scheduled_for');
       setUpcomingNotifs(notifs || []);
     } catch (error) {
-      console.error('Error fetching dashboard data:', error);
     } finally {
       setLoading(false);
     }
@@ -172,7 +171,6 @@ export default function Dashboard() {
       }
       setRevenueData(chartData);
     } catch (e) {
-      console.error(e);
     }
   };
 
@@ -198,7 +196,6 @@ export default function Dashboard() {
       }
       setAppointmentsData(chartData);
     } catch (e) {
-      console.error(e);
     }
   };
 

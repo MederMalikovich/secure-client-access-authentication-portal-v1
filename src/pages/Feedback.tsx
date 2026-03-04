@@ -84,7 +84,6 @@ export default function FeedbackPage() {
       setFeedbacks(feedbacksRes.data || []);
       setClients(clientsRes.data || []);
     } catch (error) {
-      console.error('Error fetching data:', error);
     } finally {
       setLoading(false);
     }

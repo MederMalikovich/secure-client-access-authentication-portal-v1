@@ -1,7 +1,4 @@
 export function getUserFriendlyError(error: any): string {
-  // Log full details for debugging
-  console.error('Application error:', error);
-
   if (!error) return 'Произошла неизвестная ошибка';
 
   const message = error?.message || String(error);

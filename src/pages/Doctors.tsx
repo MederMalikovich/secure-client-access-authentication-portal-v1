@@ -103,7 +103,6 @@ export default function Doctors() {
       if (error) throw error;
       setDoctors((data || []) as DoctorProfile[]);
     } catch (error) {
-      console.error('Error fetching doctors:', error);
     } finally {
       setLoading(false);
     }
@@ -133,7 +132,6 @@ export default function Doctors() {
           .slice(0, 5)
       );
     } catch (error) {
-      console.error('Error fetching top doctors:', error);
     }
   };
 

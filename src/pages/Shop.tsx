@@ -106,7 +106,6 @@ export default function Shop() {
           .slice(0, 5)
       );
     } catch (error) {
-      console.error('Error fetching data:', error);
     } finally {
       setLoading(false);
     }

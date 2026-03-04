@@ -82,7 +82,6 @@ export default function Finances() {
       setInvoices(invoicesRes.data || []);
       setClients(clientsRes.data || []);
     } catch (error) {
-      console.error('Error fetching data:', error);
     } finally {
       setLoading(false);
     }

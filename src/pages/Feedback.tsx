@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { getUserFriendlyError } from '@/lib/errorHandler';
+import { getValidationError, feedbackSchema } from '@/lib/validationSchemas';
 import { MessageSquare, Star, MoreVertical, Reply, Check, XCircle } from 'lucide-react';
 import { PageHeader } from '@/components/ui/page-header';
 import { StatCard } from '@/components/ui/stat-card';
@@ -90,12 +91,9 @@ export default function FeedbackPage() {
   };
 
   const handleSubmit = async () => {
-    if (!formData.client_id) {
-      toast({
-        variant: 'destructive',
-        title: 'Ошибка',
-        description: 'Выберите клиента',
-      });
+    const validationError = getValidationError(feedbackSchema, formData);
+    if (validationError) {
+      toast({ variant: 'destructive', title: 'Ошибка', description: validationError });
       return;
     }
 

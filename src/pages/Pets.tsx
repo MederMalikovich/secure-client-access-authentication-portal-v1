@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { getUserFriendlyError } from '@/lib/errorHandler';
+import { getValidationError, petSchema } from '@/lib/validationSchemas';
 import { useLocation } from 'react-router-dom';
 import { MoreVertical, Pencil, Trash2, Eye, Phone, Bell, Plus, CalendarIcon } from 'lucide-react';
 import { PageHeader } from '@/components/ui/page-header';
@@ -112,8 +113,9 @@ export default function Pets() {
   };
 
   const handleSubmit = async () => {
-    if (!formData.client_id || !formData.name) {
-      toast({ variant: 'destructive', title: 'Ошибка', description: 'Заполните обязательные поля' });
+    const validationError = getValidationError(petSchema, formData);
+    if (validationError) {
+      toast({ variant: 'destructive', title: 'Ошибка', description: validationError });
       return;
     }
     const petData = {

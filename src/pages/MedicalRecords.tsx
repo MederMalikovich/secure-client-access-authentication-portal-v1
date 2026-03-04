@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { getUserFriendlyError } from '@/lib/errorHandler';
+import { getValidationError, medicalRecordSchema } from '@/lib/validationSchemas';
 import { useNavigate } from 'react-router-dom';
 import { FileText, MoreVertical, Pencil, Trash2, Eye, Plus } from 'lucide-react';
 import { PageHeader } from '@/components/ui/page-header';
@@ -106,12 +107,9 @@ export default function MedicalRecords() {
   };
 
   const handleSubmit = async () => {
-    if (!formData.pet_id || !formData.visit_date) {
-      toast({
-        variant: 'destructive',
-        title: 'Ошибка',
-        description: 'Заполните обязательные поля',
-      });
+    const validationError = getValidationError(medicalRecordSchema, formData);
+    if (validationError) {
+      toast({ variant: 'destructive', title: 'Ошибка', description: validationError });
       return;
     }
 

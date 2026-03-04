@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { getUserFriendlyError } from '@/lib/errorHandler';
+import { getValidationError, clientSchema } from '@/lib/validationSchemas';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { Phone, Mail, MapPin, MoreVertical, Pencil, Trash2, Eye, PawPrint } from 'lucide-react';
 import { PageHeader } from '@/components/ui/page-header';
@@ -88,12 +89,9 @@ export default function Clients() {
   };
 
   const handleSubmit = async () => {
-    if (!formData.full_name || !formData.phone) {
-      toast({
-        variant: 'destructive',
-        title: 'Ошибка',
-        description: 'Заполните обязательные поля',
-      });
+    const validationError = getValidationError(clientSchema, formData);
+    if (validationError) {
+      toast({ variant: 'destructive', title: 'Ошибка', description: validationError });
       return;
     }
 

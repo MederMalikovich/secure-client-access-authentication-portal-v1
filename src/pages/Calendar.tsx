@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { getUserFriendlyError } from '@/lib/errorHandler';
+import { getValidationError, appointmentSchema } from '@/lib/validationSchemas';
 import { format, startOfWeek, addDays, isSameDay, parseISO, addMinutes } from 'date-fns';
 import { ru } from 'date-fns/locale';
 import { ChevronLeft, ChevronRight, Plus, Clock } from 'lucide-react';
@@ -103,12 +104,9 @@ export default function Calendar() {
   };
 
   const handleSubmit = async () => {
-    if (!formData.client_id || !formData.pet_id || !formData.scheduled_at) {
-      toast({
-        variant: 'destructive',
-        title: 'Ошибка',
-        description: 'Заполните обязательные поля',
-      });
+    const validationError = getValidationError(appointmentSchema, formData);
+    if (validationError) {
+      toast({ variant: 'destructive', title: 'Ошибка', description: validationError });
       return;
     }
 

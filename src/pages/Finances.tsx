@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { getUserFriendlyError } from '@/lib/errorHandler';
+import { getValidationError, invoiceSchema } from '@/lib/validationSchemas';
 import { DollarSign, TrendingUp, CreditCard, MoreVertical, Eye, Plus, Check } from 'lucide-react';
 import { PageHeader } from '@/components/ui/page-header';
 import { StatCard } from '@/components/ui/stat-card';
@@ -94,12 +95,9 @@ export default function Finances() {
   };
 
   const handleSubmit = async () => {
-    if (!formData.client_id || !formData.subtotal) {
-      toast({
-        variant: 'destructive',
-        title: 'Ошибка',
-        description: 'Заполните обязательные поля',
-      });
+    const validationError = getValidationError(invoiceSchema, formData);
+    if (validationError) {
+      toast({ variant: 'destructive', title: 'Ошибка', description: validationError });
       return;
     }
 

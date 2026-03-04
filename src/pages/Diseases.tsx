@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { getUserFriendlyError } from '@/lib/errorHandler';
+import { getValidationError, diseaseSchema } from '@/lib/validationSchemas';
 import { MoreVertical, Pencil, Trash2 } from 'lucide-react';
 import { PageHeader } from '@/components/ui/page-header';
 import { DataTable, Column } from '@/components/ui/data-table';
@@ -69,12 +70,9 @@ export default function Diseases() {
   };
 
   const handleSubmit = async () => {
-    if (!formData.name) {
-      toast({
-        variant: 'destructive',
-        title: 'Ошибка',
-        description: 'Введите название заболевания',
-      });
+    const validationError = getValidationError(diseaseSchema, formData);
+    if (validationError) {
+      toast({ variant: 'destructive', title: 'Ошибка', description: validationError });
       return;
     }
 

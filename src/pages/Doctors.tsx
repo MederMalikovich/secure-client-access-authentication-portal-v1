@@ -173,7 +173,7 @@ export default function Doctors() {
       setDialogOpen(false);
       fetchDoctors();
     } catch (error: any) {
-      toast({ variant: 'destructive', title: 'Ошибка', description: error.message });
+      toast({ variant: 'destructive', title: 'Ошибка', description: getUserFriendlyError(error) });
     }
   };
 

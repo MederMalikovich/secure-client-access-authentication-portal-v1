@@ -171,7 +171,6 @@ export default function Dashboard() {
       }
       setRevenueData(chartData);
     } catch (e) {
-      console.error(e);
     }
   };
 

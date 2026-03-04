@@ -98,7 +98,7 @@ export default function Diseases() {
       toast({
         variant: 'destructive',
         title: 'Ошибка',
-        description: error.message,
+        description: getUserFriendlyError(error),
       });
     }
   };

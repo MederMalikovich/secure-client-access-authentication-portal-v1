@@ -90,12 +90,9 @@ export default function FeedbackPage() {
   };
 
   const handleSubmit = async () => {
-    if (!formData.client_id) {
-      toast({
-        variant: 'destructive',
-        title: 'Ошибка',
-        description: 'Выберите клиента',
-      });
+    const validation = validateForm(feedbackSchema, formData);
+    if (!validation.success) {
+      toast({ variant: 'destructive', title: 'Ошибка', description: validation.error });
       return;
     }
 

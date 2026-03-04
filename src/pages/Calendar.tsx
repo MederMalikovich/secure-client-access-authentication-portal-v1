@@ -103,12 +103,9 @@ export default function Calendar() {
   };
 
   const handleSubmit = async () => {
-    if (!formData.client_id || !formData.pet_id || !formData.scheduled_at) {
-      toast({
-        variant: 'destructive',
-        title: 'Ошибка',
-        description: 'Заполните обязательные поля',
-      });
+    const validation = validateForm(appointmentSchema, formData);
+    if (!validation.success) {
+      toast({ variant: 'destructive', title: 'Ошибка', description: validation.error });
       return;
     }
 

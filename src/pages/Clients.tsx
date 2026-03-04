@@ -88,12 +88,9 @@ export default function Clients() {
   };
 
   const handleSubmit = async () => {
-    if (!formData.full_name || !formData.phone) {
-      toast({
-        variant: 'destructive',
-        title: 'Ошибка',
-        description: 'Заполните обязательные поля',
-      });
+    const validation = validateForm(clientSchema, formData);
+    if (!validation.success) {
+      toast({ variant: 'destructive', title: 'Ошибка', description: validation.error });
       return;
     }
 

@@ -106,12 +106,9 @@ export default function MedicalRecords() {
   };
 
   const handleSubmit = async () => {
-    if (!formData.pet_id || !formData.visit_date) {
-      toast({
-        variant: 'destructive',
-        title: 'Ошибка',
-        description: 'Заполните обязательные поля',
-      });
+    const validation = validateForm(medicalRecordSchema, formData);
+    if (!validation.success) {
+      toast({ variant: 'destructive', title: 'Ошибка', description: validation.error });
       return;
     }
 

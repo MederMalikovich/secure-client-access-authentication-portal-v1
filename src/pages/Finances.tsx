@@ -94,12 +94,9 @@ export default function Finances() {
   };
 
   const handleSubmit = async () => {
-    if (!formData.client_id || !formData.subtotal) {
-      toast({
-        variant: 'destructive',
-        title: 'Ошибка',
-        description: 'Заполните обязательные поля',
-      });
+    const validation = validateForm(invoiceSchema, formData);
+    if (!validation.success) {
+      toast({ variant: 'destructive', title: 'Ошибка', description: validation.error });
       return;
     }
 

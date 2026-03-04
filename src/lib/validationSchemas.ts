@@ -24,7 +24,7 @@ export const petSchema = z.object({
   breed: z.string().max(100, 'Максимум 100 символов').optional().or(z.literal('')),
   color: z.string().max(50, 'Максимум 50 символов').optional().or(z.literal('')),
   birth_date: z.string().optional().or(z.literal('')),
-  weight: z.number().min(0).max(1000).optional().nullable(),
+  weight: z.string().optional().or(z.literal('')),
   notes: z.string().max(2000, 'Максимум 2000 символов').optional().or(z.literal('')),
 });
 
@@ -54,8 +54,7 @@ export const serviceSchema = z.object({
 export const feedbackSchema = z.object({
   client_id: z.string().uuid('Выберите клиента'),
   comment: z.string().max(2000, 'Максимум 2000 символов').optional().or(z.literal('')),
-  rating: z.number().min(1).max(5).optional().nullable(),
-  response: z.string().max(2000, 'Максимум 2000 символов').optional().or(z.literal('')),
+  rating: z.string().optional().or(z.literal('')),
 });
 
 export const inventoryItemSchema = z.object({
@@ -77,7 +76,24 @@ export const appointmentSchema = z.object({
   notes: z.string().max(2000, 'Максимум 2000 символов').optional().or(z.literal('')),
   veterinarian_id: z.string().optional().or(z.literal('')),
   service_id: z.string().optional().or(z.literal('')),
-  duration_minutes: z.number().min(5).max(480).optional(),
+  duration_minutes: z.string().optional(),
+  status: z.string().optional(),
+});
+
+export const diseaseSchema = z.object({
+  name: z.string().min(1, 'Введите название').max(200, 'Максимум 200 символов'),
+  description: z.string().max(2000, 'Максимум 2000 символов').optional().or(z.literal('')),
+  symptoms: z.string().max(2000, 'Максимум 2000 символов').optional().or(z.literal('')),
+  treatment_guidelines: z.string().max(2000, 'Максимум 2000 символов').optional().or(z.literal('')),
+  is_active: z.boolean().optional(),
+});
+
+export const invoiceSchema = z.object({
+  client_id: z.string().uuid('Выберите клиента'),
+  subtotal: z.string().min(1, 'Укажите сумму'),
+  discount: z.string().optional().or(z.literal('')),
+  tax: z.string().optional().or(z.literal('')),
+  notes: z.string().max(2000, 'Максимум 2000 символов').optional().or(z.literal('')),
 });
 
 export function validateForm<T>(schema: z.ZodSchema<T>, data: unknown): { success: true; data: T } | { success: false; error: string } {

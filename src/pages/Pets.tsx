@@ -112,8 +112,9 @@ export default function Pets() {
   };
 
   const handleSubmit = async () => {
-    if (!formData.client_id || !formData.name) {
-      toast({ variant: 'destructive', title: 'Ошибка', description: 'Заполните обязательные поля' });
+    const validation = validateForm(petSchema, formData);
+    if (!validation.success) {
+      toast({ variant: 'destructive', title: 'Ошибка', description: validation.error });
       return;
     }
     const petData = {

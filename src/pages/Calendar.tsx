@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { getUserFriendlyError } from '@/lib/errorHandler';
 import { format, startOfWeek, addDays, isSameDay, parseISO, addMinutes } from 'date-fns';
 import { ru } from 'date-fns/locale';
 import { ChevronLeft, ChevronRight, Plus, Clock } from 'lucide-react';

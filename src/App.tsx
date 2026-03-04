@@ -5,6 +5,8 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { MainLayout } from "@/components/layout/MainLayout";
 import { ThemeProvider } from "@/contexts/ThemeContext";
+import { AuthProvider } from "@/contexts/AuthContext";
+import { ProtectedRoute } from "@/components/ProtectedRoute";
 
 // Pages
 import Dashboard from "./pages/Dashboard";
@@ -21,27 +23,28 @@ import Reports from "./pages/Reports";
 import Doctors from "./pages/Doctors";
 import Settings from "./pages/Settings";
 import NotFound from "./pages/NotFound";
+import Auth from "./pages/Auth";
 
 const queryClient = new QueryClient();
 
 function AppRoutes() {
   return (
     <Routes>
+      <Route path="/auth" element={<Auth />} />
       <Route path="/" element={<Navigate to="/dashboard" replace />} />
-      <Route path="/dashboard" element={<MainLayout><Dashboard /></MainLayout>} />
-      <Route path="/clients" element={<MainLayout><Clients /></MainLayout>} />
-      <Route path="/pets" element={<MainLayout><Pets /></MainLayout>} />
-      <Route path="/services" element={<MainLayout><Services /></MainLayout>} />
-      <Route path="/diseases" element={<MainLayout><Diseases /></MainLayout>} />
-      <Route path="/calendar" element={<MainLayout><Calendar /></MainLayout>} />
-      <Route path="/medical-records" element={<MainLayout><MedicalRecords /></MainLayout>} />
-      <Route path="/inventory" element={<MainLayout><Inventory /></MainLayout>} />
-      <Route path="/shop" element={<MainLayout><Shop /></MainLayout>} />
-      <Route path="/finances" element={<MainLayout><Finances /></MainLayout>} />
-      <Route path="/reports" element={<MainLayout><Reports /></MainLayout>} />
-      <Route path="/doctors" element={<MainLayout><Doctors /></MainLayout>} />
-      
-      <Route path="/settings" element={<MainLayout><Settings /></MainLayout>} />
+      <Route path="/dashboard" element={<ProtectedRoute><MainLayout><Dashboard /></MainLayout></ProtectedRoute>} />
+      <Route path="/clients" element={<ProtectedRoute><MainLayout><Clients /></MainLayout></ProtectedRoute>} />
+      <Route path="/pets" element={<ProtectedRoute><MainLayout><Pets /></MainLayout></ProtectedRoute>} />
+      <Route path="/services" element={<ProtectedRoute><MainLayout><Services /></MainLayout></ProtectedRoute>} />
+      <Route path="/diseases" element={<ProtectedRoute><MainLayout><Diseases /></MainLayout></ProtectedRoute>} />
+      <Route path="/calendar" element={<ProtectedRoute><MainLayout><Calendar /></MainLayout></ProtectedRoute>} />
+      <Route path="/medical-records" element={<ProtectedRoute><MainLayout><MedicalRecords /></MainLayout></ProtectedRoute>} />
+      <Route path="/inventory" element={<ProtectedRoute><MainLayout><Inventory /></MainLayout></ProtectedRoute>} />
+      <Route path="/shop" element={<ProtectedRoute><MainLayout><Shop /></MainLayout></ProtectedRoute>} />
+      <Route path="/finances" element={<ProtectedRoute><MainLayout><Finances /></MainLayout></ProtectedRoute>} />
+      <Route path="/reports" element={<ProtectedRoute><MainLayout><Reports /></MainLayout></ProtectedRoute>} />
+      <Route path="/doctors" element={<ProtectedRoute><MainLayout><Doctors /></MainLayout></ProtectedRoute>} />
+      <Route path="/settings" element={<ProtectedRoute requiredRoles={['admin']}><MainLayout><Settings /></MainLayout></ProtectedRoute>} />
       <Route path="*" element={<NotFound />} />
     </Routes>
   );
@@ -49,15 +52,17 @@ function AppRoutes() {
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
-    <ThemeProvider>
-      <TooltipProvider>
-        <Toaster />
-        <Sonner />
-        <BrowserRouter>
-          <AppRoutes />
-        </BrowserRouter>
-      </TooltipProvider>
-    </ThemeProvider>
+    <AuthProvider>
+      <ThemeProvider>
+        <TooltipProvider>
+          <Toaster />
+          <Sonner />
+          <BrowserRouter>
+            <AppRoutes />
+          </BrowserRouter>
+        </TooltipProvider>
+      </ThemeProvider>
+    </AuthProvider>
   </QueryClientProvider>
 );
 

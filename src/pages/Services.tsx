@@ -174,7 +174,7 @@ export default function Services() {
       toast({
         variant: 'destructive',
         title: 'Ошибка',
-        description: error.message,
+        description: getUserFriendlyError(error),
       });
     }
   };

@@ -95,7 +95,6 @@ export default function MedicalRecords() {
       setPets(petsRes.data || []);
       setVets(vetsRes.data || []);
     } catch (error) {
-      console.error('Error fetching data:', error);
       toast({
         variant: 'destructive',
         title: 'Ошибка',

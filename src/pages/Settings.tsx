@@ -82,7 +82,6 @@ export default function Settings() {
 
       setProfiles(profilesWithRoles);
     } catch (error) {
-      console.error('Error fetching data:', error);
       toast({
         variant: 'destructive',
         title: 'Ошибка',

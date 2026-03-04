@@ -92,7 +92,6 @@ export default function Inventory() {
       setItems(itemsRes.data || []);
       setCategories(categoriesRes.data || []);
     } catch (error) {
-      console.error('Error fetching data:', error);
       toast({
         variant: 'destructive',
         title: 'Ошибка',

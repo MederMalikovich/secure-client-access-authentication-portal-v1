@@ -58,7 +58,6 @@ export default function Diseases() {
       if (error) throw error;
       setDiseases(data || []);
     } catch (error) {
-      console.error('Error fetching diseases:', error);
       toast({
         variant: 'destructive',
         title: 'Ошибка',

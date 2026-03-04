@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { getUserFriendlyError } from '@/lib/errorHandler';
 import { useNavigate } from 'react-router-dom';
 import { FileText, MoreVertical, Pencil, Trash2, Eye, Plus } from 'lucide-react';
 import { PageHeader } from '@/components/ui/page-header';

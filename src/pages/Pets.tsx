@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { getUserFriendlyError } from '@/lib/errorHandler';
+import { validateForm, petSchema } from '@/lib/validationSchemas';
 import { useLocation } from 'react-router-dom';
 import { MoreVertical, Pencil, Trash2, Eye, Phone, Bell, Plus, CalendarIcon } from 'lucide-react';
 import { PageHeader } from '@/components/ui/page-header';

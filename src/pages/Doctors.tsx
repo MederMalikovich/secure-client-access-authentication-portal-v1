@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { getUserFriendlyError } from '@/lib/errorHandler';
 import { UserCheck, Trophy, Plus, Search, Pencil, Trash2 } from 'lucide-react';
 import { PageHeader } from '@/components/ui/page-header';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';

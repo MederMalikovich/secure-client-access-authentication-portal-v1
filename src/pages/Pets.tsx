@@ -113,9 +113,9 @@ export default function Pets() {
   };
 
   const handleSubmit = async () => {
-    const validation = validateForm(petSchema, formData);
-    if (!validation.success) {
-      toast({ variant: 'destructive', title: 'Ошибка', description: validation.error });
+    const validationError = getValidationError(petSchema, formData);
+    if (validationError) {
+      toast({ variant: 'destructive', title: 'Ошибка', description: validationError });
       return;
     }
     const petData = {

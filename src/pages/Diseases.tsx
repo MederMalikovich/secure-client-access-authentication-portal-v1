@@ -70,9 +70,9 @@ export default function Diseases() {
   };
 
   const handleSubmit = async () => {
-    const validation = validateForm(diseaseSchema, formData);
-    if (!validation.success) {
-      toast({ variant: 'destructive', title: 'Ошибка', description: validation.error });
+    const validationError = getValidationError(diseaseSchema, formData);
+    if (validationError) {
+      toast({ variant: 'destructive', title: 'Ошибка', description: validationError });
       return;
     }
 

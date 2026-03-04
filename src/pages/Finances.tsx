@@ -95,9 +95,9 @@ export default function Finances() {
   };
 
   const handleSubmit = async () => {
-    const validation = validateForm(invoiceSchema, formData);
-    if (!validation.success) {
-      toast({ variant: 'destructive', title: 'Ошибка', description: validation.error });
+    const validationError = getValidationError(invoiceSchema, formData);
+    if (validationError) {
+      toast({ variant: 'destructive', title: 'Ошибка', description: validationError });
       return;
     }
 

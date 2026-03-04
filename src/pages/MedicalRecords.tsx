@@ -107,9 +107,9 @@ export default function MedicalRecords() {
   };
 
   const handleSubmit = async () => {
-    const validation = validateForm(medicalRecordSchema, formData);
-    if (!validation.success) {
-      toast({ variant: 'destructive', title: 'Ошибка', description: validation.error });
+    const validationError = getValidationError(medicalRecordSchema, formData);
+    if (validationError) {
+      toast({ variant: 'destructive', title: 'Ошибка', description: validationError });
       return;
     }
 

@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { getUserFriendlyError } from '@/lib/errorHandler';
-import { validateForm, clientSchema } from '@/lib/validationSchemas';
+import { getValidationError, clientSchema } from '@/lib/validationSchemas';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { Phone, Mail, MapPin, MoreVertical, Pencil, Trash2, Eye, PawPrint } from 'lucide-react';
 import { PageHeader } from '@/components/ui/page-header';

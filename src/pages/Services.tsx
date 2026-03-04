@@ -107,7 +107,6 @@ export default function Services() {
         Object.values(counts).sort((a, b) => b.count - a.count).slice(0, 5)
       );
     } catch (error) {
-      console.error('Error fetching top services:', error);
     }
   };
 

@@ -141,7 +141,6 @@ export default function Dashboard() {
         .order('scheduled_for');
       setUpcomingNotifs(notifs || []);
     } catch (error) {
-      console.error('Error fetching dashboard data:', error);
     } finally {
       setLoading(false);
     }

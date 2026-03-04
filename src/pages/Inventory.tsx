@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { getUserFriendlyError } from '@/lib/errorHandler';
 import { Package, AlertTriangle, MoreVertical, Pencil, Trash2, Plus, Minus, FolderPlus } from 'lucide-react';
 import { PageHeader } from '@/components/ui/page-header';
 import { DataTable, Column } from '@/components/ui/data-table';
@@ -141,7 +142,7 @@ export default function Inventory() {
       toast({
         variant: 'destructive',
         title: 'Ошибка',
-        description: error.message,
+        description: getUserFriendlyError(error),
       });
     }
   };
@@ -197,7 +198,7 @@ export default function Inventory() {
       toast({
         variant: 'destructive',
         title: 'Ошибка',
-        description: error.message,
+        description: getUserFriendlyError(error),
       });
     }
   };
@@ -232,7 +233,7 @@ export default function Inventory() {
       toast({
         variant: 'destructive',
         title: 'Ошибка',
-        description: error.message,
+        description: getUserFriendlyError(error),
       });
     }
   };
@@ -253,7 +254,7 @@ export default function Inventory() {
       toast({
         variant: 'destructive',
         title: 'Ошибка',
-        description: error.message,
+        description: getUserFriendlyError(error),
       });
     }
   };

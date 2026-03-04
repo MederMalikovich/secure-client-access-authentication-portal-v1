@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { getUserFriendlyError } from '@/lib/errorHandler';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { Phone, Mail, MapPin, MoreVertical, Pencil, Trash2, Eye, PawPrint } from 'lucide-react';
 import { PageHeader } from '@/components/ui/page-header';
@@ -116,7 +117,7 @@ export default function Clients() {
       toast({
         variant: 'destructive',
         title: 'Ошибка',
-        description: error.message,
+        description: getUserFriendlyError(error),
       });
     }
   };
@@ -137,7 +138,7 @@ export default function Clients() {
       toast({
         variant: 'destructive',
         title: 'Ошибка',
-        description: error.message,
+        description: getUserFriendlyError(error),
       });
     }
   };

@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { getUserFriendlyError } from '@/lib/errorHandler';
 import { Users, Shield, MoreVertical, Pencil, UserPlus, Sun, Moon, Palette } from 'lucide-react';
 import { PageHeader } from '@/components/ui/page-header';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -123,7 +124,7 @@ export default function Settings() {
       toast({
         variant: 'destructive',
         title: 'Ошибка',
-        description: error.message,
+        description: getUserFriendlyError(error),
       });
     }
   };
@@ -143,7 +144,7 @@ export default function Settings() {
       toast({
         variant: 'destructive',
         title: 'Ошибка',
-        description: error.message,
+        description: getUserFriendlyError(error),
       });
     }
   };
@@ -172,7 +173,7 @@ export default function Settings() {
       toast({
         variant: 'destructive',
         title: 'Ошибка',
-        description: error.message,
+        description: getUserFriendlyError(error),
       });
     }
   };
@@ -420,7 +421,7 @@ export default function Settings() {
                             toast({ title: 'Успешно', description: `Роль «${label}» назначена` });
                             fetchData();
                           } catch (error: any) {
-                            toast({ variant: 'destructive', title: 'Ошибка', description: error.message });
+                            toast({ variant: 'destructive', title: 'Ошибка', description: getUserFriendlyError(error) });
                           }
                         }}
                       >

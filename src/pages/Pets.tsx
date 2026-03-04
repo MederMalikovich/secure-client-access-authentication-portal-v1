@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { getUserFriendlyError } from '@/lib/errorHandler';
 import { useLocation } from 'react-router-dom';
 import { MoreVertical, Pencil, Trash2, Eye, Phone, Bell, Plus, CalendarIcon } from 'lucide-react';
 import { PageHeader } from '@/components/ui/page-header';
@@ -134,7 +135,7 @@ export default function Pets() {
       resetForm();
       fetchData();
     } catch (error: any) {
-      toast({ variant: 'destructive', title: 'Ошибка', description: error.message });
+      toast({ variant: 'destructive', title: 'Ошибка', description: getUserFriendlyError(error) });
     }
   };
 
@@ -148,7 +149,7 @@ export default function Pets() {
       setSelectedPet(null);
       fetchData();
     } catch (error: any) {
-      toast({ variant: 'destructive', title: 'Ошибка', description: error.message });
+      toast({ variant: 'destructive', title: 'Ошибка', description: getUserFriendlyError(error) });
     }
   };
 
@@ -172,7 +173,7 @@ export default function Pets() {
       setNotifDialogOpen(false);
       fetchPetNotifications(detailPet.id, detailPet.client_id);
     } catch (error: any) {
-      toast({ variant: 'destructive', title: 'Ошибка', description: error.message });
+      toast({ variant: 'destructive', title: 'Ошибка', description: getUserFriendlyError(error) });
     }
   };
 

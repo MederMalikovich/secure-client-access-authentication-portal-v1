@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { getUserFriendlyError } from '@/lib/errorHandler';
 import { format, startOfWeek, addDays, isSameDay, parseISO, addMinutes } from 'date-fns';
 import { ru } from 'date-fns/locale';
 import { ChevronLeft, ChevronRight, Plus, Clock } from 'lucide-react';
@@ -139,7 +140,7 @@ export default function Calendar() {
       toast({
         variant: 'destructive',
         title: 'Ошибка',
-        description: error.message,
+        description: getUserFriendlyError(error),
       });
     }
   };
@@ -157,7 +158,7 @@ export default function Calendar() {
       toast({
         variant: 'destructive',
         title: 'Ошибка',
-        description: error.message,
+        description: getUserFriendlyError(error),
       });
     }
   };
@@ -235,7 +236,7 @@ export default function Calendar() {
       setSelectedAppointment(null);
       fetchData();
     } catch (error: any) {
-      toast({ variant: 'destructive', title: 'Ошибка', description: error.message });
+      toast({ variant: 'destructive', title: 'Ошибка', description: getUserFriendlyError(error) });
     }
   };
 

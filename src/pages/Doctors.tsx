@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { getUserFriendlyError } from '@/lib/errorHandler';
 import { UserCheck, Trophy, Plus, Search, Pencil, Trash2 } from 'lucide-react';
 import { PageHeader } from '@/components/ui/page-header';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -172,7 +173,7 @@ export default function Doctors() {
       setDialogOpen(false);
       fetchDoctors();
     } catch (error: any) {
-      toast({ variant: 'destructive', title: 'Ошибка', description: error.message });
+      toast({ variant: 'destructive', title: 'Ошибка', description: getUserFriendlyError(error) });
     }
   };
 
@@ -191,7 +192,7 @@ export default function Doctors() {
       setSelectedDoctor(null);
       fetchDoctors();
     } catch (error: any) {
-      toast({ variant: 'destructive', title: 'Ошибка', description: error.message });
+      toast({ variant: 'destructive', title: 'Ошибка', description: getUserFriendlyError(error) });
     }
   };
 

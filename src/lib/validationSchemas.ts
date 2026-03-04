@@ -96,11 +96,16 @@ export const invoiceSchema = z.object({
   notes: z.string().max(2000, 'Максимум 2000 символов').optional().or(z.literal('')),
 });
 
+export function getValidationError<T>(schema: z.ZodSchema<T>, data: unknown): string | null {
+  const result = schema.safeParse(data);
+  if (result.success) return null;
+  return result.error.errors[0]?.message || 'Ошибка валидации';
+}
+
 export function validateForm<T>(schema: z.ZodSchema<T>, data: unknown): { success: true; data: T } | { success: false; error: string } {
   const result = schema.safeParse(data);
   if (result.success) {
     return { success: true as const, data: result.data };
   }
-  const firstError = result.error.errors[0];
-  return { success: false as const, error: firstError?.message || 'Ошибка валидации' };
+  return { success: false as const, error: result.error.errors[0]?.message || 'Ошибка валидации' };
 }

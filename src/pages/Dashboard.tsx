@@ -383,7 +383,7 @@ export default function Dashboard() {
           ) : (
             <div className="space-y-3">
               {topDoctors.map((doc, index) => (
-                <div key={doc.name} className="flex items-center justify-between p-3 rounded-lg bg-muted/30">
+                <div key={`${doc.name}-${index}`} className="flex items-center justify-between p-3 rounded-lg bg-muted/30">
                   <div className="flex items-center gap-3">
                     <span className="w-7 h-7 rounded-full bg-primary/20 flex items-center justify-center text-sm font-bold text-primary">{index + 1}</span>
                     <span className="font-medium">{doc.name}</span>

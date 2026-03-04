@@ -362,7 +362,7 @@ export default function Dashboard() {
               <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
               <XAxis dataKey="date" stroke="hsl(var(--muted-foreground))" tick={{ fontSize: 11 }} />
               <YAxis stroke="hsl(var(--muted-foreground))" />
-              <Tooltip contentStyle={{ backgroundColor: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: '8px' }} />
+              <Tooltip contentStyle={{ backgroundColor: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: '8px' }} formatter={(value: number) => [value, 'Приёмы']} />
               <Bar dataKey="appointments" fill="hsl(var(--secondary))" radius={[4, 4, 0, 0]} />
             </BarChart>
           </ResponsiveContainer>

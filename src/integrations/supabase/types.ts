@@ -814,6 +814,7 @@ export type Database = {
       profiles: {
         Row: {
           avatar_url: string | null
+          client_id: string | null
           created_at: string
           email: string | null
           full_name: string
@@ -826,6 +827,7 @@ export type Database = {
         }
         Insert: {
           avatar_url?: string | null
+          client_id?: string | null
           created_at?: string
           email?: string | null
           full_name: string
@@ -838,6 +840,7 @@ export type Database = {
         }
         Update: {
           avatar_url?: string | null
+          client_id?: string | null
           created_at?: string
           email?: string | null
           full_name?: string
@@ -848,7 +851,15 @@ export type Database = {
           updated_at?: string
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "profiles_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       service_categories: {
         Row: {
@@ -1096,6 +1107,7 @@ export type Database = {
         | "accountant"
         | "manager"
         | "viewer"
+        | "client"
       appointment_status:
         | "scheduled"
         | "confirmed"
@@ -1248,6 +1260,7 @@ export const Constants = {
         "accountant",
         "manager",
         "viewer",
+        "client",
       ],
       appointment_status: [
         "scheduled",

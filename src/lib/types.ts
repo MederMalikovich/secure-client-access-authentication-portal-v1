@@ -338,5 +338,6 @@ export const roleLabels: Record<AppRole, string> = {
   registrar: 'Регистратор',
   accountant: 'Бухгалтер',
   manager: 'Менеджер',
-  viewer: 'Просмотр'
+  viewer: 'Просмотр',
+  client: 'Клиент',
 };

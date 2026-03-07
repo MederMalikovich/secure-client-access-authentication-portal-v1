@@ -1,4 +1,4 @@
-export type AppRole = 'admin' | 'veterinarian' | 'registrar' | 'accountant' | 'manager' | 'viewer';
+export type AppRole = 'admin' | 'veterinarian' | 'registrar' | 'accountant' | 'manager' | 'viewer' | 'client';
 
 export type PetSpecies = 'dog' | 'cat' | 'bird' | 'rodent' | 'reptile' | 'fish' | 'other';
 
@@ -338,5 +338,6 @@ export const roleLabels: Record<AppRole, string> = {
   registrar: 'Регистратор',
   accountant: 'Бухгалтер',
   manager: 'Менеджер',
-  viewer: 'Просмотр'
+  viewer: 'Просмотр',
+  client: 'Клиент',
 };

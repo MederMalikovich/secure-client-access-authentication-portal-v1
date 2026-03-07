@@ -197,6 +197,7 @@ export default function Settings() {
       accountant: 'outline',
       manager: 'default',
       viewer: 'outline',
+      client: 'secondary',
     };
     return variants[role];
   };

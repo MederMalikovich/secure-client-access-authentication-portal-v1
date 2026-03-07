@@ -2,7 +2,8 @@ import { useEffect, useState } from 'react';
 import { getUserFriendlyError } from '@/lib/errorHandler';
 import { getValidationError, medicalRecordSchema } from '@/lib/validationSchemas';
 import { useNavigate } from 'react-router-dom';
-import { FileText, MoreVertical, Pencil, Trash2, Eye, Plus } from 'lucide-react';
+import { FileText, MoreVertical, Pencil, Trash2, Eye, Plus, Download } from 'lucide-react';
+import { generateMedicalRecordPdf } from '@/lib/generateMedicalRecordPdf';
 import { PageHeader } from '@/components/ui/page-header';
 import { DataTable, Column } from '@/components/ui/data-table';
 import { Button } from '@/components/ui/button';
@@ -508,6 +509,10 @@ export default function MedicalRecords() {
             </div>
           )}
           <DialogFooter>
+            <Button variant="outline" onClick={() => generateMedicalRecordPdf(detailRecord)}>
+              <Download className="h-4 w-4 mr-2" />
+              Скачать PDF
+            </Button>
             <Button variant="outline" onClick={() => { setDetailDialogOpen(false); if (detailRecord) openEditDialog(detailRecord); }}>
               Редактировать
             </Button>

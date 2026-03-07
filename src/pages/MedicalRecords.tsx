@@ -509,6 +509,10 @@ export default function MedicalRecords() {
             </div>
           )}
           <DialogFooter>
+            <Button variant="outline" onClick={() => generateMedicalRecordPdf(detailRecord)}>
+              <Download className="h-4 w-4 mr-2" />
+              Скачать PDF
+            </Button>
             <Button variant="outline" onClick={() => { setDetailDialogOpen(false); if (detailRecord) openEditDialog(detailRecord); }}>
               Редактировать
             </Button>

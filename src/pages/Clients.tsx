@@ -103,8 +103,23 @@ export default function Clients() {
         if (error) throw error;
         toast({ title: 'Успешно', description: 'Клиент обновлён' });
       } else {
-        const { error } = await supabase.from('clients').insert(formData);
+        const { data: newClient, error } = await supabase.from('clients').insert(formData).select().single();
         if (error) throw error;
+        
+        // Auto-create client auth account
+        if (newClient?.client_number) {
+          try {
+            await supabase.functions.invoke('create-client-account', {
+              body: {
+                client_id: newClient.id,
+                client_number: newClient.client_number,
+                full_name: newClient.full_name,
+              },
+            });
+          } catch (e) {
+            console.error('Failed to create client account:', e);
+          }
+        }
         toast({ title: 'Успешно', description: 'Клиент добавлен' });
       }
       setDialogOpen(false);

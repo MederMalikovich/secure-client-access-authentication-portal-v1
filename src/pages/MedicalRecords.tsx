@@ -42,6 +42,8 @@ import { ru } from 'date-fns/locale';
 export default function MedicalRecords() {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { hasRole } = useAuth();
+  const isClient = hasRole('client');
   const [records, setRecords] = useState<any[]>([]);
   const [pets, setPets] = useState<any[]>([]);
   const [vets, setVets] = useState<any[]>([]);

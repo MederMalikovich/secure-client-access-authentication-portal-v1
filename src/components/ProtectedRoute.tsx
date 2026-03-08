@@ -30,7 +30,7 @@ export function ProtectedRoute({ children, requiredRoles, staffOnly }: Protected
 
   // Clients cannot access staff-only routes
   if (staffOnly && hasRole('client')) {
-    return <Navigate to="/pets" replace />;
+    return <Navigate to="/my-cabinet" replace />;
   }
 
   if (requiredRoles && requiredRoles.length > 0 && !hasAnyRole(requiredRoles)) {

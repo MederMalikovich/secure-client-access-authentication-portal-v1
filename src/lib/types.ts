@@ -18,6 +18,7 @@ export interface Profile {
   email?: string;
   avatar_url?: string;
   position?: string;
+  client_id?: string;
   is_active: boolean;
   created_at: string;
   updated_at: string;

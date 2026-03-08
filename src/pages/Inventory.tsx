@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { getUserFriendlyError } from '@/lib/errorHandler';
+import { useAuth } from '@/contexts/AuthContext';
 import { Package, AlertTriangle, MoreVertical, Pencil, Trash2, Plus, Minus, FolderPlus } from 'lucide-react';
 import { PageHeader } from '@/components/ui/page-header';
 import { DataTable, Column } from '@/components/ui/data-table';
@@ -38,6 +39,8 @@ import { InventoryItem, InventoryCategory, MovementType } from '@/lib/types';
 
 export default function Inventory() {
   const { toast } = useToast();
+  const { hasAnyRole } = useAuth();
+  const canManage = hasAnyRole(['admin', 'manager']);
   const [items, setItems] = useState<any[]>([]);
   const [categories, setCategories] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -358,7 +361,7 @@ export default function Inventory() {
     {
       key: 'actions',
       header: '',
-      cell: (item) => (
+      cell: (item) => canManage ? (
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" size="icon">
@@ -389,7 +392,7 @@ export default function Inventory() {
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
-      ),
+      ) : null,
     },
   ];
 
@@ -402,7 +405,7 @@ export default function Inventory() {
           { label: 'Дашборд', href: '/dashboard' },
           { label: 'Склад' },
         ]}
-        actions={
+        actions={canManage ? (
           <Button
             variant="outline"
             onClick={() => {
@@ -413,7 +416,7 @@ export default function Inventory() {
             <FolderPlus className="h-4 w-4 mr-2" />
             Категория
           </Button>
-        }
+        ) : undefined}
       />
 
       {/* Stats */}
@@ -464,10 +467,10 @@ export default function Inventory() {
         columns={columns}
         searchPlaceholder="Поиск товара..."
         searchKey="name"
-        onAdd={() => {
+        onAdd={canManage ? () => {
           resetItemForm();
           setItemDialogOpen(true);
-        }}
+        } : undefined}
         addLabel="Добавить товар"
         isLoading={loading}
         emptyMessage="Нет товаров"

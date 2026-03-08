@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { getUserFriendlyError } from '@/lib/errorHandler';
+import { useAuth } from '@/contexts/AuthContext';
 import { getValidationError, invoiceSchema } from '@/lib/validationSchemas';
 import { DollarSign, TrendingUp, CreditCard, MoreVertical, Eye, Plus, Check } from 'lucide-react';
 import { PageHeader } from '@/components/ui/page-header';
@@ -37,6 +38,8 @@ import { ru } from 'date-fns/locale';
 
 export default function Finances() {
   const { toast } = useToast();
+  const { hasAnyRole } = useAuth();
+  const canManage = hasAnyRole(['admin', 'accountant']);
   const [invoices, setInvoices] = useState<any[]>([]);
   const [clients, setClients] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -267,7 +270,7 @@ export default function Finances() {
     {
       key: 'actions',
       header: '',
-      cell: (invoice) => (
+      cell: (invoice) => canManage ? (
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" size="icon">
@@ -294,7 +297,7 @@ export default function Finances() {
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
-      ),
+      ) : null,
     },
   ];
 
@@ -336,10 +339,10 @@ export default function Finances() {
         columns={columns}
         searchPlaceholder="Поиск по номеру..."
         searchKey="invoice_number"
-        onAdd={() => {
+        onAdd={canManage ? () => {
           resetForm();
           setDialogOpen(true);
-        }}
+        } : undefined}
         addLabel="Создать счёт"
         isLoading={loading}
         emptyMessage="Нет счетов"

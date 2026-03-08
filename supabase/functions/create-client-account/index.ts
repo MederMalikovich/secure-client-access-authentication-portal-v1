@@ -72,7 +72,7 @@ Deno.serve(async (req) => {
 
     if (authError) {
       console.error("Auth error:", authError.message);
-      return new Response(JSON.stringify({ error: authError.message }), {
+      return new Response(JSON.stringify({ error: "Failed to create account" }), {
         status: 500,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
@@ -111,7 +111,7 @@ Deno.serve(async (req) => {
     });
   } catch (error) {
     console.error("Unexpected error:", error.message);
-    return new Response(JSON.stringify({ error: error.message }), {
+    return new Response(JSON.stringify({ error: "Internal server error" }), {
       status: 500,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });

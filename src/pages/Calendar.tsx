@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { getUserFriendlyError } from '@/lib/errorHandler';
+import { useAuth } from '@/contexts/AuthContext';
 import { getValidationError, appointmentSchema } from '@/lib/validationSchemas';
 import { format, startOfWeek, addDays, isSameDay, parseISO, addMinutes } from 'date-fns';
 import { ru } from 'date-fns/locale';
@@ -34,6 +35,8 @@ const hours = Array.from({ length: 12 }, (_, i) => i + 8); // 8:00 - 19:00
 
 export default function Calendar() {
   const { toast } = useToast();
+  const { hasAnyRole } = useAuth();
+  const canManage = hasAnyRole(['admin', 'veterinarian', 'registrar', 'manager']);
   const [currentDate, setCurrentDate] = useState(new Date());
   const [appointments, setAppointments] = useState<any[]>([]);
   const [clients, setClients] = useState<any[]>([]);
@@ -246,7 +249,7 @@ export default function Calendar() {
           { label: 'Дашборд', href: '/dashboard' },
           { label: 'Календарь' },
         ]}
-        actions={
+        actions={canManage ? (
           <Button
             onClick={() => {
               resetForm();
@@ -256,7 +259,7 @@ export default function Calendar() {
             <Plus className="h-4 w-4 mr-2" />
             Новая запись
           </Button>
-        }
+        ) : undefined}
       />
 
       {/* Calendar Controls */}
@@ -535,7 +538,7 @@ export default function Calendar() {
             </div>
           </div>
           <DialogFooter className="flex-col sm:flex-row gap-2">
-            {selectedAppointment && (
+            {selectedAppointment && canManage && (
               <Button
                 variant="destructive"
                 className="sm:mr-auto"

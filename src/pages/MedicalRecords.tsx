@@ -520,9 +520,11 @@ export default function MedicalRecords() {
               <Download className="h-4 w-4 mr-2" />
               Скачать PDF
             </Button>
-            <Button variant="outline" onClick={() => { setDetailDialogOpen(false); if (detailRecord) openEditDialog(detailRecord); }}>
-              Редактировать
-            </Button>
+            {!isClient && (
+              <Button variant="outline" onClick={() => { setDetailDialogOpen(false); if (detailRecord) openEditDialog(detailRecord); }}>
+                Редактировать
+              </Button>
+            )}
           </DialogFooter>
         </DialogContent>
       </Dialog>

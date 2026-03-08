@@ -509,7 +509,7 @@ export default function MedicalRecords() {
             </div>
           )}
           <DialogFooter>
-            <Button variant="outline" onClick={() => generateMedicalRecordPdf(detailRecord)}>
+            <Button variant="outline" onClick={async () => { try { await generateMedicalRecordPdf(detailRecord); } catch { toast({ variant: 'destructive', title: 'Ошибка', description: 'Не удалось сгенерировать PDF' }); } }}>
               <Download className="h-4 w-4 mr-2" />
               Скачать PDF
             </Button>

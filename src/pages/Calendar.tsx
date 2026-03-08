@@ -249,7 +249,7 @@ export default function Calendar() {
           { label: 'Дашборд', href: '/dashboard' },
           { label: 'Календарь' },
         ]}
-        actions={
+        actions={canManage ? (
           <Button
             onClick={() => {
               resetForm();
@@ -259,7 +259,7 @@ export default function Calendar() {
             <Plus className="h-4 w-4 mr-2" />
             Новая запись
           </Button>
-        }
+        ) : undefined}
       />
 
       {/* Calendar Controls */}

@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { getUserFriendlyError } from '@/lib/errorHandler';
+import { useAuth } from '@/contexts/AuthContext';
 import { getValidationError, invoiceSchema } from '@/lib/validationSchemas';
 import { DollarSign, TrendingUp, CreditCard, MoreVertical, Eye, Plus, Check } from 'lucide-react';
 import { PageHeader } from '@/components/ui/page-header';

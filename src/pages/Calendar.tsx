@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { getUserFriendlyError } from '@/lib/errorHandler';
+import { useAuth } from '@/contexts/AuthContext';
 import { getValidationError, appointmentSchema } from '@/lib/validationSchemas';
 import { format, startOfWeek, addDays, isSameDay, parseISO, addMinutes } from 'date-fns';
 import { ru } from 'date-fns/locale';

@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { getUserFriendlyError } from '@/lib/errorHandler';
+import { useAuth } from '@/contexts/AuthContext';
 import { Package, AlertTriangle, MoreVertical, Pencil, Trash2, Plus, Minus, FolderPlus } from 'lucide-react';
 import { PageHeader } from '@/components/ui/page-header';
 import { DataTable, Column } from '@/components/ui/data-table';

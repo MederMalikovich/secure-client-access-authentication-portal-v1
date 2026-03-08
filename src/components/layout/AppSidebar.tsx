@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useLocation } from 'react-router-dom';
-import { LayoutDashboard, Users, PawPrint, Stethoscope, Calendar, FileText, DollarSign, Package, ShoppingCart, BarChart3, Settings, ChevronLeft, ChevronRight, Heart, Syringe, UserCheck } from 'lucide-react';
+import { LayoutDashboard, Users, PawPrint, Stethoscope, Calendar, FileText, DollarSign, Package, ShoppingCart, BarChart3, Settings, ChevronLeft, ChevronRight, Heart, Syringe, UserCheck, Search } from 'lucide-react';
 import { NavLink } from '@/components/NavLink';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
@@ -92,6 +92,31 @@ export function AppSidebar() {
           {collapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
         </Button>
       </div>
+
+      {!isClient && (
+        <div className="px-3 pt-2">
+          <Button
+            variant="outline"
+            className={cn(
+              'w-full justify-start gap-2 text-muted-foreground hover:text-foreground h-9',
+              collapsed && 'justify-center px-0'
+            )}
+            onClick={() => {
+              document.dispatchEvent(new KeyboardEvent('keydown', { key: 'k', metaKey: true }));
+            }}
+          >
+            <Search className="h-4 w-4 shrink-0" />
+            {!collapsed && (
+              <>
+                <span className="flex-1 text-left text-sm">Поиск...</span>
+                <kbd className="pointer-events-none hidden sm:inline-flex h-5 select-none items-center gap-1 rounded border bg-muted px-1.5 font-mono text-[10px] font-medium text-muted-foreground">
+                  ⌘K
+                </kbd>
+              </>
+            )}
+          </Button>
+        </div>
+      )}
 
       <nav className="flex-1 overflow-y-auto p-3 space-y-6">
         {isClient ? (

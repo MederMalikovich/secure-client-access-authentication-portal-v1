@@ -405,7 +405,7 @@ export default function Inventory() {
           { label: 'Дашборд', href: '/dashboard' },
           { label: 'Склад' },
         ]}
-        actions={
+        actions={canManage ? (
           <Button
             variant="outline"
             onClick={() => {
@@ -416,7 +416,7 @@ export default function Inventory() {
             <FolderPlus className="h-4 w-4 mr-2" />
             Категория
           </Button>
-        }
+        ) : undefined}
       />
 
       {/* Stats */}

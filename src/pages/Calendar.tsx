@@ -120,7 +120,20 @@ export default function Calendar() {
       setClients(clientsRes.data || []);
       setPets(petsRes.data || []);
       setServices(servicesRes.data || []);
-      setVets(vetsRes.data || []);
+
+      // Fetch vet profiles based on user_roles
+      const vetUserIds = (vetsRes.data || []).map((r: any) => r.user_id);
+      if (vetUserIds.length > 0) {
+        const { data: vetProfiles } = await supabase
+          .from('profiles')
+          .select('id, full_name')
+          .in('user_id', vetUserIds)
+          .eq('is_active', true)
+          .order('full_name');
+        setVets(vetProfiles || []);
+      } else {
+        setVets([]);
+      }
     } catch (error) {
     } finally {
       setLoading(false);

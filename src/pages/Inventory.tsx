@@ -361,7 +361,7 @@ export default function Inventory() {
     {
       key: 'actions',
       header: '',
-      cell: (item) => (
+      cell: (item) => canManage ? (
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" size="icon">
@@ -392,7 +392,7 @@ export default function Inventory() {
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
-      ),
+      ) : null,
     },
   ];
 

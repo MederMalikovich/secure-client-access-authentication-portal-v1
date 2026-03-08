@@ -283,20 +283,24 @@ export default function MedicalRecords() {
               <Eye className="h-4 w-4 mr-2" />
               Просмотр
             </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => openEditDialog(record)}>
-              <Pencil className="h-4 w-4 mr-2" />
-              Редактировать
-            </DropdownMenuItem>
-            <DropdownMenuItem
-              className="text-destructive"
-              onClick={() => {
-                setSelectedRecord(record);
-                setDeleteDialogOpen(true);
-              }}
-            >
-              <Trash2 className="h-4 w-4 mr-2" />
-              Удалить
-            </DropdownMenuItem>
+            {!isClient && (
+              <>
+                <DropdownMenuItem onClick={() => openEditDialog(record)}>
+                  <Pencil className="h-4 w-4 mr-2" />
+                  Редактировать
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  className="text-destructive"
+                  onClick={() => {
+                    setSelectedRecord(record);
+                    setDeleteDialogOpen(true);
+                  }}
+                >
+                  <Trash2 className="h-4 w-4 mr-2" />
+                  Удалить
+                </DropdownMenuItem>
+              </>
+            )}
           </DropdownMenuContent>
         </DropdownMenu>
       ),

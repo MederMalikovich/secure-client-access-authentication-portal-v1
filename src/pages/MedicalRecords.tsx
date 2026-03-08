@@ -322,7 +322,7 @@ export default function MedicalRecords() {
         data={records}
         columns={columns}
         searchPlaceholder="Поиск..."
-        onAdd={() => {
+        onAdd={isClient ? undefined : () => {
           resetForm();
           setDialogOpen(true);
         }}

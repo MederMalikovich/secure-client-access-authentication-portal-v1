@@ -46,6 +46,7 @@ function AppRoutes() {
       <Route path="/reports" element={<ProtectedRoute requiredRoles={['admin', 'manager', 'accountant']}><MainLayout><Reports /></MainLayout></ProtectedRoute>} />
       <Route path="/doctors" element={<ProtectedRoute requiredRoles={['admin', 'manager']}><MainLayout><Doctors /></MainLayout></ProtectedRoute>} />
       <Route path="/settings" element={<ProtectedRoute requiredRoles={['admin']}><MainLayout><Settings /></MainLayout></ProtectedRoute>} />
+      <Route path="/my-cabinet" element={<ProtectedRoute requiredRoles={['client']}><MainLayout><ClientPortal /></MainLayout></ProtectedRoute>} />
       <Route path="*" element={<NotFound />} />
     </Routes>
   );

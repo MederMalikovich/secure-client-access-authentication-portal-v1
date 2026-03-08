@@ -1,14 +1,15 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback, useRef, DragEvent } from 'react';
 import { getUserFriendlyError } from '@/lib/errorHandler';
 import { useAuth } from '@/contexts/AuthContext';
 import { getValidationError, appointmentSchema } from '@/lib/validationSchemas';
-import { format, startOfWeek, addDays, isSameDay, parseISO, addMinutes } from 'date-fns';
+import { format, startOfWeek, addDays, isSameDay, parseISO, isWeekend } from 'date-fns';
 import { ru } from 'date-fns/locale';
-import { ChevronLeft, ChevronRight, Plus, Clock } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Plus, Clock, Users, Ban } from 'lucide-react';
 import { PageHeader } from '@/components/ui/page-header';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Progress } from '@/components/ui/progress';
 import {
   Dialog,
   DialogContent,
@@ -26,12 +27,31 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
-import { Appointment, AppointmentStatus, appointmentStatusLabels, Client, Pet, Service, Profile } from '@/lib/types';
+import { Appointment, AppointmentStatus, appointmentStatusLabels } from '@/lib/types';
 import { cn } from '@/lib/utils';
 
-const hours = Array.from({ length: 12 }, (_, i) => i + 8); // 8:00 - 19:00
+// Working hours config (Пн-Пт 9:00-18:00, Сб 9:00-15:00, Вс — выходной)
+const WORK_START = 9;
+const WORK_END_WEEKDAY = 18;
+const WORK_END_SATURDAY = 15;
+const SUNDAY = 0;
+const SATURDAY = 6;
+
+const hours = Array.from({ length: 13 }, (_, i) => i + 8); // 8:00 - 20:00
+
+function isWorkingSlot(day: Date, hour: number): boolean {
+  const dayOfWeek = day.getDay();
+  if (dayOfWeek === SUNDAY) return false;
+  if (dayOfWeek === SATURDAY) return hour >= WORK_START && hour < WORK_END_SATURDAY;
+  return hour >= WORK_START && hour < WORK_END_WEEKDAY;
+}
+
+function isNonWorkingDay(day: Date): boolean {
+  return day.getDay() === SUNDAY;
+}
 
 export default function Calendar() {
   const { toast } = useToast();
@@ -47,9 +67,10 @@ export default function Calendar() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [selectedAppointment, setSelectedAppointment] = useState<Appointment | null>(null);
-  const [view, setView] = useState<'week' | 'day'>('week');
   const [clientSearch, setClientSearch] = useState('');
   const [petSearch, setPetSearch] = useState('');
+  const [dragOverSlot, setDragOverSlot] = useState<string | null>(null);
+  const [showWorkload, setShowWorkload] = useState(true);
 
   const [formData, setFormData] = useState({
     client_id: '',
@@ -145,24 +166,6 @@ export default function Calendar() {
     }
   };
 
-  const handleStatusChange = async (appointment: Appointment, status: AppointmentStatus) => {
-    try {
-      const { error } = await supabase
-        .from('appointments')
-        .update({ status })
-        .eq('id', appointment.id);
-      if (error) throw error;
-      toast({ title: 'Статус обновлён' });
-      fetchData();
-    } catch (error: any) {
-      toast({
-        variant: 'destructive',
-        title: 'Ошибка',
-        description: getUserFriendlyError(error),
-      });
-    }
-  };
-
   const openEditDialog = (appointment: Appointment) => {
     setSelectedAppointment(appointment);
     setFormData({
@@ -171,7 +174,7 @@ export default function Calendar() {
       veterinarian_id: appointment.veterinarian_id || '',
       service_id: appointment.service_id || '',
       scheduled_at: format(parseISO(appointment.scheduled_at), "yyyy-MM-dd'T'HH:mm"),
-      duration_minutes: appointment.duration_minutes.toString(),
+      duration_minutes: (appointment.duration_minutes ?? 30).toString(),
       status: appointment.status,
       notes: appointment.notes || '',
     });
@@ -211,6 +214,99 @@ export default function Calendar() {
     });
   };
 
+  // --- Drag and Drop ---
+  const handleDragStart = (e: DragEvent, appointment: any) => {
+    if (!canManage) return;
+    e.dataTransfer.setData('appointmentId', appointment.id);
+    e.dataTransfer.effectAllowed = 'move';
+  };
+
+  const handleDragOver = (e: DragEvent, day: Date, hour: number) => {
+    e.preventDefault();
+    if (!isWorkingSlot(day, hour)) {
+      e.dataTransfer.dropEffect = 'none';
+      return;
+    }
+    e.dataTransfer.dropEffect = 'move';
+    setDragOverSlot(`${day.toISOString()}-${hour}`);
+  };
+
+  const handleDragLeave = () => {
+    setDragOverSlot(null);
+  };
+
+  const handleDrop = async (e: DragEvent, day: Date, hour: number) => {
+    e.preventDefault();
+    setDragOverSlot(null);
+
+    if (!canManage || !isWorkingSlot(day, hour)) return;
+
+    const appointmentId = e.dataTransfer.getData('appointmentId');
+    if (!appointmentId) return;
+
+    const apt = appointments.find(a => a.id === appointmentId);
+    if (!apt) return;
+
+    // Build new scheduled_at preserving minutes from original
+    const originalDate = parseISO(apt.scheduled_at);
+    const newDate = new Date(day);
+    newDate.setHours(hour, originalDate.getMinutes(), 0, 0);
+
+    try {
+      const { error } = await supabase
+        .from('appointments')
+        .update({ scheduled_at: newDate.toISOString() })
+        .eq('id', appointmentId);
+      if (error) throw error;
+      toast({ title: 'Запись перенесена', description: `${(apt as any).pet?.name || 'Приём'} → ${format(newDate, 'EEE d MMM, HH:mm', { locale: ru })}` });
+      fetchData();
+    } catch (error: any) {
+      toast({ variant: 'destructive', title: 'Ошибка переноса', description: getUserFriendlyError(error) });
+    }
+  };
+
+  // --- Workload calculation ---
+  const getVetWorkload = () => {
+    const activeAppointments = appointments.filter(a => a.status !== 'cancelled' && a.status !== 'no_show');
+    
+    // Count working slots this week (for capacity)
+    let totalWorkSlots = 0;
+    weekDays.forEach(day => {
+      hours.forEach(hour => {
+        if (isWorkingSlot(day, hour)) totalWorkSlots++;
+      });
+    });
+
+    const vetMap = new Map<string, { name: string; count: number; totalMinutes: number }>();
+
+    activeAppointments.forEach(apt => {
+      if (apt.veterinarian_id && (apt as any).veterinarian) {
+        const vetId = apt.veterinarian_id;
+        const existing = vetMap.get(vetId) || { name: (apt as any).veterinarian.full_name, count: 0, totalMinutes: 0 };
+        existing.count++;
+        existing.totalMinutes += apt.duration_minutes || 30;
+        vetMap.set(vetId, existing);
+      }
+    });
+
+    // Also include vets with 0 appointments
+    vets.forEach(v => {
+      if (!vetMap.has(v.id)) {
+        vetMap.set(v.id, { name: v.full_name, count: 0, totalMinutes: 0 });
+      }
+    });
+
+    const maxCapacityMinutes = totalWorkSlots * 60; // 1 hour per slot
+
+    return Array.from(vetMap.entries()).map(([id, data]) => ({
+      id,
+      name: data.name,
+      count: data.count,
+      totalMinutes: data.totalMinutes,
+      loadPercent: maxCapacityMinutes > 0 ? Math.min(100, Math.round((data.totalMinutes / (maxCapacityMinutes / Math.max(vetMap.size, 1))) * 100)) : 0,
+    })).sort((a, b) => b.count - a.count);
+  };
+
   const filteredPets = formData.client_id
     ? pets.filter((p) => p.client_id === formData.client_id)
     : pets;
@@ -240,6 +336,8 @@ export default function Calendar() {
     }
   };
 
+  const vetWorkload = getVetWorkload();
+
   return (
     <div>
       <PageHeader
@@ -249,21 +347,68 @@ export default function Calendar() {
           { label: 'Дашборд', href: '/dashboard' },
           { label: 'Календарь' },
         ]}
-        actions={canManage ? (
-          <Button
-            onClick={() => {
-              resetForm();
-              setDialogOpen(true);
-            }}
-          >
-            <Plus className="h-4 w-4 mr-2" />
-            Новая запись
-          </Button>
-        ) : undefined}
+        actions={
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setShowWorkload(!showWorkload)}
+            >
+              <Users className="h-4 w-4 mr-2" />
+              Загруженность
+            </Button>
+            {canManage && (
+              <Button
+                onClick={() => {
+                  resetForm();
+                  setDialogOpen(true);
+                }}
+              >
+                <Plus className="h-4 w-4 mr-2" />
+                Новая запись
+              </Button>
+            )}
+          </div>
+        }
       />
 
+      {/* Vet Workload Panel */}
+      {showWorkload && vetWorkload.length > 0 && (
+        <Card className="mb-4">
+          <CardHeader className="py-3 px-4">
+            <CardTitle className="text-sm font-medium flex items-center gap-2">
+              <Users className="h-4 w-4" />
+              Загруженность врачей на неделю
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="px-4 pb-3 pt-0">
+            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+              {vetWorkload.map((vet) => (
+                <div key={vet.id} className="flex flex-col gap-1.5">
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="truncate font-medium">{vet.name}</span>
+                    <span className="text-muted-foreground text-xs ml-2 whitespace-nowrap">
+                      {vet.count} зап. · {Math.floor(vet.totalMinutes / 60)}ч {vet.totalMinutes % 60}м
+                    </span>
+                  </div>
+                  <Progress
+                    value={vet.loadPercent}
+                    className={cn(
+                      "h-2",
+                      vet.loadPercent > 80 && "[&>div]:bg-red-500",
+                      vet.loadPercent > 50 && vet.loadPercent <= 80 && "[&>div]:bg-yellow-500",
+                      vet.loadPercent <= 50 && "[&>div]:bg-green-500"
+                    )}
+                  />
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Calendar Controls */}
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-4">
           <Button
             variant="outline"
@@ -284,13 +429,19 @@ export default function Calendar() {
             <ChevronRight className="h-4 w-4" />
           </Button>
         </div>
-        <Button variant="outline" onClick={() => setCurrentDate(new Date())}>
-          Сегодня
-        </Button>
+        <div className="flex items-center gap-2">
+          <div className="hidden sm:flex items-center gap-2 text-xs text-muted-foreground mr-2">
+            <div className="w-3 h-3 rounded bg-muted-foreground/10 border border-dashed border-muted-foreground/30" />
+            <span>Нерабочее время</span>
+          </div>
+          <Button variant="outline" size="sm" onClick={() => setCurrentDate(new Date())}>
+            Сегодня
+          </Button>
+        </div>
       </div>
 
       {/* Calendar Grid */}
-      <Card className="glass overflow-hidden">
+      <Card className="overflow-hidden">
         <CardContent className="p-0">
           <div className="grid grid-cols-8 border-b border-border">
             <div className="p-2 text-center text-xs text-muted-foreground">
@@ -301,7 +452,8 @@ export default function Calendar() {
                 key={day.toISOString()}
                 className={cn(
                   'p-2 text-center border-l border-border',
-                  isSameDay(day, new Date()) && 'bg-primary/10'
+                  isSameDay(day, new Date()) && 'bg-primary/10',
+                  isNonWorkingDay(day) && 'bg-muted/50'
                 )}
               >
                 <div className="text-xs text-muted-foreground">
@@ -310,11 +462,17 @@ export default function Calendar() {
                 <div
                   className={cn(
                     'text-lg font-semibold',
-                    isSameDay(day, new Date()) && 'text-primary'
+                    isSameDay(day, new Date()) && 'text-primary',
+                    isNonWorkingDay(day) && 'text-muted-foreground'
                   )}
                 >
                   {format(day, 'd')}
                 </div>
+                {isNonWorkingDay(day) && (
+                  <Badge variant="outline" className="text-[10px] px-1 py-0 mt-0.5 text-muted-foreground border-muted-foreground/30">
+                    Выходной
+                  </Badge>
+                )}
               </div>
             ))}
           </div>
@@ -327,30 +485,62 @@ export default function Calendar() {
                 </div>
                 {weekDays.map((day) => {
                   const dayAppointments = getAppointmentsForDayAndHour(day, hour);
+                  const working = isWorkingSlot(day, hour);
+                  const slotKey = `${day.toISOString()}-${hour}`;
+                  const isDragOver = dragOverSlot === slotKey;
+                  
                   return (
                     <div
-                      key={`${day.toISOString()}-${hour}`}
+                      key={slotKey}
                       className={cn(
-                        'p-1 min-h-[60px] border-l border-border',
-                        isSameDay(day, new Date()) && 'bg-primary/5'
+                        'p-1 min-h-[60px] border-l border-border transition-colors relative',
+                        isSameDay(day, new Date()) && working && 'bg-primary/5',
+                        !working && 'bg-muted/30',
+                        isDragOver && working && 'bg-primary/20 ring-1 ring-primary/40 ring-inset',
+                        isDragOver && !working && 'bg-destructive/10'
                       )}
+                      onDragOver={(e) => handleDragOver(e, day, hour)}
+                      onDragLeave={handleDragLeave}
+                      onDrop={(e) => handleDrop(e, day, hour)}
                     >
-                      {dayAppointments.map((apt) => (
-                        <div
-                          key={apt.id}
-                          onClick={() => openEditDialog(apt)}
-                          className={cn(
-                            'p-1.5 rounded text-xs cursor-pointer border transition-all hover:scale-[1.02]',
-                            getStatusColor(apt.status)
-                          )}
-                        >
-                          <div className="font-medium truncate">
-                            {format(parseISO(apt.scheduled_at), 'HH:mm')}
-                          </div>
-                          <div className="truncate">
-                            {(apt as any).pet?.name}
-                          </div>
+                      {!working && dayAppointments.length === 0 && (
+                        <div className="absolute inset-0 flex items-center justify-center opacity-20">
+                          <Ban className="h-4 w-4 text-muted-foreground" />
                         </div>
+                      )}
+                      {dayAppointments.map((apt) => (
+                        <Tooltip key={apt.id}>
+                          <TooltipTrigger asChild>
+                            <div
+                              draggable={canManage}
+                              onDragStart={(e) => handleDragStart(e, apt)}
+                              onClick={() => openEditDialog(apt)}
+                              className={cn(
+                                'p-1.5 rounded text-xs border transition-all hover:scale-[1.02] mb-0.5',
+                                canManage && 'cursor-grab active:cursor-grabbing',
+                                !canManage && 'cursor-pointer',
+                                getStatusColor(apt.status)
+                              )}
+                            >
+                              <div className="font-medium truncate">
+                                {format(parseISO(apt.scheduled_at), 'HH:mm')}
+                              </div>
+                              <div className="truncate">
+                                {(apt as any).pet?.name}
+                              </div>
+                            </div>
+                          </TooltipTrigger>
+                          <TooltipContent side="right" className="max-w-[200px]">
+                            <div className="text-xs space-y-1">
+                              <div className="font-semibold">{(apt as any).pet?.name}</div>
+                              <div>Клиент: {(apt as any).client?.full_name}</div>
+                              {(apt as any).veterinarian && <div>Врач: {(apt as any).veterinarian.full_name}</div>}
+                              {(apt as any).service && <div>Услуга: {(apt as any).service.name}</div>}
+                              <div>Статус: {appointmentStatusLabels[apt.status as AppointmentStatus]}</div>
+                              {canManage && <div className="text-muted-foreground italic mt-1">Перетащите для переноса</div>}
+                            </div>
+                          </TooltipContent>
+                        </Tooltip>
                       ))}
                     </div>
                   );
@@ -363,7 +553,7 @@ export default function Calendar() {
 
       {/* Appointment Dialog */}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent className="glass max-w-2xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>
               {selectedAppointment ? 'Редактировать запись' : 'Новая запись'}
@@ -562,7 +752,7 @@ export default function Calendar() {
 
       {/* Delete Dialog */}
       <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
-        <DialogContent className="glass">
+        <DialogContent>
           <DialogHeader>
             <DialogTitle>Удалить запись?</DialogTitle>
           </DialogHeader>

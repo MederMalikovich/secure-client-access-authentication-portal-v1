@@ -467,10 +467,10 @@ export default function Inventory() {
         columns={columns}
         searchPlaceholder="Поиск товара..."
         searchKey="name"
-        onAdd={() => {
+        onAdd={canManage ? () => {
           resetItemForm();
           setItemDialogOpen(true);
-        }}
+        } : undefined}
         addLabel="Добавить товар"
         isLoading={loading}
         emptyMessage="Нет товаров"

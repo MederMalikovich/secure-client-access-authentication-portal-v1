@@ -339,10 +339,10 @@ export default function Finances() {
         columns={columns}
         searchPlaceholder="Поиск по номеру..."
         searchKey="invoice_number"
-        onAdd={() => {
+        onAdd={canManage ? () => {
           resetForm();
           setDialogOpen(true);
-        }}
+        } : undefined}
         addLabel="Создать счёт"
         isLoading={loading}
         emptyMessage="Нет счетов"

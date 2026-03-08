@@ -538,7 +538,7 @@ export default function Calendar() {
             </div>
           </div>
           <DialogFooter className="flex-col sm:flex-row gap-2">
-            {selectedAppointment && (
+            {selectedAppointment && canManage && (
               <Button
                 variant="destructive"
                 className="sm:mr-auto"

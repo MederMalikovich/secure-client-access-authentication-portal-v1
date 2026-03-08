@@ -7,10 +7,11 @@ import { Loader2 } from 'lucide-react';
 interface ProtectedRouteProps {
   children: ReactNode;
   requiredRoles?: AppRole[];
+  staffOnly?: boolean;
 }
 
-export function ProtectedRoute({ children, requiredRoles }: ProtectedRouteProps) {
-  const { user, loading, hasAnyRole } = useAuth();
+export function ProtectedRoute({ children, requiredRoles, staffOnly }: ProtectedRouteProps) {
+  const { user, loading, hasAnyRole, hasRole } = useAuth();
 
   if (loading) {
     return (
@@ -27,6 +28,11 @@ export function ProtectedRoute({ children, requiredRoles }: ProtectedRouteProps)
     return <Navigate to="/auth" replace />;
   }
 
+  // Clients cannot access staff-only routes
+  if (staffOnly && hasRole('client')) {
+    return <Navigate to="/pets" replace />;
+  }
+
   if (requiredRoles && requiredRoles.length > 0 && !hasAnyRole(requiredRoles)) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
@@ -34,9 +40,6 @@ export function ProtectedRoute({ children, requiredRoles }: ProtectedRouteProps)
           <h1 className="text-2xl font-bold text-destructive">Доступ запрещён</h1>
           <p className="text-muted-foreground">
             У вас нет прав для просмотра этой страницы.
-          </p>
-          <p className="text-sm text-muted-foreground">
-            Обратитесь к администратору системы.
           </p>
         </div>
       </div>

@@ -1,11 +1,12 @@
 import { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Menu, X, Home, Users, PawPrint, Calendar, FileText, DollarSign, Package, ShoppingCart, BarChart3, Settings, Heart, Stethoscope, UserCheck } from 'lucide-react';
+import { Menu, X, Home, Users, PawPrint, Calendar, FileText, DollarSign, Package, ShoppingCart, BarChart3, Settings, Heart, Stethoscope, UserCheck, LogOut } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTrigger, SheetTitle } from '@/components/ui/sheet';
+import { useAuth } from '@/contexts/AuthContext';
 
-const navItems = [
+const staffNavItems = [
   { icon: Home, label: 'Дашборд', href: '/dashboard' },
   { icon: Users, label: 'Клиенты', href: '/clients' },
   { icon: PawPrint, label: 'Питомцы', href: '/pets' },
@@ -21,9 +22,17 @@ const navItems = [
   { icon: Settings, label: 'Настройки', href: '/settings' },
 ];
 
+const clientNavItems = [
+  { icon: PawPrint, label: 'Мои питомцы', href: '/pets' },
+  { icon: FileText, label: 'Медкарты', href: '/medical-records' },
+];
+
 export function MobileNav() {
   const location = useLocation();
   const [open, setOpen] = useState(false);
+  const { hasRole, signOut, profile } = useAuth();
+  const isClient = hasRole('client');
+  const navItems = isClient ? clientNavItems : staffNavItems;
 
   return (
     <div className="md:hidden fixed top-0 left-0 right-0 z-50 bg-sidebar border-b border-sidebar-border">
@@ -50,7 +59,9 @@ export function MobileNav() {
                   </div>
                   <div>
                     <h1 className="font-bold text-lg text-sidebar-foreground">VetCRM</h1>
-                    <p className="text-xs text-sidebar-foreground/60">Ветеринарная клиника</p>
+                    <p className="text-xs text-sidebar-foreground/60">
+                      {isClient ? 'Мой кабинет' : 'Ветеринарная клиника'}
+                    </p>
                   </div>
                 </div>
               </div>
@@ -75,6 +86,21 @@ export function MobileNav() {
                   );
                 })}
               </nav>
+              {isClient && (
+                <div className="p-3 border-t border-sidebar-border">
+                  <div className="px-3 py-2 text-sm text-sidebar-foreground/70 truncate">
+                    {profile?.full_name || 'Клиент'}
+                  </div>
+                  <Button
+                    variant="ghost"
+                    className="w-full justify-start gap-3 text-sidebar-foreground/70"
+                    onClick={() => { setOpen(false); signOut(); }}
+                  >
+                    <LogOut className="h-5 w-5" />
+                    Выйти
+                  </Button>
+                </div>
+              )}
             </div>
           </SheetContent>
         </Sheet>

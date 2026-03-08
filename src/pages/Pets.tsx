@@ -391,53 +391,59 @@ export default function Pets() {
                 </>
               )}
 
-              {/* Notifications section */}
-              <Separator />
-              <div>
-                <div className="flex items-center justify-between mb-3">
-                  <p className="text-sm font-medium flex items-center gap-2">
-                    <Bell className="h-4 w-4 text-primary" />
-                    Уведомления / Напоминания
-                  </p>
-                  <Button size="sm" variant="outline" onClick={() => {
-                    setNotifForm({ title: '', message: '', scheduled_for: '' });
-                    setNotifDialogOpen(true);
-                  }}>
-                    <Plus className="h-4 w-4 mr-1" />Добавить
-                  </Button>
-                </div>
-                {notifications.length === 0 ? (
-                  <p className="text-sm text-muted-foreground text-center py-3">Нет уведомлений</p>
-                ) : (
-                  <div className="space-y-2">
-                    {notifications.map((n) => (
-                      <div key={n.id} className="flex items-center justify-between p-3 rounded-lg bg-muted/30">
-                        <div>
-                          <p className="text-sm font-medium">{extractNotifTitle(n.title)}</p>
-                          <p className="text-xs text-muted-foreground">
-                            <CalendarIcon className="h-3 w-3 inline mr-1" />
-                            {n.scheduled_for ? format(new Date(n.scheduled_for), 'd MMM yyyy', { locale: ru }) : '—'}
-                          </p>
-                          {n.message && <p className="text-xs text-muted-foreground mt-1">{n.message.replace(`Питомец: ${detailPet.name}. `, '')}</p>}
-                        </div>
-                        <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={() => handleDeleteNotification(n.id)}>
-                          <Trash2 className="h-3.5 w-3.5" />
-                        </Button>
+              {!isClient && (
+                <>
+                  {/* Notifications section */}
+                  <Separator />
+                  <div>
+                    <div className="flex items-center justify-between mb-3">
+                      <p className="text-sm font-medium flex items-center gap-2">
+                        <Bell className="h-4 w-4 text-primary" />
+                        Уведомления / Напоминания
+                      </p>
+                      <Button size="sm" variant="outline" onClick={() => {
+                        setNotifForm({ title: '', message: '', scheduled_for: '' });
+                        setNotifDialogOpen(true);
+                      }}>
+                        <Plus className="h-4 w-4 mr-1" />Добавить
+                      </Button>
+                    </div>
+                    {notifications.length === 0 ? (
+                      <p className="text-sm text-muted-foreground text-center py-3">Нет уведомлений</p>
+                    ) : (
+                      <div className="space-y-2">
+                        {notifications.map((n) => (
+                          <div key={n.id} className="flex items-center justify-between p-3 rounded-lg bg-muted/30">
+                            <div>
+                              <p className="text-sm font-medium">{extractNotifTitle(n.title)}</p>
+                              <p className="text-xs text-muted-foreground">
+                                <CalendarIcon className="h-3 w-3 inline mr-1" />
+                                {n.scheduled_for ? format(new Date(n.scheduled_for), 'd MMM yyyy', { locale: ru }) : '—'}
+                              </p>
+                              {n.message && <p className="text-xs text-muted-foreground mt-1">{n.message.replace(`Питомец: ${detailPet.name}. `, '')}</p>}
+                            </div>
+                            <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={() => handleDeleteNotification(n.id)}>
+                              <Trash2 className="h-3.5 w-3.5" />
+                            </Button>
+                          </div>
+                        ))}
                       </div>
-                    ))}
+                    )}
                   </div>
-                )}
-              </div>
+                </>
+              )}
             </div>
           )}
-          <DialogFooter>
-            <Button variant="outline" onClick={() => {
-              setDetailDialogOpen(false);
-              if (detailPet) openEditDialog(detailPet);
-            }}>
-              <Pencil className="h-4 w-4 mr-2" />Редактировать
-            </Button>
-          </DialogFooter>
+          {!isClient && (
+            <DialogFooter>
+              <Button variant="outline" onClick={() => {
+                setDetailDialogOpen(false);
+                if (detailPet) openEditDialog(detailPet);
+              }}>
+                <Pencil className="h-4 w-4 mr-2" />Редактировать
+              </Button>
+            </DialogFooter>
+          )}
         </DialogContent>
       </Dialog>
 

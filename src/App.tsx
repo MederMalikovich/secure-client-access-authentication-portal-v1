@@ -22,6 +22,7 @@ import Finances from "./pages/Finances";
 import Reports from "./pages/Reports";
 import Doctors from "./pages/Doctors";
 import Settings from "./pages/Settings";
+import ClientPortal from "./pages/ClientPortal";
 import NotFound from "./pages/NotFound";
 import Auth from "./pages/Auth";
 

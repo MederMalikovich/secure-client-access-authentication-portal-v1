@@ -46,6 +46,7 @@ export function MobileNav() {
           <span className="font-bold text-sidebar-foreground">VetCRM</span>
         </div>
         <div className="flex items-center gap-1">
+          {!isClient && <NotificationBell />}
           <Button
             variant="ghost"
             size="icon"

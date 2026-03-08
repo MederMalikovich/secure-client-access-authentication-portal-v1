@@ -270,7 +270,7 @@ export default function Finances() {
     {
       key: 'actions',
       header: '',
-      cell: (invoice) => (
+      cell: (invoice) => canManage ? (
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" size="icon">
@@ -297,7 +297,7 @@ export default function Finances() {
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
-      ),
+      ) : null,
     },
   ];
 

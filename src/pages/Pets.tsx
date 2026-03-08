@@ -298,12 +298,16 @@ export default function Pets() {
             <DropdownMenuItem onClick={() => openDetailDialog(pet)}>
               <Eye className="h-4 w-4 mr-2" />Карточка
             </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => openEditDialog(pet)}>
-              <Pencil className="h-4 w-4 mr-2" />Редактировать
-            </DropdownMenuItem>
-            <DropdownMenuItem className="text-destructive" onClick={() => { setSelectedPet(pet); setDeleteDialogOpen(true); }}>
-              <Trash2 className="h-4 w-4 mr-2" />Удалить
-            </DropdownMenuItem>
+            {!isClient && (
+              <>
+                <DropdownMenuItem onClick={() => openEditDialog(pet)}>
+                  <Pencil className="h-4 w-4 mr-2" />Редактировать
+                </DropdownMenuItem>
+                <DropdownMenuItem className="text-destructive" onClick={() => { setSelectedPet(pet); setDeleteDialogOpen(true); }}>
+                  <Trash2 className="h-4 w-4 mr-2" />Удалить
+                </DropdownMenuItem>
+              </>
+            )}
           </DropdownMenuContent>
         </DropdownMenu>
       ),

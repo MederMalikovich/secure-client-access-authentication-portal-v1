@@ -23,6 +23,7 @@ const staffNavItems = [
 ];
 
 const clientNavItems = [
+  { icon: Home, label: 'Мой кабинет', href: '/my-cabinet' },
   { icon: PawPrint, label: 'Мои питомцы', href: '/pets' },
   { icon: FileText, label: 'Медкарты', href: '/medical-records' },
 ];

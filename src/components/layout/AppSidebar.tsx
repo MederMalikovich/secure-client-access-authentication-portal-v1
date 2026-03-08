@@ -24,6 +24,7 @@ const mainNavItems: NavItem[] = [
 ];
 
 const clientNavItems: NavItem[] = [
+  { title: 'Мой кабинет', url: '/my-cabinet', icon: LayoutDashboard },
   { title: 'Мои питомцы', url: '/pets', icon: PawPrint },
   { title: 'Медкарты', url: '/medical-records', icon: FileText },
 ];

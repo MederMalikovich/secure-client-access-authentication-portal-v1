@@ -34,6 +34,7 @@ import {
 } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/contexts/AuthContext';
 import { MedicalRecord, Pet, Profile } from '@/lib/types';
 import { format } from 'date-fns';
 import { ru } from 'date-fns/locale';
@@ -41,6 +42,8 @@ import { ru } from 'date-fns/locale';
 export default function MedicalRecords() {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { hasRole } = useAuth();
+  const isClient = hasRole('client');
   const [records, setRecords] = useState<any[]>([]);
   const [pets, setPets] = useState<any[]>([]);
   const [vets, setVets] = useState<any[]>([]);
@@ -280,20 +283,24 @@ export default function MedicalRecords() {
               <Eye className="h-4 w-4 mr-2" />
               Просмотр
             </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => openEditDialog(record)}>
-              <Pencil className="h-4 w-4 mr-2" />
-              Редактировать
-            </DropdownMenuItem>
-            <DropdownMenuItem
-              className="text-destructive"
-              onClick={() => {
-                setSelectedRecord(record);
-                setDeleteDialogOpen(true);
-              }}
-            >
-              <Trash2 className="h-4 w-4 mr-2" />
-              Удалить
-            </DropdownMenuItem>
+            {!isClient && (
+              <>
+                <DropdownMenuItem onClick={() => openEditDialog(record)}>
+                  <Pencil className="h-4 w-4 mr-2" />
+                  Редактировать
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  className="text-destructive"
+                  onClick={() => {
+                    setSelectedRecord(record);
+                    setDeleteDialogOpen(true);
+                  }}
+                >
+                  <Trash2 className="h-4 w-4 mr-2" />
+                  Удалить
+                </DropdownMenuItem>
+              </>
+            )}
           </DropdownMenuContent>
         </DropdownMenu>
       ),
@@ -315,7 +322,7 @@ export default function MedicalRecords() {
         data={records}
         columns={columns}
         searchPlaceholder="Поиск..."
-        onAdd={() => {
+        onAdd={isClient ? undefined : () => {
           resetForm();
           setDialogOpen(true);
         }}
@@ -513,9 +520,11 @@ export default function MedicalRecords() {
               <Download className="h-4 w-4 mr-2" />
               Скачать PDF
             </Button>
-            <Button variant="outline" onClick={() => { setDetailDialogOpen(false); if (detailRecord) openEditDialog(detailRecord); }}>
-              Редактировать
-            </Button>
+            {!isClient && (
+              <Button variant="outline" onClick={() => { setDetailDialogOpen(false); if (detailRecord) openEditDialog(detailRecord); }}>
+                Редактировать
+              </Button>
+            )}
           </DialogFooter>
         </DialogContent>
       </Dialog>

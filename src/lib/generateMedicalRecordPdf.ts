@@ -1,6 +1,7 @@
 import jsPDF from 'jspdf';
 import { format } from 'date-fns';
 import { ru } from 'date-fns/locale';
+import robotoUrl from '@/lib/fonts/Roboto-Regular.ttf';
 
 interface MedicalRecordPdfData {
   visit_date: string;
@@ -18,20 +19,36 @@ interface MedicalRecordPdfData {
   doctor_notes?: string | null;
 }
 
-export function generateMedicalRecordPdf(record: MedicalRecordPdfData) {
+async function loadFont(): Promise<string> {
+  const response = await fetch(robotoUrl);
+  const buffer = await response.arrayBuffer();
+  const bytes = new Uint8Array(buffer);
+  let binary = '';
+  for (let i = 0; i < bytes.length; i++) {
+    binary += String.fromCharCode(bytes[i]);
+  }
+  return btoa(binary);
+}
+
+export async function generateMedicalRecordPdf(record: MedicalRecordPdfData) {
   const doc = new jsPDF();
   const pageWidth = doc.internal.pageSize.getWidth();
   let y = 20;
 
-  const addText = (label: string, value: string, bold = false) => {
+  // Load and register Cyrillic font
+  const fontBase64 = await loadFont();
+  doc.addFileToVFS('Roboto-Regular.ttf', fontBase64);
+  doc.addFont('Roboto-Regular.ttf', 'Roboto', 'normal');
+  doc.setFont('Roboto');
+
+  const addText = (label: string, value: string) => {
     if (y > 270) {
       doc.addPage();
       y = 20;
     }
     doc.setFontSize(10);
-    doc.setFont('helvetica', 'bold');
+    doc.setFont('Roboto', 'normal');
     doc.text(label, 14, y);
-    doc.setFont('helvetica', 'normal');
     const lines = doc.splitTextToSize(value, pageWidth - 60);
     doc.text(lines, 60, y);
     y += Math.max(lines.length * 5, 7);
@@ -45,11 +62,10 @@ export function generateMedicalRecordPdf(record: MedicalRecordPdfData) {
     }
     y += 3;
     doc.setFontSize(11);
-    doc.setFont('helvetica', 'bold');
+    doc.setFont('Roboto', 'normal');
     doc.text(title, 14, y);
     y += 6;
     doc.setFontSize(10);
-    doc.setFont('helvetica', 'normal');
     const lines = doc.splitTextToSize(content, pageWidth - 28);
     doc.text(lines, 14, y);
     y += lines.length * 5 + 2;
@@ -57,11 +73,9 @@ export function generateMedicalRecordPdf(record: MedicalRecordPdfData) {
 
   // Header
   doc.setFontSize(16);
-  doc.setFont('helvetica', 'bold');
   doc.text('VetCRM', 14, y);
   doc.setFontSize(10);
-  doc.setFont('helvetica', 'normal');
-  doc.text('Meditsinskaya karta', 14, y + 6);
+  doc.text('Медицинская карта', 14, y + 6);
   y += 16;
 
   // Line
@@ -71,27 +85,27 @@ export function generateMedicalRecordPdf(record: MedicalRecordPdfData) {
 
   // Basic info
   const visitDate = format(new Date(record.visit_date), 'd MMMM yyyy, HH:mm', { locale: ru });
-  addText('Data:', visitDate);
-  addText('Pitomets:', record.pet?.name || '—');
-  addText('Vladelets:', record.pet?.client?.full_name || '—');
-  addText('Vrach:', record.veterinarian?.full_name || '—');
+  addText('Дата:', visitDate);
+  addText('Питомец:', record.pet?.name || '—');
+  addText('Владелец:', record.pet?.client?.full_name || '—');
+  addText('Врач:', record.veterinarian?.full_name || '—');
 
-  if (record.weight_at_visit) addText('Ves:', `${record.weight_at_visit} kg`);
-  if (record.temperature) addText('Temperatura:', `${record.temperature}°C`);
+  if (record.weight_at_visit) addText('Вес:', `${record.weight_at_visit} кг`);
+  if (record.temperature) addText('Температура:', `${record.temperature}°C`);
 
   y += 4;
   doc.line(14, y, pageWidth - 14, y);
   y += 6;
 
   // Sections
-  addSection('Zhaloby', record.chief_complaint || '');
-  addSection('Osmotr', record.examination_notes || '');
-  addSection('Diagnoz', record.diagnosis || '');
-  addSection('Lechenie', record.treatment || '');
-  addSection('Naznacheniya', record.prescriptions || '');
-  addSection('Analizy', record.lab_results || '');
-  addSection('Materialy', record.materials_used || '');
-  addSection('Kommentarii vracha', record.doctor_notes || '');
+  addSection('Жалобы', record.chief_complaint || '');
+  addSection('Осмотр', record.examination_notes || '');
+  addSection('Диагноз', record.diagnosis || '');
+  addSection('Лечение', record.treatment || '');
+  addSection('Назначения', record.prescriptions || '');
+  addSection('Анализы', record.lab_results || '');
+  addSection('Материалы', record.materials_used || '');
+  addSection('Комментарии врача', record.doctor_notes || '');
 
   // Footer
   const pages = doc.getNumberOfPages();
@@ -100,7 +114,7 @@ export function generateMedicalRecordPdf(record: MedicalRecordPdfData) {
     doc.setFontSize(8);
     doc.setTextColor(150);
     doc.text(
-      `VetCRM — ${format(new Date(), 'dd.MM.yyyy HH:mm')} — str. ${i}/${pages}`,
+      `VetCRM — ${format(new Date(), 'dd.MM.yyyy HH:mm')} — стр. ${i}/${pages}`,
       pageWidth / 2,
       doc.internal.pageSize.getHeight() - 10,
       { align: 'center' }
@@ -110,5 +124,5 @@ export function generateMedicalRecordPdf(record: MedicalRecordPdfData) {
 
   const petName = record.pet?.name || 'record';
   const dateStr = format(new Date(record.visit_date), 'yyyy-MM-dd');
-  doc.save(`medkarta_${petName}_${dateStr}.pdf`);
+  doc.save(`медкарта_${petName}_${dateStr}.pdf`);
 }

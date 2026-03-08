@@ -5,6 +5,7 @@ import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTrigger, SheetTitle } from '@/components/ui/sheet';
 import { useAuth } from '@/contexts/AuthContext';
+import { NotificationBell } from '@/components/NotificationBell';
 
 const staffNavItems = [
   { icon: Home, label: 'Дашборд', href: '/dashboard' },
@@ -45,6 +46,7 @@ export function MobileNav() {
           <span className="font-bold text-sidebar-foreground">VetCRM</span>
         </div>
         <div className="flex items-center gap-1">
+          {!isClient && <NotificationBell />}
           <Button
             variant="ghost"
             size="icon"

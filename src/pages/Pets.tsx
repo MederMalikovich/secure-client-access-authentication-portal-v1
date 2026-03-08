@@ -42,6 +42,8 @@ import { ru } from 'date-fns/locale';
 export default function Pets() {
   const location = useLocation();
   const { toast } = useToast();
+  const { hasRole } = useAuth();
+  const isClient = hasRole('client');
   const [pets, setPets] = useState<any[]>([]);
   const [clients, setClients] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);

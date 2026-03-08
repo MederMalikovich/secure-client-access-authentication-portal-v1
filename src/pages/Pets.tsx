@@ -330,7 +330,7 @@ export default function Pets() {
         columns={columns}
         searchPlaceholder="Поиск по кличке..."
         searchKey="name"
-        onAdd={() => { resetForm(); setDialogOpen(true); }}
+        onAdd={isClient ? undefined : () => { resetForm(); setDialogOpen(true); }}
         addLabel="Добавить питомца"
         onRowClick={(pet) => openDetailDialog(pet)}
         isLoading={loading}

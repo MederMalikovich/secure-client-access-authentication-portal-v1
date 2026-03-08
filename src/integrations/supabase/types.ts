@@ -657,10 +657,13 @@ export type Database = {
           client_id: string | null
           created_at: string
           id: string
+          is_read: boolean | null
           is_sent: boolean | null
           message: string | null
           scheduled_for: string | null
           sent_at: string | null
+          severity: string | null
+          target_role: string | null
           title: string
           type: string
         }
@@ -670,10 +673,13 @@ export type Database = {
           client_id?: string | null
           created_at?: string
           id?: string
+          is_read?: boolean | null
           is_sent?: boolean | null
           message?: string | null
           scheduled_for?: string | null
           sent_at?: string | null
+          severity?: string | null
+          target_role?: string | null
           title: string
           type: string
         }
@@ -683,10 +689,13 @@ export type Database = {
           client_id?: string | null
           created_at?: string
           id?: string
+          is_read?: boolean | null
           is_sent?: boolean | null
           message?: string | null
           scheduled_for?: string | null
           sent_at?: string | null
+          severity?: string | null
+          target_role?: string | null
           title?: string
           type?: string
         }

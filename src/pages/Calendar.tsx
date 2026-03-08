@@ -35,6 +35,8 @@ const hours = Array.from({ length: 12 }, (_, i) => i + 8); // 8:00 - 19:00
 
 export default function Calendar() {
   const { toast } = useToast();
+  const { hasAnyRole } = useAuth();
+  const canManage = hasAnyRole(['admin', 'veterinarian', 'registrar', 'manager']);
   const [currentDate, setCurrentDate] = useState(new Date());
   const [appointments, setAppointments] = useState<any[]>([]);
   const [clients, setClients] = useState<any[]>([]);

@@ -38,6 +38,8 @@ import { ru } from 'date-fns/locale';
 
 export default function Finances() {
   const { toast } = useToast();
+  const { hasAnyRole } = useAuth();
+  const canManage = hasAnyRole(['admin', 'accountant']);
   const [invoices, setInvoices] = useState<any[]>([]);
   const [clients, setClients] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);

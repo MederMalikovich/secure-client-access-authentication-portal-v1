@@ -39,6 +39,8 @@ import { InventoryItem, InventoryCategory, MovementType } from '@/lib/types';
 
 export default function Inventory() {
   const { toast } = useToast();
+  const { hasAnyRole } = useAuth();
+  const canManage = hasAnyRole(['admin', 'manager']);
   const [items, setItems] = useState<any[]>([]);
   const [categories, setCategories] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);

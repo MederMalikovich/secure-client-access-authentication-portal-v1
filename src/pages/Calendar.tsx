@@ -110,7 +110,8 @@ export default function Calendar() {
         supabase.from('clients').select('id, full_name').order('full_name'),
         supabase.from('pets').select('id, name, client_id').order('name'),
         supabase.from('services').select('id, name').eq('is_active', true).order('name'),
-        supabase.from('profiles').select('id, full_name').eq('is_active', true).order('full_name'),
+        // First get vet user_ids, then fetch their profiles
+        supabase.from('user_roles').select('user_id').eq('role', 'veterinarian'),
       ]);
 
       if (appointmentsRes.error) throw appointmentsRes.error;
@@ -119,7 +120,20 @@ export default function Calendar() {
       setClients(clientsRes.data || []);
       setPets(petsRes.data || []);
       setServices(servicesRes.data || []);
-      setVets(vetsRes.data || []);
+
+      // Fetch vet profiles based on user_roles
+      const vetUserIds = (vetsRes.data || []).map((r: any) => r.user_id);
+      if (vetUserIds.length > 0) {
+        const { data: vetProfiles } = await supabase
+          .from('profiles')
+          .select('id, full_name')
+          .in('user_id', vetUserIds)
+          .eq('is_active', true)
+          .order('full_name');
+        setVets(vetProfiles || []);
+      } else {
+        setVets([]);
+      }
     } catch (error) {
     } finally {
       setLoading(false);

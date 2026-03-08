@@ -92,7 +92,7 @@ export default function Auth() {
       });
     } else {
       toast({ title: 'Добро пожаловать!', description: 'Вы вошли как клиент' });
-      navigate('/dashboard');
+      navigate('/pets');
     }
   };
 

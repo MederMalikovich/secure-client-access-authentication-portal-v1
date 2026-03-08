@@ -32,18 +32,18 @@ function AppRoutes() {
     <Routes>
       <Route path="/auth" element={<Auth />} />
       <Route path="/" element={<Navigate to="/dashboard" replace />} />
-      <Route path="/dashboard" element={<ProtectedRoute><MainLayout><Dashboard /></MainLayout></ProtectedRoute>} />
-      <Route path="/clients" element={<ProtectedRoute><MainLayout><Clients /></MainLayout></ProtectedRoute>} />
+      <Route path="/dashboard" element={<ProtectedRoute staffOnly><MainLayout><Dashboard /></MainLayout></ProtectedRoute>} />
+      <Route path="/clients" element={<ProtectedRoute staffOnly><MainLayout><Clients /></MainLayout></ProtectedRoute>} />
       <Route path="/pets" element={<ProtectedRoute><MainLayout><Pets /></MainLayout></ProtectedRoute>} />
-      <Route path="/services" element={<ProtectedRoute><MainLayout><Services /></MainLayout></ProtectedRoute>} />
-      <Route path="/diseases" element={<ProtectedRoute><MainLayout><Diseases /></MainLayout></ProtectedRoute>} />
-      <Route path="/calendar" element={<ProtectedRoute><MainLayout><Calendar /></MainLayout></ProtectedRoute>} />
+      <Route path="/services" element={<ProtectedRoute staffOnly><MainLayout><Services /></MainLayout></ProtectedRoute>} />
+      <Route path="/diseases" element={<ProtectedRoute staffOnly><MainLayout><Diseases /></MainLayout></ProtectedRoute>} />
+      <Route path="/calendar" element={<ProtectedRoute staffOnly><MainLayout><Calendar /></MainLayout></ProtectedRoute>} />
       <Route path="/medical-records" element={<ProtectedRoute><MainLayout><MedicalRecords /></MainLayout></ProtectedRoute>} />
-      <Route path="/inventory" element={<ProtectedRoute><MainLayout><Inventory /></MainLayout></ProtectedRoute>} />
-      <Route path="/shop" element={<ProtectedRoute><MainLayout><Shop /></MainLayout></ProtectedRoute>} />
-      <Route path="/finances" element={<ProtectedRoute><MainLayout><Finances /></MainLayout></ProtectedRoute>} />
-      <Route path="/reports" element={<ProtectedRoute><MainLayout><Reports /></MainLayout></ProtectedRoute>} />
-      <Route path="/doctors" element={<ProtectedRoute><MainLayout><Doctors /></MainLayout></ProtectedRoute>} />
+      <Route path="/inventory" element={<ProtectedRoute staffOnly><MainLayout><Inventory /></MainLayout></ProtectedRoute>} />
+      <Route path="/shop" element={<ProtectedRoute staffOnly><MainLayout><Shop /></MainLayout></ProtectedRoute>} />
+      <Route path="/finances" element={<ProtectedRoute staffOnly><MainLayout><Finances /></MainLayout></ProtectedRoute>} />
+      <Route path="/reports" element={<ProtectedRoute staffOnly><MainLayout><Reports /></MainLayout></ProtectedRoute>} />
+      <Route path="/doctors" element={<ProtectedRoute staffOnly><MainLayout><Doctors /></MainLayout></ProtectedRoute>} />
       <Route path="/settings" element={<ProtectedRoute requiredRoles={['admin']}><MainLayout><Settings /></MainLayout></ProtectedRoute>} />
       <Route path="*" element={<NotFound />} />
     </Routes>

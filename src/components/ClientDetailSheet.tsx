@@ -154,11 +154,11 @@ export function ClientDetailSheet({ client, open, onClose, onEdit, onAddAppointm
               <div className="text-xs text-muted-foreground">Питомцев</div>
             </div>
             <div className="bg-background/60 rounded-xl p-3 text-center">
-              <div className="text-lg font-bold text-green-600">{formatCurrency(totalPaid)}</div>
+              <div className="text-lg font-bold text-primary">{formatCurrency(totalPaid)}</div>
               <div className="text-xs text-muted-foreground">Оплачено</div>
             </div>
-            <div className={`rounded-xl p-3 text-center ${totalDebt > 0 ? 'bg-red-50' : 'bg-background/60'}`}>
-              <div className={`text-lg font-bold ${totalDebt > 0 ? 'text-red-600' : ''}`}>
+            <div className={`rounded-xl p-3 text-center ${totalDebt > 0 ? 'bg-destructive/10' : 'bg-background/60'}`}>
+              <div className={`text-lg font-bold ${totalDebt > 0 ? 'text-destructive' : ''}`}>
                 {totalDebt > 0 ? formatCurrency(totalDebt) : '—'}
               </div>
               <div className="text-xs text-muted-foreground">Долг</div>

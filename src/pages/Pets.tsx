@@ -1,9 +1,9 @@
 import { useEffect, useState } from 'react';
 import { getUserFriendlyError } from '@/lib/errorHandler';
 import { getValidationError, petSchema } from '@/lib/validationSchemas';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
-import { MoreVertical, Pencil, Trash2, Eye, Phone, Bell, Plus, CalendarIcon } from 'lucide-react';
+import { MoreVertical, Pencil, Trash2, Eye } from 'lucide-react';
 import { PageHeader } from '@/components/ui/page-header';
 import { DataTable, Column } from '@/components/ui/data-table';
 import { Button } from '@/components/ui/button';
@@ -25,7 +25,6 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Separator } from '@/components/ui/separator';
 import {
   Select,
   SelectContent,
@@ -38,9 +37,11 @@ import { supabase } from '@/integrations/supabase/client';
 import { Pet, PetSpecies, PetGender, speciesLabels, genderLabels } from '@/lib/types';
 import { format } from 'date-fns';
 import { ru } from 'date-fns/locale';
+import { PetDetailSheet } from '@/components/PetDetailSheet';
 
 export default function Pets() {
   const location = useLocation();
+  const navigate = useNavigate();
   const { toast } = useToast();
   const { hasRole } = useAuth();
   const isClient = hasRole('client');
@@ -53,11 +54,6 @@ export default function Pets() {
   const [selectedPet, setSelectedPet] = useState<Pet | null>(null);
   const [detailPet, setDetailPet] = useState<any>(null);
   const [clientSearch, setClientSearch] = useState('');
-
-  // Notification state
-  const [notifDialogOpen, setNotifDialogOpen] = useState(false);
-  const [notifications, setNotifications] = useState<any[]>([]);
-  const [notifForm, setNotifForm] = useState({ title: '', message: '', scheduled_for: '' });
 
   const [formData, setFormData] = useState({
     client_id: '',
@@ -103,17 +99,6 @@ export default function Pets() {
     }
   };
 
-  const fetchPetNotifications = async (petId: string, clientId: string) => {
-    const { data } = await supabase
-      .from('notifications')
-      .select('*')
-      .eq('client_id', clientId)
-      .eq('type', 'pet_reminder')
-      .order('scheduled_for', { ascending: true });
-    // Filter by pet - we store pet_id in the message or title
-    setNotifications((data || []).filter((n: any) => n.title?.includes(petId) || n.message?.includes(petId)));
-  };
-
   const handleSubmit = async () => {
     const validationError = getValidationError(petSchema, formData);
     if (validationError) {
@@ -157,38 +142,6 @@ export default function Pets() {
     }
   };
 
-  const handleAddNotification = async () => {
-    if (!detailPet || !notifForm.title || !notifForm.scheduled_for) {
-      toast({ variant: 'destructive', title: 'Ошибка', description: 'Заполните название и дату' });
-      return;
-    }
-    try {
-      const { error } = await supabase.from('notifications').insert({
-        client_id: detailPet.client_id,
-        type: 'pet_reminder',
-        title: `[${detailPet.id}] ${notifForm.title}`,
-        message: `Питомец: ${detailPet.name}. ${notifForm.message || ''}`,
-        scheduled_for: new Date(notifForm.scheduled_for).toISOString(),
-        channel: 'system',
-      });
-      if (error) throw error;
-      toast({ title: 'Успешно', description: 'Уведомление добавлено' });
-      setNotifForm({ title: '', message: '', scheduled_for: '' });
-      setNotifDialogOpen(false);
-      fetchPetNotifications(detailPet.id, detailPet.client_id);
-    } catch (error: any) {
-      toast({ variant: 'destructive', title: 'Ошибка', description: getUserFriendlyError(error) });
-    }
-  };
-
-  const handleDeleteNotification = async (id: string) => {
-    try {
-      await supabase.from('notifications').delete().eq('id', id);
-      if (detailPet) fetchPetNotifications(detailPet.id, detailPet.client_id);
-      toast({ title: 'Удалено' });
-    } catch (e) {}
-  };
-
   const openEditDialog = (pet: Pet) => {
     setSelectedPet(pet);
     setFormData({
@@ -208,7 +161,6 @@ export default function Pets() {
   const openDetailDialog = (pet: any) => {
     setDetailPet(pet);
     setDetailDialogOpen(true);
-    fetchPetNotifications(pet.id, pet.client_id);
   };
 
   const resetForm = () => {
@@ -244,11 +196,6 @@ export default function Pets() {
         c.client_number?.includes(clientSearch)
       )
     : clients;
-
-  const extractNotifTitle = (raw: string) => {
-    // Remove [pet_id] prefix
-    return raw.replace(/^\[.*?\]\s*/, '');
-  };
 
   const columns: Column<Pet>[] = [
     {
@@ -337,157 +284,25 @@ export default function Pets() {
         emptyMessage="Нет питомцев"
       />
 
-      {/* Detail Dialog */}
-      <Dialog open={detailDialogOpen} onOpenChange={setDetailDialogOpen}>
-        <DialogContent className="glass max-w-2xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <span className="text-2xl">{detailPet && getSpeciesEmoji(detailPet.species)}</span>
-              {detailPet?.name}
-            </DialogTitle>
-          </DialogHeader>
-          {detailPet && (
-            <div className="space-y-4">
-              <div className="grid gap-3 md:grid-cols-2">
-                <div>
-                  <p className="text-sm text-muted-foreground">Вид</p>
-                  <p>{speciesLabels[detailPet.species as PetSpecies]}</p>
-                </div>
-                {detailPet.breed && <div><p className="text-sm text-muted-foreground">Порода</p><p>{detailPet.breed}</p></div>}
-                <div>
-                  <p className="text-sm text-muted-foreground">Пол</p>
-                  <p>{genderLabels[detailPet.gender as PetGender]}</p>
-                </div>
-                {detailPet.weight && <div><p className="text-sm text-muted-foreground">Вес</p><p>{detailPet.weight} кг</p></div>}
-                {detailPet.birth_date && (
-                  <div>
-                    <p className="text-sm text-muted-foreground">Возраст</p>
-                    <p>{getAge(detailPet.birth_date)} ({format(new Date(detailPet.birth_date), 'd MMM yyyy', { locale: ru })})</p>
-                  </div>
-                )}
-                {detailPet.color && <div><p className="text-sm text-muted-foreground">Окрас</p><p>{detailPet.color}</p></div>}
-              </div>
-
-              <Separator />
-              <div>
-                <p className="text-sm font-medium mb-1">Владелец</p>
-                <div className="flex items-center gap-2">
-                  <span>{detailPet.client?.full_name}</span>
-                  {detailPet.client?.phone && (
-                    <span className="text-sm text-muted-foreground flex items-center gap-1">
-                      <Phone className="h-3 w-3" /> {detailPet.client.phone}
-                    </span>
-                  )}
-                </div>
-              </div>
-
-              {detailPet.notes && (
-                <>
-                  <Separator />
-                  <div>
-                    <p className="text-sm font-medium mb-1">Комментарии</p>
-                    <p className="text-sm text-muted-foreground">{detailPet.notes}</p>
-                  </div>
-                </>
-              )}
-
-              {!isClient && (
-                <>
-                  {/* Notifications section */}
-                  <Separator />
-                  <div>
-                    <div className="flex items-center justify-between mb-3">
-                      <p className="text-sm font-medium flex items-center gap-2">
-                        <Bell className="h-4 w-4 text-primary" />
-                        Уведомления / Напоминания
-                      </p>
-                      <Button size="sm" variant="outline" onClick={() => {
-                        setNotifForm({ title: '', message: '', scheduled_for: '' });
-                        setNotifDialogOpen(true);
-                      }}>
-                        <Plus className="h-4 w-4 mr-1" />Добавить
-                      </Button>
-                    </div>
-                    {notifications.length === 0 ? (
-                      <p className="text-sm text-muted-foreground text-center py-3">Нет уведомлений</p>
-                    ) : (
-                      <div className="space-y-2">
-                        {notifications.map((n) => (
-                          <div key={n.id} className="flex items-center justify-between p-3 rounded-lg bg-muted/30">
-                            <div>
-                              <p className="text-sm font-medium">{extractNotifTitle(n.title)}</p>
-                              <p className="text-xs text-muted-foreground">
-                                <CalendarIcon className="h-3 w-3 inline mr-1" />
-                                {n.scheduled_for ? format(new Date(n.scheduled_for), 'd MMM yyyy', { locale: ru }) : '—'}
-                              </p>
-                              {n.message && <p className="text-xs text-muted-foreground mt-1">{n.message.replace(`Питомец: ${detailPet.name}. `, '')}</p>}
-                            </div>
-                            <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={() => handleDeleteNotification(n.id)}>
-                              <Trash2 className="h-3.5 w-3.5" />
-                            </Button>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                </>
-              )}
-            </div>
-          )}
-          {!isClient && (
-            <DialogFooter>
-              <Button variant="outline" onClick={() => {
-                setDetailDialogOpen(false);
-                if (detailPet) openEditDialog(detailPet);
-              }}>
-                <Pencil className="h-4 w-4 mr-2" />Редактировать
-              </Button>
-            </DialogFooter>
-          )}
-        </DialogContent>
-      </Dialog>
-
-      {/* Add Notification Dialog */}
-      <Dialog open={notifDialogOpen} onOpenChange={setNotifDialogOpen}>
-        <DialogContent className="glass">
-          <DialogHeader>
-            <DialogTitle>Новое уведомление</DialogTitle>
-            <DialogDescription>
-              Напоминание для {detailPet?.name}. Появится на дашборде за день до указанной даты.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="grid gap-4 py-4">
-            <div className="grid gap-2">
-              <Label>Название *</Label>
-              <Input
-                placeholder="Вакцинация, осмотр..."
-                value={notifForm.title}
-                onChange={(e) => setNotifForm({ ...notifForm, title: e.target.value })}
-              />
-            </div>
-            <div className="grid gap-2">
-              <Label>Дата *</Label>
-              <Input
-                type="date"
-                value={notifForm.scheduled_for}
-                onChange={(e) => setNotifForm({ ...notifForm, scheduled_for: e.target.value })}
-              />
-            </div>
-            <div className="grid gap-2">
-              <Label>Описание</Label>
-              <Textarea
-                placeholder="Дополнительная информация..."
-                value={notifForm.message}
-                onChange={(e) => setNotifForm({ ...notifForm, message: e.target.value })}
-              />
-            </div>
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setNotifDialogOpen(false)}>Отмена</Button>
-            <Button onClick={handleAddNotification}>Добавить</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <PetDetailSheet
+        pet={detailPet}
+        open={detailDialogOpen}
+        onClose={() => setDetailDialogOpen(false)}
+        onEdit={() => {
+          setDetailDialogOpen(false);
+          if (detailPet) openEditDialog(detailPet);
+        }}
+        onAddAppointment={(clientId, petId) => {
+          navigate('/calendar', {
+            state: {
+              openNew: true,
+              prefilledClientId: clientId,
+              prefilledPetId: petId,
+            },
+          });
+        }}
+        isClient={isClient}
+      />
 
       {/* Add/Edit Dialog */}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>

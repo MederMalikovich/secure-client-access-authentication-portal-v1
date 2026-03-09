@@ -778,6 +778,7 @@ export type Database = {
           id: string
           name: string
           notes: string | null
+          photo_url: string | null
           species: Database["public"]["Enums"]["pet_species"]
           updated_at: string
           weight: number | null
@@ -792,6 +793,7 @@ export type Database = {
           id?: string
           name: string
           notes?: string | null
+          photo_url?: string | null
           species?: Database["public"]["Enums"]["pet_species"]
           updated_at?: string
           weight?: number | null
@@ -806,6 +808,7 @@ export type Database = {
           id?: string
           name?: string
           notes?: string | null
+          photo_url?: string | null
           species?: Database["public"]["Enums"]["pet_species"]
           updated_at?: string
           weight?: number | null

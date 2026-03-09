@@ -197,9 +197,9 @@ export function PetDetailSheet({ pet, open, onClose, onEdit, onAddAppointment, i
 
           {/* Upcoming appointment */}
           {upcomingAppt && (
-            <div className="mt-3 p-3 rounded-xl bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800 flex items-center gap-3">
-              <Clock className="h-4 w-4 text-blue-600 shrink-0" />
-              <span className="text-sm text-blue-700 dark:text-blue-300">
+            <div className="mt-3 p-3 rounded-xl bg-accent border border-border flex items-center gap-3">
+              <Clock className="h-4 w-4 text-primary shrink-0" />
+              <span className="text-sm text-foreground">
                 Ближайший приём: {format(new Date(upcomingAppt.scheduled_at), 'd MMM, HH:mm', { locale: ru })}
                 {upcomingAppt.service && ` — ${upcomingAppt.service.name}`}
               </span>

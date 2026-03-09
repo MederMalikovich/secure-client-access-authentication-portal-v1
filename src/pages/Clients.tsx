@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { getUserFriendlyError } from '@/lib/errorHandler';
 import { getValidationError, clientSchema } from '@/lib/validationSchemas';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { Phone, Mail, MapPin, MoreVertical, Pencil, Trash2, Eye, PawPrint } from 'lucide-react';
+import { Phone, Mail, MapPin, MoreVertical, Pencil, Trash2, Eye } from 'lucide-react';
 import { PageHeader } from '@/components/ui/page-header';
 import { DataTable, Column } from '@/components/ui/data-table';
 import { Button } from '@/components/ui/button';
@@ -24,13 +24,12 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Separator } from '@/components/ui/separator';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { Client } from '@/lib/types';
 import { format } from 'date-fns';
 import { ru } from 'date-fns/locale';
+import { ClientDetailSheet } from '@/components/ClientDetailSheet';
 
 export default function Clients() {
   const navigate = useNavigate();

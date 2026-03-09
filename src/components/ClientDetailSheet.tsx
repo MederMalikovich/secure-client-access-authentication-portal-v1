@@ -240,11 +240,11 @@ export function ClientDetailSheet({ client, open, onClose, onEdit, onAddAppointm
                         <div className="flex items-start gap-3">
                           <div className="mt-0.5">
                             {appt.status === 'completed' ? (
-                              <CheckCircle2 className="h-4 w-4 text-green-500" />
+                              <CheckCircle2 className="h-4 w-4 text-primary" />
                             ) : appt.status === 'cancelled' ? (
                               <AlertCircle className="h-4 w-4 text-muted-foreground" />
                             ) : (
-                              <CircleDot className="h-4 w-4 text-blue-500" />
+                              <CircleDot className="h-4 w-4 text-primary" />
                             )}
                           </div>
                           <div>

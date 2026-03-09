@@ -168,9 +168,9 @@ export function ClientDetailSheet({ client, open, onClose, onEdit, onAddAppointm
 
         {/* Upcoming appointments alert */}
         {upcomingAppts.length > 0 && (
-          <div className="mx-4 mt-4 p-3 rounded-xl bg-blue-50 border border-blue-200 flex items-center gap-3">
-            <Clock className="h-4 w-4 text-blue-600 shrink-0" />
-            <span className="text-sm text-blue-700">
+          <div className="mx-4 mt-4 p-3 rounded-xl bg-accent border border-border flex items-center gap-3">
+            <Clock className="h-4 w-4 text-primary shrink-0" />
+            <span className="text-sm text-foreground">
               Ближайший приём: {format(new Date(upcomingAppts[0].scheduled_at), 'd MMM, HH:mm', { locale: ru })}
               {upcomingAppts[0].pet && ` — ${upcomingAppts[0].pet.name}`}
             </span>

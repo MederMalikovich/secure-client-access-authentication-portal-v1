@@ -99,17 +99,6 @@ export default function Pets() {
     }
   };
 
-  const fetchPetNotifications = async (petId: string, clientId: string) => {
-    const { data } = await supabase
-      .from('notifications')
-      .select('*')
-      .eq('client_id', clientId)
-      .eq('type', 'pet_reminder')
-      .order('scheduled_for', { ascending: true });
-    // Filter by pet - we store pet_id in the message or title
-    setNotifications((data || []).filter((n: any) => n.title?.includes(petId) || n.message?.includes(petId)));
-  };
-
   const handleSubmit = async () => {
     const validationError = getValidationError(petSchema, formData);
     if (validationError) {

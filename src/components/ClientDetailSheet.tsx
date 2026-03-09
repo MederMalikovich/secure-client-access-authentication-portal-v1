@@ -27,20 +27,20 @@ interface ClientDetailSheetProps {
 }
 
 const statusColors: Record<string, string> = {
-  pending: 'text-yellow-600 bg-yellow-50',
-  partial: 'text-blue-600 bg-blue-50',
-  paid: 'text-green-600 bg-green-50',
-  refunded: 'text-purple-600 bg-purple-50',
+  pending: 'text-foreground bg-muted',
+  partial: 'text-foreground bg-secondary',
+  paid: 'text-primary bg-primary/10',
+  refunded: 'text-muted-foreground bg-muted',
   cancelled: 'text-muted-foreground bg-muted',
 };
 
 const apptStatusColors: Record<string, string> = {
-  scheduled: 'text-blue-600 bg-blue-50',
-  confirmed: 'text-green-600 bg-green-50',
-  in_progress: 'text-yellow-600 bg-yellow-50',
-  completed: 'text-green-700 bg-green-100',
+  scheduled: 'text-foreground bg-secondary',
+  confirmed: 'text-primary bg-primary/10',
+  in_progress: 'text-foreground bg-muted',
+  completed: 'text-primary bg-primary/15',
   cancelled: 'text-muted-foreground bg-muted',
-  no_show: 'text-red-600 bg-red-50',
+  no_show: 'text-destructive bg-destructive/10',
 };
 
 export function ClientDetailSheet({ client, open, onClose, onEdit, onAddAppointment }: ClientDetailSheetProps) {

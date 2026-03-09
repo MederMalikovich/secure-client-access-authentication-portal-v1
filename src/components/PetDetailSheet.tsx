@@ -381,10 +381,10 @@ export function PetDetailSheet({ pet, open, onClose, onEdit, onAddAppointment, i
               {totalPaid > 0 && (
                 <Card>
                   <CardContent className="p-3 flex items-center gap-3">
-                    <TrendingUp className="h-8 w-8 text-green-500 shrink-0" />
+                    <TrendingUp className="h-8 w-8 text-primary shrink-0" />
                     <div>
                       <p className="text-xs text-muted-foreground">Всего потрачено</p>
-                      <p className="font-bold text-green-600">{formatCurrency(totalPaid)}</p>
+                      <p className="font-bold text-primary">{formatCurrency(totalPaid)}</p>
                     </div>
                   </CardContent>
                 </Card>

@@ -142,38 +142,6 @@ export default function Pets() {
     }
   };
 
-  const handleAddNotification = async () => {
-    if (!detailPet || !notifForm.title || !notifForm.scheduled_for) {
-      toast({ variant: 'destructive', title: 'Ошибка', description: 'Заполните название и дату' });
-      return;
-    }
-    try {
-      const { error } = await supabase.from('notifications').insert({
-        client_id: detailPet.client_id,
-        type: 'pet_reminder',
-        title: `[${detailPet.id}] ${notifForm.title}`,
-        message: `Питомец: ${detailPet.name}. ${notifForm.message || ''}`,
-        scheduled_for: new Date(notifForm.scheduled_for).toISOString(),
-        channel: 'system',
-      });
-      if (error) throw error;
-      toast({ title: 'Успешно', description: 'Уведомление добавлено' });
-      setNotifForm({ title: '', message: '', scheduled_for: '' });
-      setNotifDialogOpen(false);
-      fetchPetNotifications(detailPet.id, detailPet.client_id);
-    } catch (error: any) {
-      toast({ variant: 'destructive', title: 'Ошибка', description: getUserFriendlyError(error) });
-    }
-  };
-
-  const handleDeleteNotification = async (id: string) => {
-    try {
-      await supabase.from('notifications').delete().eq('id', id);
-      if (detailPet) fetchPetNotifications(detailPet.id, detailPet.client_id);
-      toast({ title: 'Удалено' });
-    } catch (e) {}
-  };
-
   const openEditDialog = (pet: Pet) => {
     setSelectedPet(pet);
     setFormData({
@@ -193,7 +161,6 @@ export default function Pets() {
   const openDetailDialog = (pet: any) => {
     setDetailPet(pet);
     setDetailDialogOpen(true);
-    fetchPetNotifications(pet.id, pet.client_id);
   };
 
   const resetForm = () => {

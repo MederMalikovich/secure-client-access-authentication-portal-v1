@@ -290,19 +290,19 @@ export function ClientDetailSheet({ client, open, onClose, onEdit, onAddAppointm
               <div className="grid grid-cols-2 gap-3">
                 <Card>
                   <CardContent className="p-3 flex items-center gap-3">
-                    <TrendingUp className="h-8 w-8 text-green-500 shrink-0" />
+                    <TrendingUp className="h-8 w-8 text-primary shrink-0" />
                     <div>
                       <p className="text-xs text-muted-foreground">Всего оплачено</p>
-                      <p className="font-bold text-green-600">{formatCurrency(totalPaid)}</p>
+                      <p className="font-bold text-primary">{formatCurrency(totalPaid)}</p>
                     </div>
                   </CardContent>
                 </Card>
                 <Card>
-                  <CardContent className={`p-3 flex items-center gap-3 ${totalDebt > 0 ? 'bg-red-50' : ''}`}>
-                    <DollarSign className={`h-8 w-8 shrink-0 ${totalDebt > 0 ? 'text-red-500' : 'text-muted-foreground'}`} />
+                  <CardContent className={`p-3 flex items-center gap-3 ${totalDebt > 0 ? 'bg-destructive/10' : ''}`}>
+                    <DollarSign className={`h-8 w-8 shrink-0 ${totalDebt > 0 ? 'text-destructive' : 'text-muted-foreground'}`} />
                     <div>
                       <p className="text-xs text-muted-foreground">Задолженность</p>
-                      <p className={`font-bold ${totalDebt > 0 ? 'text-red-600' : 'text-muted-foreground'}`}>
+                      <p className={`font-bold ${totalDebt > 0 ? 'text-destructive' : 'text-muted-foreground'}`}>
                         {totalDebt > 0 ? formatCurrency(totalDebt) : 'Нет'}
                       </p>
                     </div>

@@ -197,11 +197,6 @@ export default function Pets() {
       )
     : clients;
 
-  const extractNotifTitle = (raw: string) => {
-    // Remove [pet_id] prefix
-    return raw.replace(/^\[.*?\]\s*/, '');
-  };
-
   const columns: Column<Pet>[] = [
     {
       key: 'name',

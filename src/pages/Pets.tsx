@@ -41,6 +41,7 @@ import { PetDetailSheet } from '@/components/PetDetailSheet';
 
 export default function Pets() {
   const location = useLocation();
+  const navigate = useNavigate();
   const { toast } = useToast();
   const { hasRole } = useAuth();
   const isClient = hasRole('client');
@@ -53,11 +54,6 @@ export default function Pets() {
   const [selectedPet, setSelectedPet] = useState<Pet | null>(null);
   const [detailPet, setDetailPet] = useState<any>(null);
   const [clientSearch, setClientSearch] = useState('');
-
-  // Notification state
-  const [notifDialogOpen, setNotifDialogOpen] = useState(false);
-  const [notifications, setNotifications] = useState<any[]>([]);
-  const [notifForm, setNotifForm] = useState({ title: '', message: '', scheduled_for: '' });
 
   const [formData, setFormData] = useState({
     client_id: '',

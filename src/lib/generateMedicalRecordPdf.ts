@@ -30,10 +30,20 @@ async function loadFont(): Promise<string> {
   return btoa(binary);
 }
 
+// Brand colors
+const PRIMARY_COLOR: [number, number, number] = [218, 165, 32]; // golden
+const DARK_TEXT: [number, number, number] = [40, 40, 40];
+const MUTED_TEXT: [number, number, number] = [120, 120, 120];
+const SECTION_BG: [number, number, number] = [248, 246, 240];
+const LINE_COLOR: [number, number, number] = [220, 215, 200];
+
 export async function generateMedicalRecordPdf(record: MedicalRecordPdfData) {
   const doc = new jsPDF();
   const pageWidth = doc.internal.pageSize.getWidth();
-  let y = 20;
+  const pageHeight = doc.internal.pageSize.getHeight();
+  const margin = 20;
+  const contentWidth = pageWidth - margin * 2;
+  let y = 0;
 
   // Load and register Cyrillic font
   const fontBase64 = await loadFont();
@@ -41,85 +51,145 @@ export async function generateMedicalRecordPdf(record: MedicalRecordPdfData) {
   doc.addFont('Roboto-Regular.ttf', 'Roboto', 'normal');
   doc.setFont('Roboto');
 
-  const addText = (label: string, value: string) => {
-    if (y > 270) {
+  const checkPageBreak = (needed: number) => {
+    if (y + needed > pageHeight - 25) {
       doc.addPage();
-      y = 20;
+      y = 25;
     }
-    doc.setFontSize(10);
-    doc.setFont('Roboto', 'normal');
-    doc.text(label, 14, y);
-    const lines = doc.splitTextToSize(value, pageWidth - 60);
-    doc.text(lines, 60, y);
-    y += Math.max(lines.length * 5, 7);
   };
 
-  const addSection = (title: string, content: string) => {
-    if (!content) return;
-    if (y > 260) {
-      doc.addPage();
-      y = 20;
-    }
-    y += 3;
-    doc.setFontSize(11);
-    doc.setFont('Roboto', 'normal');
-    doc.text(title, 14, y);
-    y += 6;
-    doc.setFontSize(10);
-    const lines = doc.splitTextToSize(content, pageWidth - 28);
-    doc.text(lines, 14, y);
-    y += lines.length * 5 + 2;
-  };
+  // ── Header band ──
+  doc.setFillColor(...PRIMARY_COLOR);
+  doc.rect(0, 0, pageWidth, 38, 'F');
 
-  // Header
-  doc.setFontSize(16);
-  doc.text('VetCRM', 14, y);
+  // Thin accent line below header
+  doc.setFillColor(255, 215, 80);
+  doc.rect(0, 36, pageWidth, 2, 'F');
+
+  doc.setTextColor(255, 255, 255);
+  doc.setFontSize(20);
+  doc.text('VetCRM', margin, 18);
   doc.setFontSize(10);
-  doc.text('Медицинская карта', 14, y + 6);
-  y += 16;
+  doc.text('Медицинская карта приёма', margin, 28);
 
-  // Line
-  doc.setDrawColor(200);
-  doc.line(14, y, pageWidth - 14, y);
-  y += 8;
-
-  // Basic info
+  // Date on the right
   const visitDate = format(new Date(record.visit_date), 'd MMMM yyyy, HH:mm', { locale: ru });
-  addText('Дата:', visitDate);
-  addText('Питомец:', record.pet?.name || '—');
-  addText('Владелец:', record.pet?.client?.full_name || '—');
-  addText('Врач:', record.veterinarian?.full_name || '—');
+  doc.setFontSize(10);
+  doc.text(visitDate, pageWidth - margin, 18, { align: 'right' });
+  doc.setFontSize(8);
+  doc.text('Дата приёма', pageWidth - margin, 28, { align: 'right' });
 
-  if (record.weight_at_visit) addText('Вес:', `${record.weight_at_visit} кг`);
-  if (record.temperature) addText('Температура:', `${record.temperature}°C`);
+  y = 50;
 
-  y += 4;
-  doc.line(14, y, pageWidth - 14, y);
-  y += 6;
+  // ── Patient info card ──
+  doc.setFillColor(...SECTION_BG);
+  doc.roundedRect(margin, y, contentWidth, 32, 3, 3, 'F');
+  doc.setDrawColor(...LINE_COLOR);
+  doc.roundedRect(margin, y, contentWidth, 32, 3, 3, 'S');
 
-  // Sections
-  addSection('Жалобы', record.chief_complaint || '');
-  addSection('Осмотр', record.examination_notes || '');
-  addSection('Диагноз', record.diagnosis || '');
-  addSection('Лечение', record.treatment || '');
-  addSection('Назначения', record.prescriptions || '');
-  addSection('Анализы', record.lab_results || '');
-  addSection('Материалы', record.materials_used || '');
-  addSection('Комментарии врача', record.doctor_notes || '');
+  doc.setTextColor(...MUTED_TEXT);
+  doc.setFontSize(8);
+  doc.text('ПИТОМЕЦ', margin + 8, y + 10);
+  doc.text('ВЛАДЕЛЕЦ', margin + 8, y + 24);
 
-  // Footer
+  const col2X = margin + contentWidth * 0.5;
+  doc.text('ВРАЧ', col2X, y + 10);
+
+  doc.setTextColor(...DARK_TEXT);
+  doc.setFontSize(11);
+  doc.text(record.pet?.name || '—', margin + 8, y + 16);
+  doc.setFontSize(10);
+  doc.text(record.pet?.client?.full_name || '—', margin + 8, y + 30);
+  doc.text(record.veterinarian?.full_name || '—', col2X, y + 16);
+
+  // Vitals on the right
+  const vitalsX = pageWidth - margin - 8;
+  if (record.weight_at_visit || record.temperature) {
+    doc.setTextColor(...MUTED_TEXT);
+    doc.setFontSize(8);
+    let vitY = y + 10;
+    if (record.weight_at_visit) {
+      doc.text('ВЕС', vitalsX - 20, vitY);
+      doc.setTextColor(...DARK_TEXT);
+      doc.setFontSize(11);
+      doc.text(`${record.weight_at_visit} кг`, vitalsX - 20, vitY + 6);
+      vitY += 14;
+      doc.setTextColor(...MUTED_TEXT);
+      doc.setFontSize(8);
+    }
+    if (record.temperature) {
+      doc.text('ТЕМП.', vitalsX - 20, vitY);
+      doc.setTextColor(...DARK_TEXT);
+      doc.setFontSize(11);
+      doc.text(`${record.temperature}°C`, vitalsX - 20, vitY + 6);
+    }
+  }
+
+  y += 42;
+
+  // ── Sections ──
+  const sections = [
+    { label: 'Жалобы', value: record.chief_complaint, icon: '●' },
+    { label: 'Осмотр', value: record.examination_notes, icon: '●' },
+    { label: 'Диагноз', value: record.diagnosis, icon: '●' },
+    { label: 'Лечение', value: record.treatment, icon: '●' },
+    { label: 'Назначения', value: record.prescriptions, icon: '●' },
+    { label: 'Результаты анализов', value: record.lab_results, icon: '●' },
+    { label: 'Использованные материалы', value: record.materials_used, icon: '●' },
+    { label: 'Комментарии врача', value: record.doctor_notes, icon: '●' },
+  ].filter(s => s.value);
+
+  for (const section of sections) {
+    checkPageBreak(25);
+
+    // Section title with golden accent dot
+    doc.setFillColor(...PRIMARY_COLOR);
+    doc.circle(margin + 3, y + 1, 1.5, 'F');
+
+    doc.setTextColor(...PRIMARY_COLOR);
+    doc.setFontSize(9);
+    doc.text(section.label.toUpperCase(), margin + 8, y + 3);
+
+    y += 8;
+
+    // Section content
+    doc.setTextColor(...DARK_TEXT);
+    doc.setFontSize(10);
+    const lines = doc.splitTextToSize(section.value!, contentWidth - 8);
+    
+    checkPageBreak(lines.length * 5 + 4);
+    
+    // Light background for content
+    const blockHeight = lines.length * 5 + 6;
+    doc.setFillColor(252, 251, 248);
+    doc.roundedRect(margin, y - 2, contentWidth, blockHeight, 2, 2, 'F');
+
+    doc.text(lines, margin + 4, y + 4);
+    y += blockHeight + 4;
+  }
+
+  // ── Footer on all pages ──
   const pages = doc.getNumberOfPages();
   for (let i = 1; i <= pages; i++) {
     doc.setPage(i);
-    doc.setFontSize(8);
-    doc.setTextColor(150);
+
+    // Footer line
+    doc.setDrawColor(...LINE_COLOR);
+    doc.line(margin, pageHeight - 18, pageWidth - margin, pageHeight - 18);
+
+    doc.setFontSize(7);
+    doc.setTextColor(...MUTED_TEXT);
     doc.text(
-      `VetCRM — ${format(new Date(), 'dd.MM.yyyy HH:mm')} — стр. ${i}/${pages}`,
-      pageWidth / 2,
-      doc.internal.pageSize.getHeight() - 10,
-      { align: 'center' }
+      `VetCRM — Сгенерировано ${format(new Date(), 'dd.MM.yyyy HH:mm')}`,
+      margin,
+      pageHeight - 12
     );
-    doc.setTextColor(0);
+    doc.text(
+      `Стр. ${i} из ${pages}`,
+      pageWidth - margin,
+      pageHeight - 12,
+      { align: 'right' }
+    );
   }
 
   const petName = record.pet?.name || 'record';

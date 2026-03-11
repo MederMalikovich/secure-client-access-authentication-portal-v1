@@ -493,39 +493,93 @@ export default function MedicalRecords() {
 
       {/* Detail Dialog */}
       <Dialog open={detailDialogOpen} onOpenChange={setDetailDialogOpen}>
-        <DialogContent className="glass max-w-3xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>Запись от {detailRecord && format(new Date(detailRecord.visit_date), 'd MMMM yyyy, HH:mm', { locale: ru })}</DialogTitle>
-          </DialogHeader>
+        <DialogContent className="glass max-w-3xl max-h-[90vh] overflow-y-auto p-0">
           {detailRecord && (
-            <div className="space-y-3 text-sm">
-              <div className="grid gap-2 md:grid-cols-2">
-                <div><span className="text-muted-foreground">Питомец:</span> {detailRecord.pet?.name}</div>
-                <div><span className="text-muted-foreground">Владелец:</span> {detailRecord.pet?.client?.full_name}</div>
-                <div><span className="text-muted-foreground">Врач:</span> {detailRecord.veterinarian?.full_name || '—'}</div>
-                {detailRecord.weight_at_visit && <div><span className="text-muted-foreground">Вес:</span> {detailRecord.weight_at_visit} кг</div>}
-                {detailRecord.temperature && <div><span className="text-muted-foreground">Температура:</span> {detailRecord.temperature}°C</div>}
+            <>
+              {/* Header */}
+              <div className="bg-gradient-to-br from-primary/15 to-primary/5 p-6 border-b border-border rounded-t-lg">
+                <div className="flex items-start justify-between">
+                  <div>
+                    <p className="text-xs text-muted-foreground uppercase tracking-wider mb-1">Медицинская карта</p>
+                    <DialogHeader>
+                      <DialogTitle className="text-xl">
+                        {detailRecord.pet?.name}
+                      </DialogTitle>
+                    </DialogHeader>
+                    <p className="text-sm text-muted-foreground mt-1">
+                      Владелец: {detailRecord.pet?.client?.full_name}
+                    </p>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-sm font-medium">
+                      {format(new Date(detailRecord.visit_date), 'd MMMM yyyy', { locale: ru })}
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      {format(new Date(detailRecord.visit_date), 'HH:mm')}
+                    </p>
+                  </div>
+                </div>
+
+                {/* Vitals & doctor */}
+                <div className="flex flex-wrap gap-3 mt-4">
+                  {detailRecord.veterinarian?.full_name && (
+                    <div className="bg-background/60 rounded-lg px-3 py-1.5 text-sm">
+                      <span className="text-muted-foreground">Врач: </span>
+                      <span className="font-medium">{detailRecord.veterinarian.full_name}</span>
+                    </div>
+                  )}
+                  {detailRecord.weight_at_visit && (
+                    <div className="bg-background/60 rounded-lg px-3 py-1.5 text-sm">
+                      <span className="text-muted-foreground">Вес: </span>
+                      <span className="font-medium">{detailRecord.weight_at_visit} кг</span>
+                    </div>
+                  )}
+                  {detailRecord.temperature && (
+                    <div className="bg-background/60 rounded-lg px-3 py-1.5 text-sm">
+                      <span className="text-muted-foreground">Температура: </span>
+                      <span className="font-medium">{detailRecord.temperature}°C</span>
+                    </div>
+                  )}
+                </div>
               </div>
-              {detailRecord.chief_complaint && <div><p className="text-muted-foreground font-medium">Жалобы</p><p>{detailRecord.chief_complaint}</p></div>}
-              {detailRecord.examination_notes && <div><p className="text-muted-foreground font-medium">Осмотр</p><p>{detailRecord.examination_notes}</p></div>}
-              {detailRecord.diagnosis && <div><p className="text-muted-foreground font-medium">Диагноз</p><p>{detailRecord.diagnosis}</p></div>}
-              {detailRecord.treatment && <div><p className="text-muted-foreground font-medium">Лечение</p><p>{detailRecord.treatment}</p></div>}
-              {detailRecord.prescriptions && <div><p className="text-muted-foreground font-medium">Назначения</p><p>{detailRecord.prescriptions}</p></div>}
-              {detailRecord.lab_results && <div><p className="text-muted-foreground font-medium">Анализы</p><p>{detailRecord.lab_results}</p></div>}
-              {detailRecord.doctor_notes && <div><p className="text-muted-foreground font-medium">Комментарии врача</p><p>{detailRecord.doctor_notes}</p></div>}
-            </div>
+
+              {/* Body */}
+              <div className="p-6 space-y-5">
+                {[
+                  { label: 'Жалобы', value: detailRecord.chief_complaint, icon: '💬' },
+                  { label: 'Осмотр', value: detailRecord.examination_notes, icon: '🔍' },
+                  { label: 'Диагноз', value: detailRecord.diagnosis, icon: '🩺' },
+                  { label: 'Лечение', value: detailRecord.treatment, icon: '💊' },
+                  { label: 'Назначения', value: detailRecord.prescriptions, icon: '📋' },
+                  { label: 'Анализы', value: detailRecord.lab_results, icon: '🧪' },
+                  { label: 'Материалы', value: detailRecord.materials_used, icon: '🧰' },
+                  { label: 'Комментарии врача', value: detailRecord.doctor_notes, icon: '📝' },
+                ].filter(s => s.value).map((section) => (
+                  <div key={section.label} className="group">
+                    <div className="flex items-center gap-2 mb-1.5">
+                      <span className="text-base">{section.icon}</span>
+                      <h4 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">{section.label}</h4>
+                    </div>
+                    <p className="text-sm leading-relaxed pl-7 whitespace-pre-wrap">{section.value}</p>
+                  </div>
+                ))}
+              </div>
+
+              {/* Footer */}
+              <div className="flex justify-end gap-2 p-4 border-t border-border">
+                <Button variant="outline" onClick={async () => { try { await generateMedicalRecordPdf(detailRecord); } catch { toast({ variant: 'destructive', title: 'Ошибка', description: 'Не удалось сгенерировать PDF' }); } }}>
+                  <Download className="h-4 w-4 mr-2" />
+                  Скачать PDF
+                </Button>
+                {!isClient && (
+                  <Button variant="outline" onClick={() => { setDetailDialogOpen(false); if (detailRecord) openEditDialog(detailRecord); }}>
+                    <Pencil className="h-4 w-4 mr-2" />
+                    Редактировать
+                  </Button>
+                )}
+              </div>
+            </>
           )}
-          <DialogFooter>
-            <Button variant="outline" onClick={async () => { try { await generateMedicalRecordPdf(detailRecord); } catch { toast({ variant: 'destructive', title: 'Ошибка', description: 'Не удалось сгенерировать PDF' }); } }}>
-              <Download className="h-4 w-4 mr-2" />
-              Скачать PDF
-            </Button>
-            {!isClient && (
-              <Button variant="outline" onClick={() => { setDetailDialogOpen(false); if (detailRecord) openEditDialog(detailRecord); }}>
-                Редактировать
-              </Button>
-            )}
-          </DialogFooter>
         </DialogContent>
       </Dialog>
 

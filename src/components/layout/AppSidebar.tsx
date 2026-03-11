@@ -131,10 +131,10 @@ export function AppSidebar() {
         )}
       </nav>
 
-      <div className="p-3 border-t border-sidebar-border">
-        {!collapsed && (
+      <div className="p-3 border-t border-sidebar-border space-y-2">
+        {!collapsed ? (
           <div className="flex items-center gap-3 px-3 py-2">
-            <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center">
+            <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center shrink-0">
               <span className="text-sm font-semibold text-primary">
                 {(profile?.full_name || 'U')[0].toUpperCase()}
               </span>
@@ -146,7 +146,18 @@ export function AppSidebar() {
               </p>
             </div>
           </div>
-        )}
+        ) : null}
+        <Button
+          variant="ghost"
+          className={cn(
+            'w-full text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors',
+            collapsed ? 'justify-center px-0' : 'justify-start gap-3 px-3'
+          )}
+          onClick={signOut}
+        >
+          <LogOut className="h-4 w-4 shrink-0" />
+          {!collapsed && <span className="text-sm">Выйти</span>}
+        </Button>
       </div>
     </aside>
   );

@@ -62,11 +62,9 @@ export async function generateMedicalRecordPdf(record: MedicalRecordPdfData) {
   doc.setFillColor(...PRIMARY_COLOR);
   doc.rect(0, 0, pageWidth, 38, 'F');
 
-  // Subtle decorative line
-  doc.setFillColor(255, 255, 255);
-  doc.setGlobalAlpha?.(0.15);
+  // Thin accent line below header
+  doc.setFillColor(255, 215, 80);
   doc.rect(0, 36, pageWidth, 2, 'F');
-  doc.setGlobalAlpha?.(1);
 
   doc.setTextColor(255, 255, 255);
   doc.setFontSize(20);

@@ -43,7 +43,7 @@ const systemNavItems: NavItem[] = [
 export function AppSidebar() {
   const [collapsed, setCollapsed] = useState(false);
   const location = useLocation();
-  const { hasRole, profile } = useAuth();
+  const { hasRole, profile, signOut } = useAuth();
   const isClient = hasRole('client');
 
   const renderNavItems = (items: NavItem[], label: string) => {

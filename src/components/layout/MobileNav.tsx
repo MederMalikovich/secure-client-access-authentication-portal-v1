@@ -98,21 +98,29 @@ export function MobileNav() {
                   );
                 })}
               </nav>
-              {isClient && (
-                <div className="p-3 border-t border-sidebar-border">
-                  <div className="px-3 py-2 text-sm text-sidebar-foreground/70 truncate">
-                    {profile?.full_name || 'Клиент'}
+              <div className="p-3 border-t border-sidebar-border">
+                <div className="flex items-center gap-3 px-3 py-2">
+                  <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center shrink-0">
+                    <span className="text-sm font-semibold text-primary">
+                      {(profile?.full_name || 'U')[0].toUpperCase()}
+                    </span>
                   </div>
-                  <Button
-                    variant="ghost"
-                    className="w-full justify-start gap-3 text-sidebar-foreground/70"
-                    onClick={() => { setOpen(false); signOut(); }}
-                  >
-                    <LogOut className="h-5 w-5" />
-                    Выйти
-                  </Button>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-sidebar-foreground truncate">{profile?.full_name || 'Пользователь'}</p>
+                    <p className="text-xs text-sidebar-foreground/60 truncate">
+                      {isClient ? 'Клиент' : profile?.email || ''}
+                    </p>
+                  </div>
                 </div>
-              )}
+                <Button
+                  variant="ghost"
+                  className="w-full justify-start gap-3 text-sidebar-foreground/70 hover:text-destructive hover:bg-destructive/10"
+                  onClick={() => { setOpen(false); signOut(); }}
+                >
+                  <LogOut className="h-5 w-5" />
+                  Выйти
+                </Button>
+              </div>
             </div>
           </SheetContent>
         </Sheet>

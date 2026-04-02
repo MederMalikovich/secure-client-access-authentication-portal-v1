@@ -194,6 +194,10 @@ export function ClientDetailSheet({ client, open, onClose, onEdit, onAddAppointm
                 <DollarSign className="h-4 w-4 mr-1.5" />
                 Финансы
               </TabsTrigger>
+              <TabsTrigger value="notifications" className="flex-1">
+                <Bell className="h-4 w-4 mr-1.5" />
+                Уведомления
+              </TabsTrigger>
             </TabsList>
 
             {/* Pets tab */}

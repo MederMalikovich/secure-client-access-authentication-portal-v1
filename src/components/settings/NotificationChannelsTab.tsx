@@ -14,7 +14,7 @@ interface ChannelConfig {
   id: string;
   channel: string;
   is_enabled: boolean;
-  config: Record<string, any>;
+  config: any;
 }
 
 const channelMeta: Record<string, { icon: any; label: string; color: string; description: string }> = {

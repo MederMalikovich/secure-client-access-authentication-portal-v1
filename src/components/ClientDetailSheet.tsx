@@ -17,6 +17,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { supabase } from '@/integrations/supabase/client';
 import { speciesLabels, paymentStatusLabels, appointmentStatusLabels } from '@/lib/types';
 import { formatCurrency } from '@/lib/currency';
+import { ClientNotificationPreferences } from '@/components/ClientNotificationPreferences';
 
 interface ClientDetailSheetProps {
   client: any;

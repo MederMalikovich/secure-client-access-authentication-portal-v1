@@ -4,7 +4,7 @@ import { ru } from 'date-fns/locale';
 import {
   Phone, Mail, MapPin, PawPrint, FileText, DollarSign,
   Calendar, Plus, Pencil, Hash, Clock, ChevronRight,
-  TrendingUp, AlertCircle, CheckCircle2, CircleDot
+  TrendingUp, AlertCircle, CheckCircle2, CircleDot, Bell
 } from 'lucide-react';
 import {
   Sheet, SheetContent, SheetHeader, SheetTitle,

@@ -352,6 +352,11 @@ export function ClientDetailSheet({ client, open, onClose, onEdit, onAddAppointm
                 </div>
               )}
             </TabsContent>
+
+            {/* Notifications tab */}
+            <TabsContent value="notifications" className="mt-4">
+              <ClientNotificationPreferences clientId={client.id} />
+            </TabsContent>
           </Tabs>
 
           {client.notes && (

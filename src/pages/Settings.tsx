@@ -35,6 +35,7 @@ import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { Profile, UserRole, AppRole, roleLabels } from '@/lib/types';
 import { useTheme } from '@/contexts/ThemeContext';
+import { NotificationChannelsTab } from '@/components/settings/NotificationChannelsTab';
 import { format } from 'date-fns';
 import { ru } from 'date-fns/locale';
 

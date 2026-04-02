@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { getUserFriendlyError } from '@/lib/errorHandler';
-import { Users, Shield, MoreVertical, Pencil, UserPlus, Sun, Moon, Palette } from 'lucide-react';
+import { Users, Shield, MoreVertical, Pencil, UserPlus, Sun, Moon, Palette, Bell } from 'lucide-react';
 import { PageHeader } from '@/components/ui/page-header';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { DataTable, Column } from '@/components/ui/data-table';

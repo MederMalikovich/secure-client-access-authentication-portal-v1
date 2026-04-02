@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { getUserFriendlyError } from '@/lib/errorHandler';
-import { Users, Shield, MoreVertical, Pencil, UserPlus, Sun, Moon, Palette } from 'lucide-react';
+import { Users, Shield, MoreVertical, Pencil, UserPlus, Sun, Moon, Palette, Bell } from 'lucide-react';
 import { PageHeader } from '@/components/ui/page-header';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { DataTable, Column } from '@/components/ui/data-table';
@@ -35,6 +35,7 @@ import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { Profile, UserRole, AppRole, roleLabels } from '@/lib/types';
 import { useTheme } from '@/contexts/ThemeContext';
+import { NotificationChannelsTab } from '@/components/settings/NotificationChannelsTab';
 import { format } from 'date-fns';
 import { ru } from 'date-fns/locale';
 
@@ -310,6 +311,7 @@ export default function Settings() {
       <Tabs defaultValue="appearance" className="space-y-4">
         <TabsList className="flex-wrap">
           <TabsTrigger value="appearance">Оформление</TabsTrigger>
+          <TabsTrigger value="notifications">Уведомления</TabsTrigger>
           <TabsTrigger value="users">Пользователи</TabsTrigger>
           <TabsTrigger value="roles">Роли</TabsTrigger>
         </TabsList>
@@ -351,6 +353,10 @@ export default function Settings() {
               </CardContent>
             </Card>
           </div>
+        </TabsContent>
+
+        <TabsContent value="notifications">
+          <NotificationChannelsTab />
         </TabsContent>
 
         <TabsContent value="users">

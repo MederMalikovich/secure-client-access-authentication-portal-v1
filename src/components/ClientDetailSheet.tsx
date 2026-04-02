@@ -4,7 +4,7 @@ import { ru } from 'date-fns/locale';
 import {
   Phone, Mail, MapPin, PawPrint, FileText, DollarSign,
   Calendar, Plus, Pencil, Hash, Clock, ChevronRight,
-  TrendingUp, AlertCircle, CheckCircle2, CircleDot
+  TrendingUp, AlertCircle, CheckCircle2, CircleDot, Bell
 } from 'lucide-react';
 import {
   Sheet, SheetContent, SheetHeader, SheetTitle,
@@ -17,6 +17,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { supabase } from '@/integrations/supabase/client';
 import { speciesLabels, paymentStatusLabels, appointmentStatusLabels } from '@/lib/types';
 import { formatCurrency } from '@/lib/currency';
+import { ClientNotificationPreferences } from '@/components/ClientNotificationPreferences';
 
 interface ClientDetailSheetProps {
   client: any;
@@ -193,6 +194,10 @@ export function ClientDetailSheet({ client, open, onClose, onEdit, onAddAppointm
                 <DollarSign className="h-4 w-4 mr-1.5" />
                 Финансы
               </TabsTrigger>
+              <TabsTrigger value="notifications" className="flex-1">
+                <Bell className="h-4 w-4 mr-1.5" />
+                Уведомления
+              </TabsTrigger>
             </TabsList>
 
             {/* Pets tab */}
@@ -346,6 +351,11 @@ export function ClientDetailSheet({ client, open, onClose, onEdit, onAddAppointm
                   <p className="text-sm">Нет счетов</p>
                 </div>
               )}
+            </TabsContent>
+
+            {/* Notifications tab */}
+            <TabsContent value="notifications" className="mt-4">
+              <ClientNotificationPreferences clientId={client.id} />
             </TabsContent>
           </Tabs>
 

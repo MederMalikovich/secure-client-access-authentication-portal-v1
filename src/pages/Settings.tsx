@@ -311,6 +311,7 @@ export default function Settings() {
       <Tabs defaultValue="appearance" className="space-y-4">
         <TabsList className="flex-wrap">
           <TabsTrigger value="appearance">Оформление</TabsTrigger>
+          <TabsTrigger value="notifications">Уведомления</TabsTrigger>
           <TabsTrigger value="users">Пользователи</TabsTrigger>
           <TabsTrigger value="roles">Роли</TabsTrigger>
         </TabsList>

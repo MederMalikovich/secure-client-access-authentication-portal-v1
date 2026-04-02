@@ -355,6 +355,10 @@ export default function Settings() {
           </div>
         </TabsContent>
 
+        <TabsContent value="notifications">
+          <NotificationChannelsTab />
+        </TabsContent>
+
         <TabsContent value="users">
           <DataTable
             data={profiles}

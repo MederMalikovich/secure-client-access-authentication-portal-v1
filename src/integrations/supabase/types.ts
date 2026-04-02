@@ -85,6 +85,59 @@ export type Database = {
           },
         ]
       }
+      client_notification_preferences: {
+        Row: {
+          client_id: string
+          created_at: string
+          email_notifications: boolean
+          id: string
+          instagram_notifications: boolean
+          instagram_username: string | null
+          preferred_channel: string
+          telegram_chat_id: string | null
+          telegram_notifications: boolean
+          updated_at: string
+          whatsapp_notifications: boolean
+          whatsapp_number: string | null
+        }
+        Insert: {
+          client_id: string
+          created_at?: string
+          email_notifications?: boolean
+          id?: string
+          instagram_notifications?: boolean
+          instagram_username?: string | null
+          preferred_channel?: string
+          telegram_chat_id?: string | null
+          telegram_notifications?: boolean
+          updated_at?: string
+          whatsapp_notifications?: boolean
+          whatsapp_number?: string | null
+        }
+        Update: {
+          client_id?: string
+          created_at?: string
+          email_notifications?: boolean
+          id?: string
+          instagram_notifications?: boolean
+          instagram_username?: string | null
+          preferred_channel?: string
+          telegram_chat_id?: string | null
+          telegram_notifications?: boolean
+          updated_at?: string
+          whatsapp_notifications?: boolean
+          whatsapp_number?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "client_notification_preferences_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: true
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       clients: {
         Row: {
           address: string | null
@@ -649,6 +702,33 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      notification_channel_config: {
+        Row: {
+          channel: string
+          config: Json | null
+          created_at: string
+          id: string
+          is_enabled: boolean
+          updated_at: string
+        }
+        Insert: {
+          channel: string
+          config?: Json | null
+          created_at?: string
+          id?: string
+          is_enabled?: boolean
+          updated_at?: string
+        }
+        Update: {
+          channel?: string
+          config?: Json | null
+          created_at?: string
+          id?: string
+          is_enabled?: boolean
+          updated_at?: string
+        }
+        Relationships: []
       }
       notifications: {
         Row: {

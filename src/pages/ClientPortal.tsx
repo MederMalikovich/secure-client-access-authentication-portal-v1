@@ -48,9 +48,10 @@ export default function ClientPortal() {
   const [bookingOpen, setBookingOpen] = useState(false);
   const [bookingPetId, setBookingPetId] = useState('');
   const [bookingServiceId, setBookingServiceId] = useState('');
-  const [bookingVetId, setBookingVetId] = useState('');
+  const [bookingVetId, setBookingVetId] = useState('any');
   const [bookingDate, setBookingDate] = useState<Date | undefined>();
   const [bookingTime, setBookingTime] = useState('');
+  const [bookingCustomTime, setBookingCustomTime] = useState('');
   const [bookingNotes, setBookingNotes] = useState('');
   const [bookingLoading, setBookingLoading] = useState(false);
   const [availableSlots, setAvailableSlots] = useState<string[]>([]);
@@ -124,38 +125,65 @@ export default function ClientPortal() {
       return;
     }
 
-    // Get existing appointments for the selected date and vet
     const startOfDay = new Date(bookingDate);
     startOfDay.setHours(0, 0, 0, 0);
     const endOfDay = new Date(bookingDate);
     endOfDay.setHours(23, 59, 59, 999);
 
-    const { data: existing } = await supabase
+    let query = supabase
       .from('appointments')
-      .select('scheduled_at, duration_minutes')
-      .eq('veterinarian_id', bookingVetId)
+      .select('scheduled_at, duration_minutes, veterinarian_id')
       .gte('scheduled_at', startOfDay.toISOString())
       .lte('scheduled_at', endOfDay.toISOString())
       .not('status', 'eq', 'cancelled');
 
-    const bookedTimes = new Set(
-      (existing || []).map(a => {
-        const d = new Date(a.scheduled_at);
-        return `${d.getHours()}:${d.getMinutes().toString().padStart(2, '0')}`;
-      })
-    );
+    if (bookingVetId !== 'any') {
+      query = query.eq('veterinarian_id', bookingVetId);
+    }
 
-    const slots: string[] = [];
-    for (let h = hours.start; h < hours.end; h++) {
-      for (const m of ['00', '30']) {
-        const slot = `${h}:${m}`;
-        if (!bookedTimes.has(slot)) {
-          slots.push(`${h.toString().padStart(2, '0')}:${m}`);
+    const { data: existing } = await query;
+
+    if (bookingVetId === 'any') {
+      // For "any vet": a slot is available if at least one vet is free
+      const vetIds = vets.map(v => v.id);
+      const slots: string[] = [];
+      for (let h = hours.start; h < hours.end; h++) {
+        for (const m of ['00', '30']) {
+          const slotKey = `${h}:${m}`;
+          const busyVets = new Set(
+            (existing || [])
+              .filter(a => {
+                const d = new Date(a.scheduled_at);
+                return `${d.getHours()}:${d.getMinutes().toString().padStart(2, '0')}` === slotKey;
+              })
+              .map(a => a.veterinarian_id)
+          );
+          if (vetIds.some(id => !busyVets.has(id))) {
+            slots.push(`${h.toString().padStart(2, '0')}:${m}`);
+          }
         }
       }
+      setAvailableSlots(slots);
+    } else {
+      const bookedTimes = new Set(
+        (existing || []).map(a => {
+          const d = new Date(a.scheduled_at);
+          return `${d.getHours()}:${d.getMinutes().toString().padStart(2, '0')}`;
+        })
+      );
+      const slots: string[] = [];
+      for (let h = hours.start; h < hours.end; h++) {
+        for (const m of ['00', '30']) {
+          const slot = `${h}:${m}`;
+          if (!bookedTimes.has(slot)) {
+            slots.push(`${h.toString().padStart(2, '0')}:${m}`);
+          }
+        }
+      }
+      setAvailableSlots(slots);
     }
-    setAvailableSlots(slots);
     setBookingTime('');
+    setBookingCustomTime('');
   };
 
   const handleBooking = async () => {
@@ -170,11 +198,46 @@ export default function ClientPortal() {
       const scheduledAt = new Date(bookingDate);
       scheduledAt.setHours(hours, minutes, 0, 0);
 
+      let assignedVetId = bookingVetId;
+
+      if (bookingVetId === 'any') {
+        // Find a free vet for this slot
+        const startOfDay = new Date(bookingDate);
+        startOfDay.setHours(0, 0, 0, 0);
+        const endOfDay = new Date(bookingDate);
+        endOfDay.setHours(23, 59, 59, 999);
+
+        const { data: existing } = await supabase
+          .from('appointments')
+          .select('veterinarian_id, scheduled_at')
+          .gte('scheduled_at', startOfDay.toISOString())
+          .lte('scheduled_at', endOfDay.toISOString())
+          .not('status', 'eq', 'cancelled');
+
+        const slotKey = `${hours}:${minutes.toString().padStart(2, '0')}`;
+        const busyVets = new Set(
+          (existing || [])
+            .filter(a => {
+              const d = new Date(a.scheduled_at);
+              return `${d.getHours()}:${d.getMinutes().toString().padStart(2, '0')}` === slotKey;
+            })
+            .map(a => a.veterinarian_id)
+        );
+
+        const freeVet = vets.find(v => !busyVets.has(v.id));
+        if (!freeVet) {
+          toast({ title: 'Нет свободных врачей на это время', variant: 'destructive' });
+          setBookingLoading(false);
+          return;
+        }
+        assignedVetId = freeVet.id;
+      }
+
       const { error } = await supabase.from('appointments').insert({
         client_id: clientId!,
         pet_id: bookingPetId,
         service_id: bookingServiceId,
-        veterinarian_id: bookingVetId,
+        veterinarian_id: assignedVetId,
         scheduled_at: scheduledAt.toISOString(),
         status: 'scheduled',
         notes: bookingNotes || null,
@@ -197,9 +260,10 @@ export default function ClientPortal() {
   const resetBookingForm = () => {
     setBookingPetId('');
     setBookingServiceId('');
-    setBookingVetId('');
+    setBookingVetId('any');
     setBookingDate(undefined);
     setBookingTime('');
+    setBookingCustomTime('');
     setBookingNotes('');
   };
 
@@ -439,6 +503,7 @@ export default function ClientPortal() {
                       <SelectValue placeholder="Выберите врача" />
                     </SelectTrigger>
                     <SelectContent>
+                      <SelectItem value="any">🔄 Любой свободный врач</SelectItem>
                       {vets.map(vet => (
                         <SelectItem key={vet.id} value={vet.id}>
                           {vet.full_name}
@@ -471,22 +536,39 @@ export default function ClientPortal() {
               </div>
 
               {bookingDate && bookingVetId && (
-                <div className="space-y-2">
+                <div className="space-y-3">
                   <Label>Время *</Label>
+                  <div className="flex items-center gap-3">
+                    <div className="space-y-1">
+                      <Label className="text-xs text-muted-foreground">Указать вручную</Label>
+                      <input
+                        type="time"
+                        value={bookingCustomTime}
+                        onChange={(e) => {
+                          setBookingCustomTime(e.target.value);
+                          setBookingTime(e.target.value);
+                        }}
+                        className="flex h-10 w-[140px] rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                      />
+                    </div>
+                  </div>
                   {availableSlots.length === 0 ? (
                     <p className="text-sm text-muted-foreground">Нет доступных слотов на эту дату</p>
                   ) : (
-                    <div className="flex flex-wrap gap-2">
-                      {availableSlots.map(slot => (
-                        <Button
-                          key={slot}
-                          variant={bookingTime === slot ? 'default' : 'outline'}
-                          size="sm"
-                          onClick={() => setBookingTime(slot)}
-                        >
-                          {slot}
-                        </Button>
-                      ))}
+                    <div>
+                      <p className="text-xs text-muted-foreground mb-2">Или выберите из свободных:</p>
+                      <div className="flex flex-wrap gap-2">
+                        {availableSlots.map(slot => (
+                          <Button
+                            key={slot}
+                            variant={bookingTime === slot ? 'default' : 'outline'}
+                            size="sm"
+                            onClick={() => { setBookingTime(slot); setBookingCustomTime(slot); }}
+                          >
+                            {slot}
+                          </Button>
+                        ))}
+                      </div>
                     </div>
                   )}
                 </div>

@@ -536,22 +536,39 @@ export default function ClientPortal() {
               </div>
 
               {bookingDate && bookingVetId && (
-                <div className="space-y-2">
+                <div className="space-y-3">
                   <Label>Время *</Label>
+                  <div className="flex items-center gap-3">
+                    <div className="space-y-1">
+                      <Label className="text-xs text-muted-foreground">Указать вручную</Label>
+                      <input
+                        type="time"
+                        value={bookingCustomTime}
+                        onChange={(e) => {
+                          setBookingCustomTime(e.target.value);
+                          setBookingTime(e.target.value);
+                        }}
+                        className="flex h-10 w-[140px] rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                      />
+                    </div>
+                  </div>
                   {availableSlots.length === 0 ? (
                     <p className="text-sm text-muted-foreground">Нет доступных слотов на эту дату</p>
                   ) : (
-                    <div className="flex flex-wrap gap-2">
-                      {availableSlots.map(slot => (
-                        <Button
-                          key={slot}
-                          variant={bookingTime === slot ? 'default' : 'outline'}
-                          size="sm"
-                          onClick={() => setBookingTime(slot)}
-                        >
-                          {slot}
-                        </Button>
-                      ))}
+                    <div>
+                      <p className="text-xs text-muted-foreground mb-2">Или выберите из свободных:</p>
+                      <div className="flex flex-wrap gap-2">
+                        {availableSlots.map(slot => (
+                          <Button
+                            key={slot}
+                            variant={bookingTime === slot ? 'default' : 'outline'}
+                            size="sm"
+                            onClick={() => { setBookingTime(slot); setBookingCustomTime(slot); }}
+                          >
+                            {slot}
+                          </Button>
+                        ))}
+                      </div>
                     </div>
                   )}
                 </div>

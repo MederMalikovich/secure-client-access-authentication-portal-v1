@@ -198,11 +198,46 @@ export default function ClientPortal() {
       const scheduledAt = new Date(bookingDate);
       scheduledAt.setHours(hours, minutes, 0, 0);
 
+      let assignedVetId = bookingVetId;
+
+      if (bookingVetId === 'any') {
+        // Find a free vet for this slot
+        const startOfDay = new Date(bookingDate);
+        startOfDay.setHours(0, 0, 0, 0);
+        const endOfDay = new Date(bookingDate);
+        endOfDay.setHours(23, 59, 59, 999);
+
+        const { data: existing } = await supabase
+          .from('appointments')
+          .select('veterinarian_id, scheduled_at')
+          .gte('scheduled_at', startOfDay.toISOString())
+          .lte('scheduled_at', endOfDay.toISOString())
+          .not('status', 'eq', 'cancelled');
+
+        const slotKey = `${hours}:${minutes.toString().padStart(2, '0')}`;
+        const busyVets = new Set(
+          (existing || [])
+            .filter(a => {
+              const d = new Date(a.scheduled_at);
+              return `${d.getHours()}:${d.getMinutes().toString().padStart(2, '0')}` === slotKey;
+            })
+            .map(a => a.veterinarian_id)
+        );
+
+        const freeVet = vets.find(v => !busyVets.has(v.id));
+        if (!freeVet) {
+          toast({ title: 'Нет свободных врачей на это время', variant: 'destructive' });
+          setBookingLoading(false);
+          return;
+        }
+        assignedVetId = freeVet.id;
+      }
+
       const { error } = await supabase.from('appointments').insert({
         client_id: clientId!,
         pet_id: bookingPetId,
         service_id: bookingServiceId,
-        veterinarian_id: bookingVetId,
+        veterinarian_id: assignedVetId,
         scheduled_at: scheduledAt.toISOString(),
         status: 'scheduled',
         notes: bookingNotes || null,
@@ -225,9 +260,10 @@ export default function ClientPortal() {
   const resetBookingForm = () => {
     setBookingPetId('');
     setBookingServiceId('');
-    setBookingVetId('');
+    setBookingVetId('any');
     setBookingDate(undefined);
     setBookingTime('');
+    setBookingCustomTime('');
     setBookingNotes('');
   };
 

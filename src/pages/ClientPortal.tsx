@@ -125,38 +125,65 @@ export default function ClientPortal() {
       return;
     }
 
-    // Get existing appointments for the selected date and vet
     const startOfDay = new Date(bookingDate);
     startOfDay.setHours(0, 0, 0, 0);
     const endOfDay = new Date(bookingDate);
     endOfDay.setHours(23, 59, 59, 999);
 
-    const { data: existing } = await supabase
+    let query = supabase
       .from('appointments')
-      .select('scheduled_at, duration_minutes')
-      .eq('veterinarian_id', bookingVetId)
+      .select('scheduled_at, duration_minutes, veterinarian_id')
       .gte('scheduled_at', startOfDay.toISOString())
       .lte('scheduled_at', endOfDay.toISOString())
       .not('status', 'eq', 'cancelled');
 
-    const bookedTimes = new Set(
-      (existing || []).map(a => {
-        const d = new Date(a.scheduled_at);
-        return `${d.getHours()}:${d.getMinutes().toString().padStart(2, '0')}`;
-      })
-    );
+    if (bookingVetId !== 'any') {
+      query = query.eq('veterinarian_id', bookingVetId);
+    }
 
-    const slots: string[] = [];
-    for (let h = hours.start; h < hours.end; h++) {
-      for (const m of ['00', '30']) {
-        const slot = `${h}:${m}`;
-        if (!bookedTimes.has(slot)) {
-          slots.push(`${h.toString().padStart(2, '0')}:${m}`);
+    const { data: existing } = await query;
+
+    if (bookingVetId === 'any') {
+      // For "any vet": a slot is available if at least one vet is free
+      const vetIds = vets.map(v => v.id);
+      const slots: string[] = [];
+      for (let h = hours.start; h < hours.end; h++) {
+        for (const m of ['00', '30']) {
+          const slotKey = `${h}:${m}`;
+          const busyVets = new Set(
+            (existing || [])
+              .filter(a => {
+                const d = new Date(a.scheduled_at);
+                return `${d.getHours()}:${d.getMinutes().toString().padStart(2, '0')}` === slotKey;
+              })
+              .map(a => a.veterinarian_id)
+          );
+          if (vetIds.some(id => !busyVets.has(id))) {
+            slots.push(`${h.toString().padStart(2, '0')}:${m}`);
+          }
         }
       }
+      setAvailableSlots(slots);
+    } else {
+      const bookedTimes = new Set(
+        (existing || []).map(a => {
+          const d = new Date(a.scheduled_at);
+          return `${d.getHours()}:${d.getMinutes().toString().padStart(2, '0')}`;
+        })
+      );
+      const slots: string[] = [];
+      for (let h = hours.start; h < hours.end; h++) {
+        for (const m of ['00', '30']) {
+          const slot = `${h}:${m}`;
+          if (!bookedTimes.has(slot)) {
+            slots.push(`${h.toString().padStart(2, '0')}:${m}`);
+          }
+        }
+      }
+      setAvailableSlots(slots);
     }
-    setAvailableSlots(slots);
     setBookingTime('');
+    setBookingCustomTime('');
   };
 
   const handleBooking = async () => {

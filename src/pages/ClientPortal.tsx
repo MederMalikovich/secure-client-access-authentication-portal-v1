@@ -48,9 +48,10 @@ export default function ClientPortal() {
   const [bookingOpen, setBookingOpen] = useState(false);
   const [bookingPetId, setBookingPetId] = useState('');
   const [bookingServiceId, setBookingServiceId] = useState('');
-  const [bookingVetId, setBookingVetId] = useState('');
+  const [bookingVetId, setBookingVetId] = useState('any');
   const [bookingDate, setBookingDate] = useState<Date | undefined>();
   const [bookingTime, setBookingTime] = useState('');
+  const [bookingCustomTime, setBookingCustomTime] = useState('');
   const [bookingNotes, setBookingNotes] = useState('');
   const [bookingLoading, setBookingLoading] = useState(false);
   const [availableSlots, setAvailableSlots] = useState<string[]>([]);

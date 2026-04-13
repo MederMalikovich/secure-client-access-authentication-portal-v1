@@ -503,6 +503,7 @@ export default function ClientPortal() {
                       <SelectValue placeholder="Выберите врача" />
                     </SelectTrigger>
                     <SelectContent>
+                      <SelectItem value="any">🔄 Любой свободный врач</SelectItem>
                       {vets.map(vet => (
                         <SelectItem key={vet.id} value={vet.id}>
                           {vet.full_name}

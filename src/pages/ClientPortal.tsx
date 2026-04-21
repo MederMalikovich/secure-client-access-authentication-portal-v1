@@ -291,7 +291,7 @@ export default function ClientPortal() {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     if (date < today) return true;
-    return WORKING_HOURS[date.getDay()] === null;
+    return !isDayWorking(workingHours, date);
   };
 
   const upcomingAppointments = appointments.filter(a => new Date(a.scheduled_at) >= new Date() && a.status !== 'cancelled');

@@ -57,7 +57,7 @@ export function WorkingHoursTab() {
       if (firstError) throw firstError;
       toast({ title: 'Успешно', description: 'График работы обновлён' });
       refetch();
-    } catch (err: any) {
+    } catch (err: unknown) {
       toast({ variant: 'destructive', title: 'Ошибка', description: getUserFriendlyError(err) });
     } finally {
       setSaving(false);

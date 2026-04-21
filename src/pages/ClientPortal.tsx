@@ -61,14 +61,21 @@ export default function ClientPortal() {
   }, [clientId]);
 
   useEffect(() => {
-    if (bookingDate && bookingVetId) {
+    if (bookingDate && bookingVetId && workingHours) {
       fetchAvailableSlots();
     }
-  }, [bookingDate, bookingVetId]);
+  }, [bookingDate, bookingVetId, workingHours]);
 
   const fetchData = async () => {
     setLoading(true);
     try {
+      // Fetch vet user_ids first, then their profiles via user_id
+      const { data: vetRoles } = await supabase
+        .from('user_roles')
+        .select('user_id')
+        .eq('role', 'veterinarian');
+      const vetUserIds = (vetRoles || []).map((r: any) => r.user_id);
+
       const [apptRes, invRes, petsRes, svcRes, vetsRes] = await Promise.all([
         supabase
           .from('appointments')
@@ -89,10 +96,14 @@ export default function ClientPortal() {
           .select('*')
           .eq('is_active', true)
           .order('name'),
-        supabase
-          .from('profiles')
-          .select('id, full_name')
-          .in('id', (await supabase.from('user_roles').select('user_id').eq('role', 'veterinarian')).data?.map(r => r.user_id) || []),
+        vetUserIds.length > 0
+          ? supabase
+              .from('profiles')
+              .select('id, full_name')
+              .in('user_id', vetUserIds)
+              .eq('is_active', true)
+              .order('full_name')
+          : Promise.resolve({ data: [] as any[] }),
       ]);
 
       setAppointments(apptRes.data || []);

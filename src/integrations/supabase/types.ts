@@ -174,6 +174,39 @@ export type Database = {
         }
         Relationships: []
       }
+      clinic_working_hours: {
+        Row: {
+          created_at: string
+          day_of_week: number
+          end_time: string
+          id: string
+          is_working: boolean
+          slot_duration_minutes: number
+          start_time: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          day_of_week: number
+          end_time?: string
+          id?: string
+          is_working?: boolean
+          slot_duration_minutes?: number
+          start_time?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          day_of_week?: number
+          end_time?: string
+          id?: string
+          is_working?: boolean
+          slot_duration_minutes?: number
+          start_time?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       diseases: {
         Row: {
           created_at: string

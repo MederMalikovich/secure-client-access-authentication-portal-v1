@@ -668,13 +668,28 @@ export default function Calendar() {
             </div>
             <div className="grid gap-2">
               <Label>Дата и время *</Label>
-              <Input
-                type="datetime-local"
-                value={formData.scheduled_at}
-                onChange={(e) =>
-                  setFormData({ ...formData, scheduled_at: e.target.value })
-                }
-              />
+              <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+                <Input
+                  type="date"
+                  value={formData.scheduled_at ? formData.scheduled_at.slice(0, 10) : ''}
+                  onChange={(e) => {
+                    const date = e.target.value;
+                    const time = formData.scheduled_at.slice(11, 16) || '09:00';
+                    setFormData({ ...formData, scheduled_at: date ? `${date}T${time}` : '' });
+                  }}
+                  className="sm:w-[180px]"
+                />
+                <TimePicker
+                  value={formData.scheduled_at.slice(11, 16) || ''}
+                  onChange={(v) => {
+                    const date = formData.scheduled_at.slice(0, 10) || format(new Date(), 'yyyy-MM-dd');
+                    setFormData({ ...formData, scheduled_at: `${date}T${v}` });
+                  }}
+                  startHour={6}
+                  endHour={22}
+                  minuteStep={5}
+                />
+              </div>
             </div>
             <div className="grid gap-2">
               <Label>Длительность (мин)</Label>

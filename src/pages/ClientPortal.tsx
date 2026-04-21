@@ -25,6 +25,7 @@ import { useWorkingHours, generateDaySlots, isDayWorking } from '@/hooks/useWork
 export default function ClientPortal() {
   const { profile } = useAuth();
   const { toast } = useToast();
+  const { workingHours } = useWorkingHours();
 
   // State
   const [activeTab, setActiveTab] = useState('visits');

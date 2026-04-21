@@ -41,6 +41,10 @@ export default function Calendar() {
   const { toast } = useToast();
   const { hasAnyRole } = useAuth();
   const canManage = hasAnyRole(['admin', 'veterinarian', 'registrar', 'manager']);
+  const { workingHours } = useWorkingHours();
+
+  const isWorkingSlot = (day: Date, hour: number) => isHourWorking(workingHours, day, hour);
+  const isNonWorkingDay = (day: Date) => !isDayWorking(workingHours, day);
   const [currentDate, setCurrentDate] = useState(new Date());
   const [appointments, setAppointments] = useState<any[]>([]);
   const [clients, setClients] = useState<any[]>([]);

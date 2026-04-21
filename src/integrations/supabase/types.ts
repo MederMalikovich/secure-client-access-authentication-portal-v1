@@ -1223,6 +1223,13 @@ export type Database = {
         }
         Returns: boolean
       }
+      list_public_veterinarians: {
+        Args: never
+        Returns: {
+          full_name: string
+          id: string
+        }[]
+      }
     }
     Enums: {
       app_role:

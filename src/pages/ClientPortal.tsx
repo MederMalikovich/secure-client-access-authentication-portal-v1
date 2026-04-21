@@ -526,22 +526,25 @@ export default function ClientPortal() {
               {bookingDate && bookingVetId && (
                 <div className="space-y-3">
                   <Label>Время *</Label>
-                  <div className="flex items-center gap-3">
+                  <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:gap-4">
                     <div className="space-y-1">
                       <Label className="text-xs text-muted-foreground">Указать вручную</Label>
-                      <input
-                        type="time"
+                      <TimePicker
                         value={bookingCustomTime}
-                        onChange={(e) => {
-                          setBookingCustomTime(e.target.value);
-                          setBookingTime(e.target.value);
+                        onChange={(v) => {
+                          setBookingCustomTime(v);
+                          setBookingTime(v);
                         }}
-                        className="flex h-10 w-[140px] rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                        startHour={6}
+                        endHour={22}
+                        minuteStep={5}
                       />
                     </div>
                   </div>
                   {availableSlots.length === 0 ? (
-                    <p className="text-sm text-muted-foreground">Нет доступных слотов на эту дату</p>
+                    <p className="text-sm text-muted-foreground">
+                      На эту дату нет свободных слотов. Попробуйте выбрать другой день или укажите время вручную.
+                    </p>
                   ) : (
                     <div>
                       <p className="text-xs text-muted-foreground mb-2">Или выберите из свободных:</p>

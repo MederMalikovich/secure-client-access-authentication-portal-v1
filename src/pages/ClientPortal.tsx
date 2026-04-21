@@ -1,6 +1,7 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
+import type { Database } from '@/integrations/supabase/types';
 import { useToast } from '@/hooks/use-toast';
 import { PageHeader } from '@/components/ui/page-header';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -21,6 +22,32 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { cn } from '@/lib/utils';
 import { TimePicker } from '@/components/ui/time-picker';
 import { useWorkingHours, generateDaySlots, isDayWorking } from '@/hooks/useWorkingHours';
+import { getUserFriendlyError } from '@/lib/errorHandler';
+
+type AppointmentRow = Database['public']['Tables']['appointments']['Row'];
+type InvoiceRow = Database['public']['Tables']['invoices']['Row'];
+type InvoiceItemRow = Database['public']['Tables']['invoice_items']['Row'];
+type PetRow = Database['public']['Tables']['pets']['Row'];
+type ServiceRow = Database['public']['Tables']['services']['Row'];
+
+type ClientPortalAppointment = AppointmentRow & {
+  pets: Pick<PetRow, 'name' | 'species'> | null;
+  services: Pick<ServiceRow, 'name'> | null;
+  profiles: { full_name: string } | null;
+};
+
+type ClientPortalInvoice = InvoiceRow & {
+  pets: Pick<PetRow, 'name'> | null;
+};
+
+type ClientPortalInvoiceItem = InvoiceItemRow & {
+  services: Pick<ServiceRow, 'name'> | null;
+};
+
+type VeterinarianOption = {
+  id: string;
+  full_name: string;
+};
 
 export default function ClientPortal() {
   const { profile } = useAuth();
@@ -29,11 +56,11 @@ export default function ClientPortal() {
 
   // State
   const [activeTab, setActiveTab] = useState('visits');
-  const [appointments, setAppointments] = useState<any[]>([]);
-  const [invoices, setInvoices] = useState<any[]>([]);
-  const [pets, setPets] = useState<any[]>([]);
-  const [services, setServices] = useState<any[]>([]);
-  const [vets, setVets] = useState<any[]>([]);
+  const [appointments, setAppointments] = useState<ClientPortalAppointment[]>([]);
+  const [invoices, setInvoices] = useState<ClientPortalInvoice[]>([]);
+  const [pets, setPets] = useState<PetRow[]>([]);
+  const [services, setServices] = useState<ServiceRow[]>([]);
+  const [vets, setVets] = useState<VeterinarianOption[]>([]);
   const [loading, setLoading] = useState(true);
 
   // Booking state
@@ -49,8 +76,8 @@ export default function ClientPortal() {
   const [availableSlots, setAvailableSlots] = useState<string[]>([]);
 
   // Invoice detail state
-  const [selectedInvoice, setSelectedInvoice] = useState<any>(null);
-  const [invoiceItems, setInvoiceItems] = useState<any[]>([]);
+  const [selectedInvoice, setSelectedInvoice] = useState<ClientPortalInvoice | null>(null);
+  const [invoiceItems, setInvoiceItems] = useState<ClientPortalInvoiceItem[]>([]);
 
   const clientId = profile?.client_id;
 
@@ -64,18 +91,11 @@ export default function ClientPortal() {
     if (bookingDate && bookingVetId && workingHours) {
       fetchAvailableSlots();
     }
-  }, [bookingDate, bookingVetId, workingHours]);
+  }, [bookingDate, bookingVetId, workingHours, vets]);
 
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     setLoading(true);
     try {
-      // Fetch vet user_ids first, then their profiles via user_id
-      const { data: vetRoles } = await supabase
-        .from('user_roles')
-        .select('user_id')
-        .eq('role', 'veterinarian');
-      const vetUserIds = (vetRoles || []).map((r: any) => r.user_id);
-
       const [apptRes, invRes, petsRes, svcRes, vetsRes] = await Promise.all([
         supabase
           .from('appointments')
@@ -96,29 +116,26 @@ export default function ClientPortal() {
           .select('*')
           .eq('is_active', true)
           .order('name'),
-        vetUserIds.length > 0
-          ? supabase
-              .from('profiles')
-              .select('id, full_name')
-              .in('user_id', vetUserIds)
-              .eq('is_active', true)
-              .order('full_name')
-          : Promise.resolve({ data: [] as any[] }),
+        supabase.rpc('list_public_veterinarians'),
       ]);
 
-      setAppointments(apptRes.data || []);
-      setInvoices(invRes.data || []);
-      setPets(petsRes.data || []);
-      setServices(svcRes.data || []);
-      setVets(vetsRes.data || []);
-    } catch (err) {
-      console.error(err);
+      setAppointments((apptRes.data || []) as ClientPortalAppointment[]);
+      setInvoices((invRes.data || []) as ClientPortalInvoice[]);
+      setPets((petsRes.data || []) as PetRow[]);
+      setServices((svcRes.data || []) as ServiceRow[]);
+      setVets((vetsRes.data || []) as VeterinarianOption[]);
+    } catch {
+      toast({
+        title: 'Ошибка загрузки',
+        description: 'Не удалось загрузить данные личного кабинета',
+        variant: 'destructive',
+      });
     } finally {
       setLoading(false);
     }
-  };
+  }, [clientId, toast]);
 
-  const fetchAvailableSlots = async () => {
+  const fetchAvailableSlots = useCallback(async () => {
     if (!bookingDate || !bookingVetId || !workingHours) return;
 
     const allSlots = generateDaySlots(workingHours, bookingDate);
@@ -146,33 +163,48 @@ export default function ClientPortal() {
     }
 
     const { data: existing } = await query;
+    const existingAppointments = (existing || []) as Pick<AppointmentRow, 'scheduled_at' | 'duration_minutes' | 'veterinarian_id'>[];
 
-    const slotKeyOf = (d: Date) => `${d.getHours()}:${d.getMinutes().toString().padStart(2, '0')}`;
+    const slotKeyOf = (d: Date) => `${String(d.getHours()).padStart(2, '0')}:${d.getMinutes().toString().padStart(2, '0')}`;
+    const daySchedule = workingHours[bookingDate.getDay()];
+    const slotDurationMinutes = daySchedule?.slot_duration_minutes || 30;
+
+    const getSlotRange = (slot: string) => {
+      const [hours, minutes] = slot.split(':').map(Number);
+      const start = new Date(bookingDate);
+      start.setHours(hours, minutes, 0, 0);
+      const end = new Date(start);
+      end.setMinutes(end.getMinutes() + slotDurationMinutes);
+      return { start, end };
+    };
+
+    const overlapsSlot = (appointment: Pick<AppointmentRow, 'scheduled_at' | 'duration_minutes' | 'veterinarian_id'>, slot: string) => {
+      const appointmentStart = new Date(appointment.scheduled_at);
+      const appointmentEnd = new Date(appointmentStart);
+      appointmentEnd.setMinutes(appointmentEnd.getMinutes() + (appointment.duration_minutes || slotDurationMinutes));
+      const { start, end } = getSlotRange(slot);
+      return appointmentStart < end && appointmentEnd > start;
+    };
 
     if (bookingVetId === 'any') {
       const vetIds = vets.map((v) => v.id);
       const slots = allSlots.filter((slot) => {
-        const [h, m] = slot.split(':').map(Number);
-        const key = `${h}:${m.toString().padStart(2, '0')}`;
         const busyVets = new Set(
           (existing || [])
-            .filter((a) => slotKeyOf(new Date(a.scheduled_at)) === key)
+            .filter((a): a is Pick<AppointmentRow, 'scheduled_at' | 'duration_minutes' | 'veterinarian_id'> => !!a)
+            .filter((a) => overlapsSlot(a, slot))
             .map((a) => a.veterinarian_id)
         );
-        return vetIds.length === 0 ? true : vetIds.some((id) => !busyVets.has(id));
+        return vetIds.some((id) => !busyVets.has(id));
       });
       setAvailableSlots(slots);
     } else {
-      const bookedTimes = new Set((existing || []).map((a) => slotKeyOf(new Date(a.scheduled_at))));
-      const slots = allSlots.filter((slot) => {
-        const [h, m] = slot.split(':').map(Number);
-        return !bookedTimes.has(`${h}:${m.toString().padStart(2, '0')}`);
-      });
+      const slots = allSlots.filter((slot) => !existingAppointments.some((a) => overlapsSlot(a, slot)));
       setAvailableSlots(slots);
     }
     setBookingTime('');
     setBookingCustomTime('');
-  };
+  }, [bookingDate, bookingVetId, vets, workingHours]);
 
   const handleBooking = async () => {
     if (!bookingPetId || !bookingServiceId || !bookingVetId || !bookingDate || !bookingTime) {
@@ -186,10 +218,32 @@ export default function ClientPortal() {
       const scheduledAt = new Date(bookingDate);
       scheduledAt.setHours(hours, minutes, 0, 0);
 
+      const daySchedule = workingHours?.[bookingDate.getDay()];
+      const slotDurationMinutes = daySchedule?.slot_duration_minutes || 30;
+
+      if (!daySchedule?.is_working) {
+        toast({ title: 'Клиника не работает в этот день', variant: 'destructive' });
+        return;
+      }
+
+      const slotStart = new Date(scheduledAt);
+      const slotEnd = new Date(scheduledAt);
+      slotEnd.setMinutes(slotEnd.getMinutes() + slotDurationMinutes);
+      const [startHour, startMinute] = daySchedule.start_time.split(':').map(Number);
+      const [endHour, endMinute] = daySchedule.end_time.split(':').map(Number);
+      const workStart = new Date(bookingDate);
+      workStart.setHours(startHour, startMinute, 0, 0);
+      const workEnd = new Date(bookingDate);
+      workEnd.setHours(endHour, endMinute, 0, 0);
+
+      if (slotStart < workStart || slotEnd > workEnd) {
+        toast({ title: 'Время вне графика работы клиники', variant: 'destructive' });
+        return;
+      }
+
       let assignedVetId = bookingVetId;
 
       if (bookingVetId === 'any') {
-        // Find a free vet for this slot
         const startOfDay = new Date(bookingDate);
         startOfDay.setHours(0, 0, 0, 0);
         const endOfDay = new Date(bookingDate);
@@ -197,17 +251,23 @@ export default function ClientPortal() {
 
         const { data: existing } = await supabase
           .from('appointments')
-          .select('veterinarian_id, scheduled_at')
+          .select('veterinarian_id, scheduled_at, duration_minutes')
           .gte('scheduled_at', startOfDay.toISOString())
           .lte('scheduled_at', endOfDay.toISOString())
           .not('status', 'eq', 'cancelled');
 
-        const slotKey = `${hours}:${minutes.toString().padStart(2, '0')}`;
+        if (vets.length === 0) {
+          toast({ title: 'Нет доступных врачей', variant: 'destructive' });
+          return;
+        }
+
         const busyVets = new Set(
           (existing || [])
-            .filter(a => {
-              const d = new Date(a.scheduled_at);
-              return `${d.getHours()}:${d.getMinutes().toString().padStart(2, '0')}` === slotKey;
+            .filter((a) => {
+              const appointmentStart = new Date(a.scheduled_at);
+              const appointmentEnd = new Date(appointmentStart);
+              appointmentEnd.setMinutes(appointmentEnd.getMinutes() + (a.duration_minutes || slotDurationMinutes));
+              return appointmentStart < slotEnd && appointmentEnd > slotStart;
             })
             .map(a => a.veterinarian_id)
         );
@@ -219,6 +279,9 @@ export default function ClientPortal() {
           return;
         }
         assignedVetId = freeVet.id;
+      } else if (!availableSlots.includes(bookingTime)) {
+        toast({ title: 'Это время уже занято', description: 'Выберите свободный слот из списка', variant: 'destructive' });
+        return;
       }
 
       const { error } = await supabase.from('appointments').insert({
@@ -229,7 +292,7 @@ export default function ClientPortal() {
         scheduled_at: scheduledAt.toISOString(),
         status: 'scheduled',
         notes: bookingNotes || null,
-        duration_minutes: 30,
+        duration_minutes: slotDurationMinutes,
       });
 
       if (error) throw error;
@@ -238,8 +301,8 @@ export default function ClientPortal() {
       setBookingOpen(false);
       resetBookingForm();
       fetchData();
-    } catch (err: any) {
-      toast({ title: 'Ошибка', description: err.message, variant: 'destructive' });
+    } catch (err: unknown) {
+      toast({ title: 'Ошибка', description: getUserFriendlyError(err), variant: 'destructive' });
     } finally {
       setBookingLoading(false);
     }
@@ -255,13 +318,13 @@ export default function ClientPortal() {
     setBookingNotes('');
   };
 
-  const fetchInvoiceDetails = async (invoice: any) => {
+  const fetchInvoiceDetails = async (invoice: ClientPortalInvoice) => {
     setSelectedInvoice(invoice);
     const { data } = await supabase
       .from('invoice_items')
       .select('*, services(name)')
       .eq('invoice_id', invoice.id);
-    setInvoiceItems(data || []);
+    setInvoiceItems((data || []) as ClientPortalInvoiceItem[]);
   };
 
   const getStatusBadge = (status: string) => {
@@ -510,13 +573,14 @@ export default function ClientPortal() {
                         {bookingDate ? format(bookingDate, 'dd MMMM yyyy', { locale: ru }) : 'Выберите дату'}
                       </Button>
                     </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0">
+                     <PopoverContent className="w-auto p-0" align="start">
                       <CalendarPicker
                         mode="single"
                         selected={bookingDate}
                         onSelect={setBookingDate}
                         disabled={isDateDisabled}
                         locale={ru}
+                         className={cn('p-3 pointer-events-auto')}
                       />
                     </PopoverContent>
                   </Popover>

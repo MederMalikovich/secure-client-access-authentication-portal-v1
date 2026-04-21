@@ -1,7 +1,7 @@
-export function getUserFriendlyError(error: any): string {
+export function getUserFriendlyError(error: unknown): string {
   if (!error) return 'Произошла неизвестная ошибка';
 
-  const message = error?.message || String(error);
+  const message = error instanceof Error ? error.message : String(error);
 
   // Auth errors
   if (message.includes('Invalid login credentials')) return 'Неверный email или пароль';
@@ -10,7 +10,9 @@ export function getUserFriendlyError(error: any): string {
   if (message.includes('Email not confirmed')) return 'Подтвердите email для входа';
 
   // DB constraint errors
-  const code = error?.code;
+  const code = typeof error === 'object' && error !== null && 'code' in error
+    ? String((error as { code?: string }).code)
+    : undefined;
   if (code === '23505') return 'Такая запись уже существует';
   if (code === '23503') return 'Невозможно удалить — есть связанные записи';
   if (code === '23502') return 'Заполните все обязательные поля';

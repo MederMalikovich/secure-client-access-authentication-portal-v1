@@ -1,5 +1,6 @@
 import { useEffect, useState, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import type { Database } from '@/integrations/supabase/types';
 
 export interface WorkingHoursDay {
   day_of_week: number;
@@ -14,6 +15,8 @@ export interface WorkingHoursMap {
 }
 
 const DAY_LABELS_RU = ['Воскресенье', 'Понедельник', 'Вторник', 'Среда', 'Четверг', 'Пятница', 'Суббота'];
+
+type ClinicWorkingHoursRow = Database['public']['Tables']['clinic_working_hours']['Row'];
 
 export function dayLabel(day: number): string {
   return DAY_LABELS_RU[day] ?? '';
@@ -79,7 +82,7 @@ export function useWorkingHours() {
       .order('day_of_week');
     if (data) {
       const m: WorkingHoursMap = {};
-      data.forEach((row: any) => {
+      data.forEach((row: ClinicWorkingHoursRow) => {
         m[row.day_of_week] = row;
       });
       setMap(m);

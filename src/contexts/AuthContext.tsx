@@ -82,7 +82,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (rolesData) {
         setRoles(rolesData.map(r => r.role as AppRole));
       }
-    } catch (error) {
+    } catch {
+      setProfile(null);
+      setRoles([]);
     } finally {
       setLoading(false);
     }

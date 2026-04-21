@@ -19,17 +19,8 @@ import { appointmentStatusLabels, paymentStatusLabels, speciesLabels } from '@/l
 import { Calendar as CalendarPicker } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { cn } from '@/lib/utils';
-
-// Working hours config
-const WORKING_HOURS: Record<number, { start: number; end: number } | null> = {
-  0: null, // Sunday off
-  1: { start: 9, end: 18 },
-  2: { start: 9, end: 18 },
-  3: { start: 9, end: 18 },
-  4: { start: 9, end: 18 },
-  5: { start: 9, end: 18 },
-  6: { start: 9, end: 15 }, // Saturday short
-};
+import { TimePicker } from '@/components/ui/time-picker';
+import { useWorkingHours, generateDaySlots, isDayWorking } from '@/hooks/useWorkingHours';
 
 export default function ClientPortal() {
   const { profile } = useAuth();

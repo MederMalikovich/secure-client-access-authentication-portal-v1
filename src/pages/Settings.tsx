@@ -36,6 +36,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Profile, UserRole, AppRole, roleLabels } from '@/lib/types';
 import { useTheme } from '@/contexts/ThemeContext';
 import { NotificationChannelsTab } from '@/components/settings/NotificationChannelsTab';
+import { WorkingHoursTab } from '@/components/settings/WorkingHoursTab';
 import { format } from 'date-fns';
 import { ru } from 'date-fns/locale';
 
@@ -309,12 +310,17 @@ export default function Settings() {
       />
 
       <Tabs defaultValue="appearance" className="space-y-4">
-        <TabsList className="flex-wrap">
+        <TabsList className="flex-wrap h-auto">
           <TabsTrigger value="appearance">Оформление</TabsTrigger>
+          <TabsTrigger value="schedule">График работы</TabsTrigger>
           <TabsTrigger value="notifications">Уведомления</TabsTrigger>
           <TabsTrigger value="users">Пользователи</TabsTrigger>
           <TabsTrigger value="roles">Роли</TabsTrigger>
         </TabsList>
+
+        <TabsContent value="schedule">
+          <WorkingHoursTab />
+        </TabsContent>
 
         <TabsContent value="appearance">
           <div className="grid gap-4 md:grid-cols-2">

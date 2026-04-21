@@ -19,21 +19,13 @@ import { appointmentStatusLabels, paymentStatusLabels, speciesLabels } from '@/l
 import { Calendar as CalendarPicker } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { cn } from '@/lib/utils';
-
-// Working hours config
-const WORKING_HOURS: Record<number, { start: number; end: number } | null> = {
-  0: null, // Sunday off
-  1: { start: 9, end: 18 },
-  2: { start: 9, end: 18 },
-  3: { start: 9, end: 18 },
-  4: { start: 9, end: 18 },
-  5: { start: 9, end: 18 },
-  6: { start: 9, end: 15 }, // Saturday short
-};
+import { TimePicker } from '@/components/ui/time-picker';
+import { useWorkingHours, generateDaySlots, isDayWorking } from '@/hooks/useWorkingHours';
 
 export default function ClientPortal() {
   const { profile } = useAuth();
   const { toast } = useToast();
+  const { workingHours } = useWorkingHours();
 
   // State
   const [activeTab, setActiveTab] = useState('visits');
@@ -69,14 +61,21 @@ export default function ClientPortal() {
   }, [clientId]);
 
   useEffect(() => {
-    if (bookingDate && bookingVetId) {
+    if (bookingDate && bookingVetId && workingHours) {
       fetchAvailableSlots();
     }
-  }, [bookingDate, bookingVetId]);
+  }, [bookingDate, bookingVetId, workingHours]);
 
   const fetchData = async () => {
     setLoading(true);
     try {
+      // Fetch vet user_ids first, then their profiles via user_id
+      const { data: vetRoles } = await supabase
+        .from('user_roles')
+        .select('user_id')
+        .eq('role', 'veterinarian');
+      const vetUserIds = (vetRoles || []).map((r: any) => r.user_id);
+
       const [apptRes, invRes, petsRes, svcRes, vetsRes] = await Promise.all([
         supabase
           .from('appointments')
@@ -97,10 +96,14 @@ export default function ClientPortal() {
           .select('*')
           .eq('is_active', true)
           .order('name'),
-        supabase
-          .from('profiles')
-          .select('id, full_name')
-          .in('id', (await supabase.from('user_roles').select('user_id').eq('role', 'veterinarian')).data?.map(r => r.user_id) || []),
+        vetUserIds.length > 0
+          ? supabase
+              .from('profiles')
+              .select('id, full_name')
+              .in('user_id', vetUserIds)
+              .eq('is_active', true)
+              .order('full_name')
+          : Promise.resolve({ data: [] as any[] }),
       ]);
 
       setAppointments(apptRes.data || []);
@@ -116,12 +119,13 @@ export default function ClientPortal() {
   };
 
   const fetchAvailableSlots = async () => {
-    if (!bookingDate || !bookingVetId) return;
+    if (!bookingDate || !bookingVetId || !workingHours) return;
 
-    const dayOfWeek = bookingDate.getDay();
-    const hours = WORKING_HOURS[dayOfWeek];
-    if (!hours) {
+    const allSlots = generateDaySlots(workingHours, bookingDate);
+    if (allSlots.length === 0) {
       setAvailableSlots([]);
+      setBookingTime('');
+      setBookingCustomTime('');
       return;
     }
 
@@ -143,43 +147,27 @@ export default function ClientPortal() {
 
     const { data: existing } = await query;
 
+    const slotKeyOf = (d: Date) => `${d.getHours()}:${d.getMinutes().toString().padStart(2, '0')}`;
+
     if (bookingVetId === 'any') {
-      // For "any vet": a slot is available if at least one vet is free
-      const vetIds = vets.map(v => v.id);
-      const slots: string[] = [];
-      for (let h = hours.start; h < hours.end; h++) {
-        for (const m of ['00', '30']) {
-          const slotKey = `${h}:${m}`;
-          const busyVets = new Set(
-            (existing || [])
-              .filter(a => {
-                const d = new Date(a.scheduled_at);
-                return `${d.getHours()}:${d.getMinutes().toString().padStart(2, '0')}` === slotKey;
-              })
-              .map(a => a.veterinarian_id)
-          );
-          if (vetIds.some(id => !busyVets.has(id))) {
-            slots.push(`${h.toString().padStart(2, '0')}:${m}`);
-          }
-        }
-      }
+      const vetIds = vets.map((v) => v.id);
+      const slots = allSlots.filter((slot) => {
+        const [h, m] = slot.split(':').map(Number);
+        const key = `${h}:${m.toString().padStart(2, '0')}`;
+        const busyVets = new Set(
+          (existing || [])
+            .filter((a) => slotKeyOf(new Date(a.scheduled_at)) === key)
+            .map((a) => a.veterinarian_id)
+        );
+        return vetIds.length === 0 ? true : vetIds.some((id) => !busyVets.has(id));
+      });
       setAvailableSlots(slots);
     } else {
-      const bookedTimes = new Set(
-        (existing || []).map(a => {
-          const d = new Date(a.scheduled_at);
-          return `${d.getHours()}:${d.getMinutes().toString().padStart(2, '0')}`;
-        })
-      );
-      const slots: string[] = [];
-      for (let h = hours.start; h < hours.end; h++) {
-        for (const m of ['00', '30']) {
-          const slot = `${h}:${m}`;
-          if (!bookedTimes.has(slot)) {
-            slots.push(`${h.toString().padStart(2, '0')}:${m}`);
-          }
-        }
-      }
+      const bookedTimes = new Set((existing || []).map((a) => slotKeyOf(new Date(a.scheduled_at))));
+      const slots = allSlots.filter((slot) => {
+        const [h, m] = slot.split(':').map(Number);
+        return !bookedTimes.has(`${h}:${m.toString().padStart(2, '0')}`);
+      });
       setAvailableSlots(slots);
     }
     setBookingTime('');
@@ -303,7 +291,7 @@ export default function ClientPortal() {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     if (date < today) return true;
-    return WORKING_HOURS[date.getDay()] === null;
+    return !isDayWorking(workingHours, date);
   };
 
   const upcomingAppointments = appointments.filter(a => new Date(a.scheduled_at) >= new Date() && a.status !== 'cancelled');
@@ -538,22 +526,25 @@ export default function ClientPortal() {
               {bookingDate && bookingVetId && (
                 <div className="space-y-3">
                   <Label>Время *</Label>
-                  <div className="flex items-center gap-3">
+                  <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:gap-4">
                     <div className="space-y-1">
                       <Label className="text-xs text-muted-foreground">Указать вручную</Label>
-                      <input
-                        type="time"
+                      <TimePicker
                         value={bookingCustomTime}
-                        onChange={(e) => {
-                          setBookingCustomTime(e.target.value);
-                          setBookingTime(e.target.value);
+                        onChange={(v) => {
+                          setBookingCustomTime(v);
+                          setBookingTime(v);
                         }}
-                        className="flex h-10 w-[140px] rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                        startHour={6}
+                        endHour={22}
+                        minuteStep={5}
                       />
                     </div>
                   </div>
                   {availableSlots.length === 0 ? (
-                    <p className="text-sm text-muted-foreground">Нет доступных слотов на эту дату</p>
+                    <p className="text-sm text-muted-foreground">
+                      На эту дату нет свободных слотов. Попробуйте выбрать другой день или укажите время вручную.
+                    </p>
                   ) : (
                     <div>
                       <p className="text-xs text-muted-foreground mb-2">Или выберите из свободных:</p>

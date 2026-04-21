@@ -32,31 +32,19 @@ import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { Appointment, AppointmentStatus, appointmentStatusLabels } from '@/lib/types';
 import { cn } from '@/lib/utils';
+import { TimePicker } from '@/components/ui/time-picker';
+import { useWorkingHours, isHourWorking, isDayWorking } from '@/hooks/useWorkingHours';
 
-// Working hours config (Пн-Пт 9:00-18:00, Сб 9:00-15:00, Вс — выходной)
-const WORK_START = 9;
-const WORK_END_WEEKDAY = 18;
-const WORK_END_SATURDAY = 15;
-const SUNDAY = 0;
-const SATURDAY = 6;
-
-const hours = Array.from({ length: 13 }, (_, i) => i + 8); // 8:00 - 20:00
-
-function isWorkingSlot(day: Date, hour: number): boolean {
-  const dayOfWeek = day.getDay();
-  if (dayOfWeek === SUNDAY) return false;
-  if (dayOfWeek === SATURDAY) return hour >= WORK_START && hour < WORK_END_SATURDAY;
-  return hour >= WORK_START && hour < WORK_END_WEEKDAY;
-}
-
-function isNonWorkingDay(day: Date): boolean {
-  return day.getDay() === SUNDAY;
-}
+const hours = Array.from({ length: 15 }, (_, i) => i + 7); // 7:00 - 21:00 visible range
 
 export default function Calendar() {
   const { toast } = useToast();
   const { hasAnyRole } = useAuth();
   const canManage = hasAnyRole(['admin', 'veterinarian', 'registrar', 'manager']);
+  const { workingHours } = useWorkingHours();
+
+  const isWorkingSlot = (day: Date, hour: number) => isHourWorking(workingHours, day, hour);
+  const isNonWorkingDay = (day: Date) => !isDayWorking(workingHours, day);
   const [currentDate, setCurrentDate] = useState(new Date());
   const [appointments, setAppointments] = useState<any[]>([]);
   const [clients, setClients] = useState<any[]>([]);
@@ -680,13 +668,28 @@ export default function Calendar() {
             </div>
             <div className="grid gap-2">
               <Label>Дата и время *</Label>
-              <Input
-                type="datetime-local"
-                value={formData.scheduled_at}
-                onChange={(e) =>
-                  setFormData({ ...formData, scheduled_at: e.target.value })
-                }
-              />
+              <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+                <Input
+                  type="date"
+                  value={formData.scheduled_at ? formData.scheduled_at.slice(0, 10) : ''}
+                  onChange={(e) => {
+                    const date = e.target.value;
+                    const time = formData.scheduled_at.slice(11, 16) || '09:00';
+                    setFormData({ ...formData, scheduled_at: date ? `${date}T${time}` : '' });
+                  }}
+                  className="sm:w-[180px]"
+                />
+                <TimePicker
+                  value={formData.scheduled_at.slice(11, 16) || ''}
+                  onChange={(v) => {
+                    const date = formData.scheduled_at.slice(0, 10) || format(new Date(), 'yyyy-MM-dd');
+                    setFormData({ ...formData, scheduled_at: `${date}T${v}` });
+                  }}
+                  startHour={6}
+                  endHour={22}
+                  minuteStep={5}
+                />
+              </div>
             </div>
             <div className="grid gap-2">
               <Label>Длительность (мин)</Label>

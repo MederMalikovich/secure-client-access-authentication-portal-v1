@@ -2,12 +2,13 @@ import { useEffect, useState } from 'react';
 import { getUserFriendlyError } from '@/lib/errorHandler';
 import { getValidationError, medicalRecordSchema } from '@/lib/validationSchemas';
 import { useNavigate } from 'react-router-dom';
-import { FileText, MoreVertical, Pencil, Trash2, Eye, Plus, Download } from 'lucide-react';
+import { FileText, MoreVertical, Pencil, Trash2, Eye, Plus, Download, Stethoscope, Weight, Thermometer } from 'lucide-react';
 import { generateMedicalRecordPdf } from '@/lib/generateMedicalRecordPdf';
 import { PageHeader } from '@/components/ui/page-header';
 import { DataTable, Column } from '@/components/ui/data-table';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Card, CardContent } from '@/components/ui/card';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -39,6 +40,13 @@ import { MedicalRecord, Pet, Profile } from '@/lib/types';
 import { format } from 'date-fns';
 import { ru } from 'date-fns/locale';
 
+type PetMedicalTimeline = {
+  petId: string;
+  petName: string;
+  clientName?: string;
+  visits: any[];
+};
+
 export default function MedicalRecords() {
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -54,6 +62,23 @@ export default function MedicalRecords() {
   const [selectedRecord, setSelectedRecord] = useState<MedicalRecord | null>(null);
   const [detailRecord, setDetailRecord] = useState<any>(null);
   const [petSearch, setPetSearch] = useState('');
+
+  const petTimelines = records.reduce<PetMedicalTimeline[]>((acc, record) => {
+    const petId = record.pet_id;
+    const existing = acc.find((item) => item.petId === petId);
+    if (existing) {
+      existing.visits.push(record);
+      return acc;
+    }
+
+    acc.push({
+      petId,
+      petName: record.pet?.name || 'Питомец',
+      clientName: record.pet?.client?.full_name,
+      visits: [record],
+    });
+    return acc;
+  }, []);
 
   const [formData, setFormData] = useState({
     pet_id: '',

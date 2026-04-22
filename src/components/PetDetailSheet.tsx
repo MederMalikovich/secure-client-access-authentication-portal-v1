@@ -233,17 +233,24 @@ export function PetDetailSheet({ pet, open, onClose, onEdit, onAddAppointment, i
             </TabsList>
 
             {/* Medical records tab */}
-            <TabsContent value="history" className="mt-4 space-y-3">
+            <TabsContent value="history" className="mt-4">
               {loading ? (
                 <div className="text-center py-8 text-muted-foreground text-sm">Загрузка...</div>
               ) : medicalRecords.length > 0 ? (
-                medicalRecords.map((mr) => (
-                  <Card key={mr.id} className="hover:shadow-sm transition-shadow">
-                    <CardContent className="p-4 space-y-3">
+                <div className="relative space-y-0">
+                  {medicalRecords.map((mr, index) => (
+                    <div key={mr.id} className="relative pb-4 pl-8 last:pb-0">
+                      {index < medicalRecords.length - 1 && (
+                        <div className="absolute left-[11px] top-7 h-[calc(100%-1.75rem)] w-px bg-border" />
+                      )}
+                      <div className="absolute left-0 top-4 flex h-6 w-6 items-center justify-center rounded-full border border-primary/30 bg-background">
+                        <Stethoscope className="h-3.5 w-3.5 text-primary" />
+                      </div>
+                      <Card className="hover:shadow-sm transition-shadow">
+                        <CardContent className="p-4 space-y-3">
                       {/* Date & vet */}
                       <div className="flex items-start justify-between gap-2">
                         <div className="flex items-center gap-2">
-                          <Stethoscope className="h-4 w-4 text-primary shrink-0" />
                           <div>
                             <p className="font-medium text-sm">
                               {format(new Date(mr.visit_date), 'd MMMM yyyy', { locale: ru })}
@@ -323,9 +330,11 @@ export function PetDetailSheet({ pet, open, onClose, onEdit, onAddAppointment, i
                           </div>
                         </div>
                       )}
-                    </CardContent>
-                  </Card>
-                ))
+                        </CardContent>
+                      </Card>
+                    </div>
+                  ))}
+                </div>
               ) : (
                 <div className="text-center py-8 text-muted-foreground">
                   <FileText className="h-8 w-8 mx-auto mb-2 opacity-30" />

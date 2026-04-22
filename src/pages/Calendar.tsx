@@ -130,7 +130,12 @@ export default function Calendar() {
 
   const ensureCompletionDocuments = async (
     appointmentId: string,
-    data: typeof formData & { scheduled_at: string; duration_minutes: number; veterinarian_id: string | null; service_id: string | null }
+    data: Omit<typeof formData, 'scheduled_at' | 'duration_minutes' | 'veterinarian_id' | 'service_id'> & {
+      scheduled_at: string;
+      duration_minutes: number;
+      veterinarian_id: string | null;
+      service_id: string | null;
+    }
   ) => {
     const { data: existingRecord, error: recordLookupError } = await supabase
       .from('medical_records')

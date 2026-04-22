@@ -1,14 +1,15 @@
-import { useEffect, useState } from 'react';
+import { useRef, useState, useEffect } from 'react';
 import { getUserFriendlyError } from '@/lib/errorHandler';
 import { getValidationError, medicalRecordSchema } from '@/lib/validationSchemas';
 import { useNavigate } from 'react-router-dom';
-import { FileText, MoreVertical, Pencil, Trash2, Eye, Plus, Download, Stethoscope, Weight, Thermometer } from 'lucide-react';
+import { FileText, MoreVertical, Pencil, Trash2, Eye, Download, Stethoscope, Weight, Thermometer, Upload, FlaskConical, ClipboardList, CalendarClock } from 'lucide-react';
 import { generateMedicalRecordPdf } from '@/lib/generateMedicalRecordPdf';
 import { PageHeader } from '@/components/ui/page-header';
 import { DataTable, Column } from '@/components/ui/data-table';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -47,6 +48,20 @@ type PetMedicalTimeline = {
   visits: any[];
 };
 
+type MedicalRecordFile = {
+  id: string;
+  medical_record_id: string;
+  pet_id: string;
+  title: string;
+  study_type: string;
+  study_date: string;
+  laboratory_name?: string | null;
+  file_path: string;
+  file_name: string;
+  file_size?: number | null;
+  notes?: string | null;
+};
+
 export default function MedicalRecords() {
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -62,6 +77,15 @@ export default function MedicalRecords() {
   const [selectedRecord, setSelectedRecord] = useState<MedicalRecord | null>(null);
   const [detailRecord, setDetailRecord] = useState<any>(null);
   const [petSearch, setPetSearch] = useState('');
+  const [uploadingFile, setUploadingFile] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [fileForm, setFileForm] = useState({
+    title: '',
+    study_type: 'analysis',
+    study_date: new Date().toISOString().slice(0, 10),
+    laboratory_name: '',
+    notes: '',
+  });
 
   const petTimelines = records.reduce<PetMedicalTimeline[]>((acc, record) => {
     const petId = record.pet_id;
@@ -90,6 +114,13 @@ export default function MedicalRecords() {
     treatment: '',
     prescriptions: '',
     lab_results: '',
+    anamnesis: '',
+    clinical_findings: '',
+    vaccination_status: '',
+    allergy_notes: '',
+    follow_up_plan: '',
+    owner_recommendations: '',
+    next_visit_date: '',
     materials_used: '',
     doctor_notes: '',
     weight_at_visit: '',

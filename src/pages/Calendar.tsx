@@ -150,6 +150,29 @@ export default function Calendar() {
           .update(data)
           .eq('id', selectedAppointment.id);
         if (error) throw error;
+
+        if (data.status === 'completed') {
+          const { data: existingRecord, error: recordLookupError } = await supabase
+            .from('medical_records')
+            .select('id')
+            .eq('appointment_id', selectedAppointment.id)
+            .maybeSingle();
+
+          if (recordLookupError) throw recordLookupError;
+
+          if (!existingRecord) {
+            const { error: recordError } = await supabase.from('medical_records').insert({
+              appointment_id: selectedAppointment.id,
+              pet_id: data.pet_id,
+              veterinarian_id: data.veterinarian_id,
+              visit_date: data.scheduled_at,
+              chief_complaint: data.notes || null,
+              doctor_notes: 'Автоматически создано из завершённого приёма',
+            });
+            if (recordError) throw recordError;
+          }
+        }
+
         toast({ title: 'Успешно', description: 'Запись обновлена' });
       } else {
         const { error } = await supabase.from('appointments').insert(data);

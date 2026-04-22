@@ -769,27 +769,84 @@ export default function MedicalRecords() {
                 </div>
               </div>
 
-              {/* Body */}
-              <div className="p-6 space-y-5">
-                {[
-                  { label: 'Жалобы', value: detailRecord.chief_complaint, icon: '💬' },
-                  { label: 'Осмотр', value: detailRecord.examination_notes, icon: '🔍' },
-                  { label: 'Диагноз', value: detailRecord.diagnosis, icon: '🩺' },
-                  { label: 'Лечение', value: detailRecord.treatment, icon: '💊' },
-                  { label: 'Назначения', value: detailRecord.prescriptions, icon: '📋' },
-                  { label: 'Анализы', value: detailRecord.lab_results, icon: '🧪' },
-                  { label: 'Материалы', value: detailRecord.materials_used, icon: '🧰' },
-                  { label: 'Комментарии врача', value: detailRecord.doctor_notes, icon: '📝' },
-                ].filter(s => s.value).map((section) => (
-                  <div key={section.label} className="group">
-                    <div className="flex items-center gap-2 mb-1.5">
-                      <span className="text-base">{section.icon}</span>
-                      <h4 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">{section.label}</h4>
+              <Tabs defaultValue="card" className="p-6">
+                <TabsList className="grid w-full grid-cols-2">
+                  <TabsTrigger value="card"><ClipboardList className="mr-2 h-4 w-4" />Осмотр</TabsTrigger>
+                  <TabsTrigger value="files"><FlaskConical className="mr-2 h-4 w-4" />Исследования</TabsTrigger>
+                </TabsList>
+
+                <TabsContent value="card" className="mt-5 space-y-5">
+                  {[
+                    { label: 'Жалобы', value: detailRecord.chief_complaint, icon: '💬' },
+                    { label: 'Анамнез', value: detailRecord.anamnesis, icon: '📌' },
+                    { label: 'Вакцинация', value: detailRecord.vaccination_status, icon: '🛡️' },
+                    { label: 'Аллергии / ограничения', value: detailRecord.allergy_notes, icon: '⚠️' },
+                    { label: 'Осмотр', value: detailRecord.examination_notes, icon: '🔍' },
+                    { label: 'Клинические показатели', value: detailRecord.clinical_findings, icon: '📈' },
+                    { label: 'Диагноз', value: detailRecord.diagnosis, icon: '🩺' },
+                    { label: 'Лечение', value: detailRecord.treatment, icon: '💊' },
+                    { label: 'Назначения', value: detailRecord.prescriptions, icon: '📋' },
+                    { label: 'Анализы', value: detailRecord.lab_results, icon: '🧪' },
+                    { label: 'План наблюдения', value: detailRecord.follow_up_plan, icon: '🔁' },
+                    { label: 'Рекомендации владельцу', value: detailRecord.owner_recommendations, icon: '🏠' },
+                    { label: 'Материалы', value: detailRecord.materials_used, icon: '🧰' },
+                    { label: 'Комментарии врача', value: detailRecord.doctor_notes, icon: '📝' },
+                    { label: 'Следующий контроль', value: detailRecord.next_visit_date ? format(new Date(detailRecord.next_visit_date), 'd MMMM yyyy, HH:mm', { locale: ru }) : '', icon: '📅' },
+                  ].filter(s => s.value).map((section) => (
+                    <div key={section.label} className="group">
+                      <div className="mb-1.5 flex items-center gap-2">
+                        <span className="text-base">{section.icon}</span>
+                        <h4 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">{section.label}</h4>
+                      </div>
+                      <p className="whitespace-pre-wrap pl-7 text-sm leading-relaxed">{section.value}</p>
                     </div>
-                    <p className="text-sm leading-relaxed pl-7 whitespace-pre-wrap">{section.value}</p>
-                  </div>
-                ))}
-              </div>
+                  ))}
+                </TabsContent>
+
+                <TabsContent value="files" className="mt-5 space-y-4">
+                  {!isClient && (
+                    <div className="rounded-lg border border-border bg-background/60 p-4">
+                      <div className="grid gap-3 md:grid-cols-2">
+                        <Input placeholder="Название исследования" value={fileForm.title} onChange={(e) => setFileForm({ ...fileForm, title: e.target.value })} />
+                        <Select value={fileForm.study_type} onValueChange={(v) => setFileForm({ ...fileForm, study_type: v })}>
+                          <SelectTrigger><SelectValue /></SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="analysis">Анализы</SelectItem>
+                            <SelectItem value="ultrasound">УЗИ</SelectItem>
+                            <SelectItem value="xray">Рентген</SelectItem>
+                            <SelectItem value="cardiology">Кардиология</SelectItem>
+                            <SelectItem value="other">Другое исследование</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <Input type="date" value={fileForm.study_date} onChange={(e) => setFileForm({ ...fileForm, study_date: e.target.value })} />
+                        <Input placeholder="Лаборатория / кабинет" value={fileForm.laboratory_name} onChange={(e) => setFileForm({ ...fileForm, laboratory_name: e.target.value })} />
+                        <Input ref={fileInputRef} type="file" accept="application/pdf" className="md:col-span-2" />
+                        <Textarea className="md:col-span-2" placeholder="Комментарий к результатам" value={fileForm.notes} onChange={(e) => setFileForm({ ...fileForm, notes: e.target.value })} />
+                      </div>
+                      <Button className="mt-3" onClick={handleFileUpload} disabled={uploadingFile}>
+                        <Upload className="mr-2 h-4 w-4" />{uploadingFile ? 'Загрузка...' : 'Добавить PDF'}
+                      </Button>
+                    </div>
+                  )}
+
+                  {detailRecord.files?.length ? detailRecord.files.map((file: MedicalRecordFile) => (
+                    <div key={file.id} className="flex flex-col gap-3 rounded-lg border border-border p-4 sm:flex-row sm:items-center sm:justify-between">
+                      <div className="min-w-0">
+                        <p className="font-medium">{file.title}</p>
+                        <p className="text-xs text-muted-foreground">{format(new Date(file.study_date), 'd MMM yyyy', { locale: ru })}{file.laboratory_name ? ` • ${file.laboratory_name}` : ''}</p>
+                        {file.notes && <p className="mt-1 text-sm text-muted-foreground">{file.notes}</p>}
+                      </div>
+                      <Button variant="outline" size="sm" onClick={() => openMedicalFile(file)}>
+                        <FileText className="mr-2 h-4 w-4" />Открыть PDF
+                      </Button>
+                    </div>
+                  )) : (
+                    <div className="rounded-lg border border-dashed border-border p-6 text-center text-sm text-muted-foreground">
+                      <FlaskConical className="mx-auto mb-2 h-8 w-8 opacity-40" />PDF исследований пока не добавлены
+                    </div>
+                  )}
+                </TabsContent>
+              </Tabs>
 
               {/* Footer */}
               <div className="flex justify-end gap-2 p-4 border-t border-border">

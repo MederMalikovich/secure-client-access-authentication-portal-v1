@@ -139,7 +139,8 @@ export default function MedicalRecords() {
           .select(`
             *,
             pet:pets(id, name, client:clients(full_name)),
-            veterinarian:profiles(id, full_name)
+            veterinarian:profiles(id, full_name),
+            files:medical_record_files(*)
           `)
           .order('visit_date', { ascending: false }),
         supabase.from('pets').select(`
@@ -202,6 +203,74 @@ export default function MedicalRecords() {
         description: getUserFriendlyError(error),
       });
     }
+  };
+
+  const resetFileForm = () => {
+    setFileForm({
+      title: '',
+      study_type: 'analysis',
+      study_date: new Date().toISOString().slice(0, 10),
+      laboratory_name: '',
+      notes: '',
+    });
+    if (fileInputRef.current) fileInputRef.current.value = '';
+  };
+
+  const handleFileUpload = async () => {
+    const file = fileInputRef.current?.files?.[0];
+    if (!detailRecord || !file) {
+      toast({ variant: 'destructive', title: 'Ошибка', description: 'Выберите PDF файл' });
+      return;
+    }
+    if (file.type !== 'application/pdf') {
+      toast({ variant: 'destructive', title: 'Ошибка', description: 'Можно загрузить только PDF' });
+      return;
+    }
+
+    setUploadingFile(true);
+    try {
+      const safeName = file.name.replace(/[^a-zA-Z0-9а-яА-Я._-]/g, '_');
+      const path = `${detailRecord.pet_id}/${detailRecord.id}/${Date.now()}_${safeName}`;
+      const { error: uploadError } = await supabase.storage
+        .from('medical-record-files')
+        .upload(path, file, { contentType: 'application/pdf' });
+      if (uploadError) throw uploadError;
+
+      const { data: { user } } = await supabase.auth.getUser();
+      const { data, error } = await (supabase as any).from('medical_record_files').insert({
+        medical_record_id: detailRecord.id,
+        pet_id: detailRecord.pet_id,
+        title: fileForm.title || file.name.replace(/\.pdf$/i, ''),
+        study_type: fileForm.study_type,
+        study_date: new Date(fileForm.study_date).toISOString(),
+        laboratory_name: fileForm.laboratory_name || null,
+        file_path: path,
+        file_name: file.name,
+        file_size: file.size,
+        notes: fileForm.notes || null,
+        uploaded_by: user?.id || null,
+      }).select().single();
+      if (error) throw error;
+
+      const updatedRecord = { ...detailRecord, files: [data, ...(detailRecord.files || [])] };
+      setDetailRecord(updatedRecord);
+      setRecords((items) => items.map((record) => record.id === detailRecord.id ? updatedRecord : record));
+      resetFileForm();
+      toast({ title: 'PDF добавлен', description: 'Файл исследования сохранён в медкарте' });
+    } catch (error) {
+      toast({ variant: 'destructive', title: 'Ошибка', description: getUserFriendlyError(error) });
+    } finally {
+      setUploadingFile(false);
+    }
+  };
+
+  const openMedicalFile = async (file: MedicalRecordFile) => {
+    const { data, error } = await supabase.storage.from('medical-record-files').createSignedUrl(file.file_path, 60);
+    if (error || !data?.signedUrl) {
+      toast({ variant: 'destructive', title: 'Ошибка', description: 'Не удалось открыть PDF' });
+      return;
+    }
+    window.open(data.signedUrl, '_blank', 'noopener,noreferrer');
   };
 
   const handleDelete = async () => {

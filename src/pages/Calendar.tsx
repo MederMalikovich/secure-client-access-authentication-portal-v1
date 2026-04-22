@@ -97,7 +97,7 @@ export default function Calendar() {
           .order('scheduled_at'),
         supabase.from('clients').select('id, full_name').order('full_name'),
         supabase.from('pets').select('id, name, client_id').order('name'),
-        supabase.from('services').select('id, name').eq('is_active', true).order('name'),
+        supabase.from('services').select('id, name, price').eq('is_active', true).order('name'),
         // First get vet user_ids, then fetch their profiles
         supabase.from('user_roles').select('user_id').eq('role', 'veterinarian'),
       ]);
@@ -128,6 +128,95 @@ export default function Calendar() {
     }
   };
 
+  const ensureCompletionDocuments = async (
+    appointmentId: string,
+    data: Omit<typeof formData, 'scheduled_at' | 'duration_minutes' | 'veterinarian_id' | 'service_id'> & {
+      scheduled_at: string;
+      duration_minutes: number;
+      veterinarian_id: string | null;
+      service_id: string | null;
+    }
+  ) => {
+    const { data: existingRecord, error: recordLookupError } = await supabase
+      .from('medical_records')
+      .select('id')
+      .eq('appointment_id', appointmentId)
+      .maybeSingle();
+
+    if (recordLookupError) throw recordLookupError;
+
+    let medicalRecordId = existingRecord?.id;
+
+    if (!medicalRecordId) {
+      const { data: createdRecord, error: recordError } = await supabase
+        .from('medical_records')
+        .insert({
+          appointment_id: appointmentId,
+          pet_id: data.pet_id,
+          veterinarian_id: data.veterinarian_id,
+          visit_date: data.scheduled_at,
+          chief_complaint: data.notes || null,
+          doctor_notes: 'Автоматически создано из завершённого приёма',
+        })
+        .select('id')
+        .single();
+
+      if (recordError) throw recordError;
+      medicalRecordId = createdRecord.id;
+    }
+
+    const { data: existingInvoice, error: invoiceLookupError } = await supabase
+      .from('invoices')
+      .select('id')
+      .eq('medical_record_id', medicalRecordId)
+      .maybeSingle();
+
+    if (invoiceLookupError) throw invoiceLookupError;
+    if (existingInvoice) return false;
+
+    const selectedService = services.find((service) => service.id === data.service_id);
+    const servicePrice = Number(selectedService?.price || 0);
+    const { data: invoiceNumber, error: numberError } = await supabase.rpc('generate_invoice_number');
+
+    if (numberError) throw numberError;
+
+    const { data: createdInvoice, error: invoiceError } = await supabase
+      .from('invoices')
+      .insert({
+        invoice_number: invoiceNumber,
+        client_id: data.client_id,
+        pet_id: data.pet_id,
+        medical_record_id: medicalRecordId,
+        subtotal: servicePrice,
+        discount: 0,
+        tax: 0,
+        total: servicePrice,
+        status: 'pending',
+        notes: selectedService
+          ? `Автоматически выставлен после завершения визита: ${selectedService.name}`
+          : 'Автоматически выставлен после завершения визита',
+      })
+      .select('id')
+      .single();
+
+    if (invoiceError) throw invoiceError;
+
+    if (selectedService) {
+      const { error: itemError } = await supabase.from('invoice_items').insert({
+        invoice_id: createdInvoice.id,
+        service_id: selectedService.id,
+        description: selectedService.name,
+        quantity: 1,
+        unit_price: servicePrice,
+        total: servicePrice,
+      });
+
+      if (itemError) throw itemError;
+    }
+
+    return true;
+  };
+
   const handleSubmit = async () => {
     const validationError = getValidationError(appointmentSchema, formData);
     if (validationError) {
@@ -151,29 +240,16 @@ export default function Calendar() {
           .eq('id', selectedAppointment.id);
         if (error) throw error;
 
-        if (data.status === 'completed') {
-          const { data: existingRecord, error: recordLookupError } = await supabase
-            .from('medical_records')
-            .select('id')
-            .eq('appointment_id', selectedAppointment.id)
-            .maybeSingle();
+        const invoiceCreated = data.status === 'completed'
+          ? await ensureCompletionDocuments(selectedAppointment.id, data)
+          : false;
 
-          if (recordLookupError) throw recordLookupError;
-
-          if (!existingRecord) {
-            const { error: recordError } = await supabase.from('medical_records').insert({
-              appointment_id: selectedAppointment.id,
-              pet_id: data.pet_id,
-              veterinarian_id: data.veterinarian_id,
-              visit_date: data.scheduled_at,
-              chief_complaint: data.notes || null,
-              doctor_notes: 'Автоматически создано из завершённого приёма',
-            });
-            if (recordError) throw recordError;
-          }
-        }
-
-        toast({ title: 'Успешно', description: 'Запись обновлена' });
+        toast({
+          title: 'Успешно',
+          description: invoiceCreated
+            ? 'Визит завершён, медкарта обновлена и счёт выставлен клиенту'
+            : 'Запись обновлена',
+        });
       } else {
         const { error } = await supabase.from('appointments').insert(data);
         if (error) throw error;

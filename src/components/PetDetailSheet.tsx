@@ -398,6 +398,38 @@ export function PetDetailSheet({ pet, open, onClose, onEdit, onAddAppointment, i
               )}
             </TabsContent>
 
+            <TabsContent value="studies" className="mt-4 space-y-2">
+              {medicalRecords.flatMap((mr) => (mr.files || []).map((file: any) => ({ ...file, visit_date: mr.visit_date }))).length > 0 ? (
+                medicalRecords.flatMap((mr) => (mr.files || []).map((file: any) => ({ ...file, visit_date: mr.visit_date }))).map((file: any) => (
+                  <Card key={file.id}>
+                    <CardContent className="p-4">
+                      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                        <div className="min-w-0">
+                          <div className="flex items-center gap-2">
+                            <FileText className="h-4 w-4 text-primary" />
+                            <p className="font-medium text-sm">{file.title}</p>
+                          </div>
+                          <p className="text-xs text-muted-foreground mt-1">
+                            {format(new Date(file.study_date), 'd MMM yyyy', { locale: ru })}
+                            {file.laboratory_name && ` • ${file.laboratory_name}`}
+                          </p>
+                          {file.notes && <p className="mt-1 text-sm text-muted-foreground">{file.notes}</p>}
+                        </div>
+                        <Button variant="outline" size="sm" onClick={() => openMedicalFile(file.file_path)}>
+                          Открыть PDF
+                        </Button>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))
+              ) : (
+                <div className="text-center py-8 text-muted-foreground">
+                  <FlaskConical className="h-8 w-8 mx-auto mb-2 opacity-30" />
+                  <p className="text-sm">Нет PDF исследований</p>
+                </div>
+              )}
+            </TabsContent>
+
             {/* Finances tab */}
             <TabsContent value="finances" className="mt-4 space-y-3">
               {totalPaid > 0 && (

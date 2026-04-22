@@ -4,7 +4,7 @@ import { ru } from 'date-fns/locale';
 import {
   FileText, DollarSign, Calendar, Plus, Pencil,
   Clock, Camera, CheckCircle2, AlertCircle, CircleDot,
-  TrendingUp, Stethoscope, Weight, Thermometer, User
+  TrendingUp, Stethoscope, Weight, Thermometer, User, FlaskConical
 } from 'lucide-react';
 import {
   Sheet, SheetContent, SheetHeader, SheetTitle,
@@ -55,7 +55,7 @@ export function PetDetailSheet({ pet, open, onClose, onEdit, onAddAppointment, i
       const [mrRes, apptRes, invRes] = await Promise.all([
         supabase
           .from('medical_records')
-          .select(`*, veterinarian:profiles(full_name), diagnoses:medical_record_diagnoses(*, disease:diseases(name)), services:medical_record_services(*, service:services(name))`)
+          .select(`*, veterinarian:profiles(full_name), diagnoses:medical_record_diagnoses(*, disease:diseases(name)), services:medical_record_services(*, service:services(name)), files:medical_record_files(*)`)
           .eq('pet_id', petId)
           .order('visit_date', { ascending: false })
           .limit(20),
@@ -78,6 +78,15 @@ export function PetDetailSheet({ pet, open, onClose, onEdit, onAddAppointment, i
     } finally {
       setLoading(false);
     }
+  };
+
+  const openMedicalFile = async (filePath: string) => {
+    const { data, error } = await supabase.storage.from('medical-record-files').createSignedUrl(filePath, 60);
+    if (error || !data?.signedUrl) {
+      toast({ variant: 'destructive', title: 'Ошибка', description: 'Не удалось открыть PDF' });
+      return;
+    }
+    window.open(data.signedUrl, '_blank', 'noopener,noreferrer');
   };
 
   const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -225,6 +234,10 @@ export function PetDetailSheet({ pet, open, onClose, onEdit, onAddAppointment, i
               <TabsTrigger value="appointments" className="flex-1">
                 <Calendar className="h-4 w-4 mr-1.5" />
                 Визиты
+              </TabsTrigger>
+              <TabsTrigger value="studies" className="flex-1">
+                <FlaskConical className="h-4 w-4 mr-1.5" />
+                Анализы
               </TabsTrigger>
               <TabsTrigger value="finances" className="flex-1">
                 <DollarSign className="h-4 w-4 mr-1.5" />

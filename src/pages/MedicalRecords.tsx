@@ -176,6 +176,7 @@ export default function MedicalRecords() {
     const data = {
       ...formData,
       veterinarian_id: formData.veterinarian_id || null,
+      next_visit_date: formData.next_visit_date ? new Date(formData.next_visit_date).toISOString() : null,
       weight_at_visit: formData.weight_at_visit ? parseFloat(formData.weight_at_visit) : null,
       temperature: formData.temperature ? parseFloat(formData.temperature) : null,
     };

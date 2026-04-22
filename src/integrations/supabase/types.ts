@@ -609,6 +609,65 @@ export type Database = {
           },
         ]
       }
+      medical_record_files: {
+        Row: {
+          created_at: string
+          file_name: string
+          file_path: string
+          file_size: number | null
+          id: string
+          laboratory_name: string | null
+          medical_record_id: string
+          notes: string | null
+          pet_id: string
+          study_date: string
+          study_type: string
+          title: string
+          updated_at: string
+          uploaded_by: string | null
+        }
+        Insert: {
+          created_at?: string
+          file_name: string
+          file_path: string
+          file_size?: number | null
+          id?: string
+          laboratory_name?: string | null
+          medical_record_id: string
+          notes?: string | null
+          pet_id: string
+          study_date?: string
+          study_type?: string
+          title: string
+          updated_at?: string
+          uploaded_by?: string | null
+        }
+        Update: {
+          created_at?: string
+          file_name?: string
+          file_path?: string
+          file_size?: number | null
+          id?: string
+          laboratory_name?: string | null
+          medical_record_id?: string
+          notes?: string | null
+          pet_id?: string
+          study_date?: string
+          study_type?: string
+          title?: string
+          updated_at?: string
+          uploaded_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "medical_record_files_medical_record_id_fkey"
+            columns: ["medical_record_id"]
+            isOneToOne: false
+            referencedRelation: "medical_records"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       medical_record_services: {
         Row: {
           created_at: string
@@ -656,58 +715,79 @@ export type Database = {
       }
       medical_records: {
         Row: {
+          allergy_notes: string | null
+          anamnesis: string | null
           appointment_id: string | null
           chief_complaint: string | null
+          clinical_findings: string | null
           created_at: string
           diagnosis: string | null
           doctor_notes: string | null
           examination_notes: string | null
+          follow_up_plan: string | null
           id: string
           lab_results: string | null
           materials_used: string | null
+          next_visit_date: string | null
+          owner_recommendations: string | null
           pet_id: string
           prescriptions: string | null
           temperature: number | null
           treatment: string | null
           updated_at: string
+          vaccination_status: string | null
           veterinarian_id: string | null
           visit_date: string
           weight_at_visit: number | null
         }
         Insert: {
+          allergy_notes?: string | null
+          anamnesis?: string | null
           appointment_id?: string | null
           chief_complaint?: string | null
+          clinical_findings?: string | null
           created_at?: string
           diagnosis?: string | null
           doctor_notes?: string | null
           examination_notes?: string | null
+          follow_up_plan?: string | null
           id?: string
           lab_results?: string | null
           materials_used?: string | null
+          next_visit_date?: string | null
+          owner_recommendations?: string | null
           pet_id: string
           prescriptions?: string | null
           temperature?: number | null
           treatment?: string | null
           updated_at?: string
+          vaccination_status?: string | null
           veterinarian_id?: string | null
           visit_date?: string
           weight_at_visit?: number | null
         }
         Update: {
+          allergy_notes?: string | null
+          anamnesis?: string | null
           appointment_id?: string | null
           chief_complaint?: string | null
+          clinical_findings?: string | null
           created_at?: string
           diagnosis?: string | null
           doctor_notes?: string | null
           examination_notes?: string | null
+          follow_up_plan?: string | null
           id?: string
           lab_results?: string | null
           materials_used?: string | null
+          next_visit_date?: string | null
+          owner_recommendations?: string | null
           pet_id?: string
           prescriptions?: string | null
           temperature?: number | null
           treatment?: string | null
           updated_at?: string
+          vaccination_status?: string | null
           veterinarian_id?: string | null
           visit_date?: string
           weight_at_visit?: number | null

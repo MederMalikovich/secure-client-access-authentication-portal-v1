@@ -120,6 +120,13 @@ export interface MedicalRecord {
   treatment?: string;
   prescriptions?: string;
   lab_results?: string;
+  anamnesis?: string;
+  clinical_findings?: string;
+  vaccination_status?: string;
+  allergy_notes?: string;
+  follow_up_plan?: string;
+  owner_recommendations?: string;
+  next_visit_date?: string;
   materials_used?: string;
   doctor_notes?: string;
   weight_at_visit?: number;
@@ -130,6 +137,23 @@ export interface MedicalRecord {
   veterinarian?: Profile;
   diagnoses?: MedicalRecordDiagnosis[];
   services?: MedicalRecordService[];
+  files?: MedicalRecordFile[];
+}
+
+export interface MedicalRecordFile {
+  id: string;
+  medical_record_id: string;
+  pet_id: string;
+  title: string;
+  study_type: string;
+  study_date: string;
+  laboratory_name?: string;
+  file_path: string;
+  file_name: string;
+  file_size?: number;
+  notes?: string;
+  created_at: string;
+  updated_at: string;
 }
 
 export interface MedicalRecordDiagnosis {

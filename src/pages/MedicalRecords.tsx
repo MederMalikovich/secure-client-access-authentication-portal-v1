@@ -336,12 +336,70 @@ export default function MedicalRecords() {
     <div>
       <PageHeader
         title="Медицинские карты"
-        description="История лечения и приёмов"
+        description="Единая хронологическая история визитов каждого питомца"
         breadcrumbs={[
           { label: 'Дашборд', href: '/dashboard' },
           { label: 'Медкарты' },
         ]}
       />
+
+      <div className="mb-6 space-y-4">
+        {loading ? (
+          <Card>
+            <CardContent className="p-6 text-center text-sm text-muted-foreground">Загрузка истории визитов...</CardContent>
+          </Card>
+        ) : petTimelines.length > 0 ? (
+          petTimelines.map((timeline) => (
+            <Card key={timeline.petId} className="overflow-hidden">
+              <CardContent className="p-0">
+                <div className="flex flex-col gap-1 border-b border-border bg-primary/5 p-4 sm:flex-row sm:items-center sm:justify-between">
+                  <div>
+                    <h2 className="text-lg font-semibold">{timeline.petName}</h2>
+                    <p className="text-sm text-muted-foreground">
+                      {timeline.clientName ? `Владелец: ${timeline.clientName}` : 'Единая медкарта питомца'}
+                    </p>
+                  </div>
+                  <Badge variant="outline" className="w-fit">{timeline.visits.length} визитов</Badge>
+                </div>
+
+                <div className="space-y-0 p-4">
+                  {timeline.visits.map((visit, index) => (
+                    <div key={visit.id} className="relative grid gap-3 pb-6 pl-8 last:pb-0 sm:grid-cols-[180px_1fr] sm:gap-5">
+                      {index < timeline.visits.length - 1 && (
+                        <div className="absolute left-[11px] top-7 h-[calc(100%-1.75rem)] w-px bg-border" />
+                      )}
+                      <div className="absolute left-0 top-1 flex h-6 w-6 items-center justify-center rounded-full border border-primary/30 bg-background">
+                        <Stethoscope className="h-3.5 w-3.5 text-primary" />
+                      </div>
+                      <div>
+                        <p className="font-medium">{format(new Date(visit.visit_date), 'd MMMM yyyy', { locale: ru })}</p>
+                        <p className="text-xs text-muted-foreground">{format(new Date(visit.visit_date), 'HH:mm')}</p>
+                        <p className="mt-1 text-xs text-muted-foreground">{visit.veterinarian?.full_name || 'Врач не указан'}</p>
+                      </div>
+                      <div className="space-y-2 rounded-lg border border-border bg-background/60 p-3">
+                        <div className="flex flex-wrap gap-2">
+                          {visit.weight_at_visit && <Badge variant="outline"><Weight className="mr-1 h-3 w-3" />{visit.weight_at_visit} кг</Badge>}
+                          {visit.temperature && <Badge variant="outline"><Thermometer className="mr-1 h-3 w-3" />{visit.temperature}°C</Badge>}
+                        </div>
+                        {visit.chief_complaint && <p className="text-sm"><span className="text-muted-foreground">Жалобы: </span>{visit.chief_complaint}</p>}
+                        {visit.diagnosis && <p className="text-sm"><span className="text-muted-foreground">Диагноз: </span>{visit.diagnosis}</p>}
+                        {visit.treatment && <p className="text-sm"><span className="text-muted-foreground">Лечение: </span>{visit.treatment}</p>}
+                        <Button variant="ghost" size="sm" className="px-0" onClick={() => { setDetailRecord(visit); setDetailDialogOpen(true); }}>
+                          <Eye className="mr-2 h-4 w-4" />Открыть запись
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          ))
+        ) : (
+          <Card>
+            <CardContent className="p-6 text-center text-sm text-muted-foreground">Пока нет медицинских записей</CardContent>
+          </Card>
+        )}
+      </div>
 
       <DataTable
         data={records}

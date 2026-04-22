@@ -97,7 +97,7 @@ export default function Calendar() {
           .order('scheduled_at'),
         supabase.from('clients').select('id, full_name').order('full_name'),
         supabase.from('pets').select('id, name, client_id').order('name'),
-        supabase.from('services').select('id, name').eq('is_active', true).order('name'),
+        supabase.from('services').select('id, name, price').eq('is_active', true).order('name'),
         // First get vet user_ids, then fetch their profiles
         supabase.from('user_roles').select('user_id').eq('role', 'veterinarian'),
       ]);
@@ -151,29 +151,16 @@ export default function Calendar() {
           .eq('id', selectedAppointment.id);
         if (error) throw error;
 
-        if (data.status === 'completed') {
-          const { data: existingRecord, error: recordLookupError } = await supabase
-            .from('medical_records')
-            .select('id')
-            .eq('appointment_id', selectedAppointment.id)
-            .maybeSingle();
+        const invoiceCreated = data.status === 'completed'
+          ? await ensureCompletionDocuments(selectedAppointment.id, data)
+          : false;
 
-          if (recordLookupError) throw recordLookupError;
-
-          if (!existingRecord) {
-            const { error: recordError } = await supabase.from('medical_records').insert({
-              appointment_id: selectedAppointment.id,
-              pet_id: data.pet_id,
-              veterinarian_id: data.veterinarian_id,
-              visit_date: data.scheduled_at,
-              chief_complaint: data.notes || null,
-              doctor_notes: 'Автоматически создано из завершённого приёма',
-            });
-            if (recordError) throw recordError;
-          }
-        }
-
-        toast({ title: 'Успешно', description: 'Запись обновлена' });
+        toast({
+          title: 'Успешно',
+          description: invoiceCreated
+            ? 'Визит завершён, медкарта обновлена и счёт выставлен клиенту'
+            : 'Запись обновлена',
+        });
       } else {
         const { error } = await supabase.from('appointments').insert(data);
         if (error) throw error;

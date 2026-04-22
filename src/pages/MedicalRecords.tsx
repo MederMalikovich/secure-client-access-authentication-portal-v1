@@ -621,6 +621,18 @@ export default function MedicalRecords() {
                 placeholder="Основные жалобы владельца"
               />
             </div>
+            <div className="grid gap-2">
+              <Label>Анамнез</Label>
+              <Textarea value={formData.anamnesis} onChange={(e) => setFormData({ ...formData, anamnesis: e.target.value })} placeholder="Когда началось, питание, активность, перенесённые болезни..." />
+            </div>
+            <div className="grid gap-2">
+              <Label>Вакцинация</Label>
+              <Input value={formData.vaccination_status} onChange={(e) => setFormData({ ...formData, vaccination_status: e.target.value })} placeholder="Статус вакцинации" />
+            </div>
+            <div className="grid gap-2">
+              <Label>Аллергии / ограничения</Label>
+              <Input value={formData.allergy_notes} onChange={(e) => setFormData({ ...formData, allergy_notes: e.target.value })} placeholder="Аллергии, противопоказания" />
+            </div>
             <div className="grid gap-2 md:col-span-2">
               <Label>Осмотр</Label>
               <Textarea
@@ -628,6 +640,10 @@ export default function MedicalRecords() {
                 onChange={(e) => setFormData({ ...formData, examination_notes: e.target.value })}
                 placeholder="Результаты осмотра..."
               />
+            </div>
+            <div className="grid gap-2 md:col-span-2">
+              <Label>Клинические показатели</Label>
+              <Textarea value={formData.clinical_findings} onChange={(e) => setFormData({ ...formData, clinical_findings: e.target.value })} placeholder="Пульс, дыхание, слизистые, кожа, ЖКТ, неврология..." />
             </div>
             <div className="grid gap-2 md:col-span-2">
               <Label>Диагноз</Label>
@@ -660,6 +676,18 @@ export default function MedicalRecords() {
                 onChange={(e) => setFormData({ ...formData, lab_results: e.target.value })}
                 placeholder="Результаты лабораторных исследований..."
               />
+            </div>
+            <div className="grid gap-2">
+              <Label>План наблюдения</Label>
+              <Textarea value={formData.follow_up_plan} onChange={(e) => setFormData({ ...formData, follow_up_plan: e.target.value })} placeholder="Контроль, повторные анализы, динамика..." />
+            </div>
+            <div className="grid gap-2">
+              <Label>Рекомендации владельцу</Label>
+              <Textarea value={formData.owner_recommendations} onChange={(e) => setFormData({ ...formData, owner_recommendations: e.target.value })} placeholder="Уход дома, кормление, ограничения..." />
+            </div>
+            <div className="grid gap-2">
+              <Label>Следующий контроль</Label>
+              <Input type="datetime-local" value={formData.next_visit_date} onChange={(e) => setFormData({ ...formData, next_visit_date: e.target.value })} />
             </div>
             <div className="grid gap-2">
               <Label>Использованные материалы</Label>

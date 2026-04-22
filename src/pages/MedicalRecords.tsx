@@ -1,14 +1,15 @@
-import { useEffect, useState } from 'react';
+import { useRef, useState, useEffect } from 'react';
 import { getUserFriendlyError } from '@/lib/errorHandler';
 import { getValidationError, medicalRecordSchema } from '@/lib/validationSchemas';
 import { useNavigate } from 'react-router-dom';
-import { FileText, MoreVertical, Pencil, Trash2, Eye, Plus, Download, Stethoscope, Weight, Thermometer } from 'lucide-react';
+import { FileText, MoreVertical, Pencil, Trash2, Eye, Download, Stethoscope, Weight, Thermometer, Upload, FlaskConical, ClipboardList, CalendarClock } from 'lucide-react';
 import { generateMedicalRecordPdf } from '@/lib/generateMedicalRecordPdf';
 import { PageHeader } from '@/components/ui/page-header';
 import { DataTable, Column } from '@/components/ui/data-table';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -47,6 +48,20 @@ type PetMedicalTimeline = {
   visits: any[];
 };
 
+type MedicalRecordFile = {
+  id: string;
+  medical_record_id: string;
+  pet_id: string;
+  title: string;
+  study_type: string;
+  study_date: string;
+  laboratory_name?: string | null;
+  file_path: string;
+  file_name: string;
+  file_size?: number | null;
+  notes?: string | null;
+};
+
 export default function MedicalRecords() {
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -62,6 +77,15 @@ export default function MedicalRecords() {
   const [selectedRecord, setSelectedRecord] = useState<MedicalRecord | null>(null);
   const [detailRecord, setDetailRecord] = useState<any>(null);
   const [petSearch, setPetSearch] = useState('');
+  const [uploadingFile, setUploadingFile] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [fileForm, setFileForm] = useState({
+    title: '',
+    study_type: 'analysis',
+    study_date: new Date().toISOString().slice(0, 10),
+    laboratory_name: '',
+    notes: '',
+  });
 
   const petTimelines = records.reduce<PetMedicalTimeline[]>((acc, record) => {
     const petId = record.pet_id;
@@ -90,6 +114,13 @@ export default function MedicalRecords() {
     treatment: '',
     prescriptions: '',
     lab_results: '',
+    anamnesis: '',
+    clinical_findings: '',
+    vaccination_status: '',
+    allergy_notes: '',
+    follow_up_plan: '',
+    owner_recommendations: '',
+    next_visit_date: '',
     materials_used: '',
     doctor_notes: '',
     weight_at_visit: '',
@@ -108,7 +139,8 @@ export default function MedicalRecords() {
           .select(`
             *,
             pet:pets(id, name, client:clients(full_name)),
-            veterinarian:profiles(id, full_name)
+            veterinarian:profiles(id, full_name),
+            files:medical_record_files(*)
           `)
           .order('visit_date', { ascending: false }),
         supabase.from('pets').select(`
@@ -144,6 +176,7 @@ export default function MedicalRecords() {
     const data = {
       ...formData,
       veterinarian_id: formData.veterinarian_id || null,
+      next_visit_date: formData.next_visit_date ? new Date(formData.next_visit_date).toISOString() : null,
       weight_at_visit: formData.weight_at_visit ? parseFloat(formData.weight_at_visit) : null,
       temperature: formData.temperature ? parseFloat(formData.temperature) : null,
     };
@@ -171,6 +204,74 @@ export default function MedicalRecords() {
         description: getUserFriendlyError(error),
       });
     }
+  };
+
+  const resetFileForm = () => {
+    setFileForm({
+      title: '',
+      study_type: 'analysis',
+      study_date: new Date().toISOString().slice(0, 10),
+      laboratory_name: '',
+      notes: '',
+    });
+    if (fileInputRef.current) fileInputRef.current.value = '';
+  };
+
+  const handleFileUpload = async () => {
+    const file = fileInputRef.current?.files?.[0];
+    if (!detailRecord || !file) {
+      toast({ variant: 'destructive', title: 'Ошибка', description: 'Выберите PDF файл' });
+      return;
+    }
+    if (file.type !== 'application/pdf') {
+      toast({ variant: 'destructive', title: 'Ошибка', description: 'Можно загрузить только PDF' });
+      return;
+    }
+
+    setUploadingFile(true);
+    try {
+      const safeName = file.name.replace(/[^a-zA-Z0-9а-яА-Я._-]/g, '_');
+      const path = `${detailRecord.pet_id}/${detailRecord.id}/${Date.now()}_${safeName}`;
+      const { error: uploadError } = await supabase.storage
+        .from('medical-record-files')
+        .upload(path, file, { contentType: 'application/pdf' });
+      if (uploadError) throw uploadError;
+
+      const { data: { user } } = await supabase.auth.getUser();
+      const { data, error } = await (supabase as any).from('medical_record_files').insert({
+        medical_record_id: detailRecord.id,
+        pet_id: detailRecord.pet_id,
+        title: fileForm.title || file.name.replace(/\.pdf$/i, ''),
+        study_type: fileForm.study_type,
+        study_date: new Date(fileForm.study_date).toISOString(),
+        laboratory_name: fileForm.laboratory_name || null,
+        file_path: path,
+        file_name: file.name,
+        file_size: file.size,
+        notes: fileForm.notes || null,
+        uploaded_by: user?.id || null,
+      }).select().single();
+      if (error) throw error;
+
+      const updatedRecord = { ...detailRecord, files: [data, ...(detailRecord.files || [])] };
+      setDetailRecord(updatedRecord);
+      setRecords((items) => items.map((record) => record.id === detailRecord.id ? updatedRecord : record));
+      resetFileForm();
+      toast({ title: 'PDF добавлен', description: 'Файл исследования сохранён в медкарте' });
+    } catch (error) {
+      toast({ variant: 'destructive', title: 'Ошибка', description: getUserFriendlyError(error) });
+    } finally {
+      setUploadingFile(false);
+    }
+  };
+
+  const openMedicalFile = async (file: MedicalRecordFile) => {
+    const { data, error } = await supabase.storage.from('medical-record-files').createSignedUrl(file.file_path, 60);
+    if (error || !data?.signedUrl) {
+      toast({ variant: 'destructive', title: 'Ошибка', description: 'Не удалось открыть PDF' });
+      return;
+    }
+    window.open(data.signedUrl, '_blank', 'noopener,noreferrer');
   };
 
   const handleDelete = async () => {
@@ -206,6 +307,13 @@ export default function MedicalRecords() {
       treatment: record.treatment || '',
       prescriptions: record.prescriptions || '',
       lab_results: record.lab_results || '',
+      anamnesis: (record as any).anamnesis || '',
+      clinical_findings: (record as any).clinical_findings || '',
+      vaccination_status: (record as any).vaccination_status || '',
+      allergy_notes: (record as any).allergy_notes || '',
+      follow_up_plan: (record as any).follow_up_plan || '',
+      owner_recommendations: (record as any).owner_recommendations || '',
+      next_visit_date: (record as any).next_visit_date?.slice(0, 16) || '',
       materials_used: record.materials_used || '',
       doctor_notes: record.doctor_notes || '',
       weight_at_visit: record.weight_at_visit?.toString() || '',
@@ -226,6 +334,13 @@ export default function MedicalRecords() {
       treatment: '',
       prescriptions: '',
       lab_results: '',
+      anamnesis: '',
+      clinical_findings: '',
+      vaccination_status: '',
+      allergy_notes: '',
+      follow_up_plan: '',
+      owner_recommendations: '',
+      next_visit_date: '',
       materials_used: '',
       doctor_notes: '',
       weight_at_visit: '',
@@ -506,6 +621,18 @@ export default function MedicalRecords() {
                 placeholder="Основные жалобы владельца"
               />
             </div>
+            <div className="grid gap-2">
+              <Label>Анамнез</Label>
+              <Textarea value={formData.anamnesis} onChange={(e) => setFormData({ ...formData, anamnesis: e.target.value })} placeholder="Когда началось, питание, активность, перенесённые болезни..." />
+            </div>
+            <div className="grid gap-2">
+              <Label>Вакцинация</Label>
+              <Input value={formData.vaccination_status} onChange={(e) => setFormData({ ...formData, vaccination_status: e.target.value })} placeholder="Статус вакцинации" />
+            </div>
+            <div className="grid gap-2">
+              <Label>Аллергии / ограничения</Label>
+              <Input value={formData.allergy_notes} onChange={(e) => setFormData({ ...formData, allergy_notes: e.target.value })} placeholder="Аллергии, противопоказания" />
+            </div>
             <div className="grid gap-2 md:col-span-2">
               <Label>Осмотр</Label>
               <Textarea
@@ -513,6 +640,10 @@ export default function MedicalRecords() {
                 onChange={(e) => setFormData({ ...formData, examination_notes: e.target.value })}
                 placeholder="Результаты осмотра..."
               />
+            </div>
+            <div className="grid gap-2 md:col-span-2">
+              <Label>Клинические показатели</Label>
+              <Textarea value={formData.clinical_findings} onChange={(e) => setFormData({ ...formData, clinical_findings: e.target.value })} placeholder="Пульс, дыхание, слизистые, кожа, ЖКТ, неврология..." />
             </div>
             <div className="grid gap-2 md:col-span-2">
               <Label>Диагноз</Label>
@@ -545,6 +676,18 @@ export default function MedicalRecords() {
                 onChange={(e) => setFormData({ ...formData, lab_results: e.target.value })}
                 placeholder="Результаты лабораторных исследований..."
               />
+            </div>
+            <div className="grid gap-2">
+              <Label>План наблюдения</Label>
+              <Textarea value={formData.follow_up_plan} onChange={(e) => setFormData({ ...formData, follow_up_plan: e.target.value })} placeholder="Контроль, повторные анализы, динамика..." />
+            </div>
+            <div className="grid gap-2">
+              <Label>Рекомендации владельцу</Label>
+              <Textarea value={formData.owner_recommendations} onChange={(e) => setFormData({ ...formData, owner_recommendations: e.target.value })} placeholder="Уход дома, кормление, ограничения..." />
+            </div>
+            <div className="grid gap-2">
+              <Label>Следующий контроль</Label>
+              <Input type="datetime-local" value={formData.next_visit_date} onChange={(e) => setFormData({ ...formData, next_visit_date: e.target.value })} />
             </div>
             <div className="grid gap-2">
               <Label>Использованные материалы</Label>
@@ -626,27 +769,84 @@ export default function MedicalRecords() {
                 </div>
               </div>
 
-              {/* Body */}
-              <div className="p-6 space-y-5">
-                {[
-                  { label: 'Жалобы', value: detailRecord.chief_complaint, icon: '💬' },
-                  { label: 'Осмотр', value: detailRecord.examination_notes, icon: '🔍' },
-                  { label: 'Диагноз', value: detailRecord.diagnosis, icon: '🩺' },
-                  { label: 'Лечение', value: detailRecord.treatment, icon: '💊' },
-                  { label: 'Назначения', value: detailRecord.prescriptions, icon: '📋' },
-                  { label: 'Анализы', value: detailRecord.lab_results, icon: '🧪' },
-                  { label: 'Материалы', value: detailRecord.materials_used, icon: '🧰' },
-                  { label: 'Комментарии врача', value: detailRecord.doctor_notes, icon: '📝' },
-                ].filter(s => s.value).map((section) => (
-                  <div key={section.label} className="group">
-                    <div className="flex items-center gap-2 mb-1.5">
-                      <span className="text-base">{section.icon}</span>
-                      <h4 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">{section.label}</h4>
+              <Tabs defaultValue="card" className="p-6">
+                <TabsList className="grid w-full grid-cols-2">
+                  <TabsTrigger value="card"><ClipboardList className="mr-2 h-4 w-4" />Осмотр</TabsTrigger>
+                  <TabsTrigger value="files"><FlaskConical className="mr-2 h-4 w-4" />Исследования</TabsTrigger>
+                </TabsList>
+
+                <TabsContent value="card" className="mt-5 space-y-5">
+                  {[
+                    { label: 'Жалобы', value: detailRecord.chief_complaint, icon: '💬' },
+                    { label: 'Анамнез', value: detailRecord.anamnesis, icon: '📌' },
+                    { label: 'Вакцинация', value: detailRecord.vaccination_status, icon: '🛡️' },
+                    { label: 'Аллергии / ограничения', value: detailRecord.allergy_notes, icon: '⚠️' },
+                    { label: 'Осмотр', value: detailRecord.examination_notes, icon: '🔍' },
+                    { label: 'Клинические показатели', value: detailRecord.clinical_findings, icon: '📈' },
+                    { label: 'Диагноз', value: detailRecord.diagnosis, icon: '🩺' },
+                    { label: 'Лечение', value: detailRecord.treatment, icon: '💊' },
+                    { label: 'Назначения', value: detailRecord.prescriptions, icon: '📋' },
+                    { label: 'Анализы', value: detailRecord.lab_results, icon: '🧪' },
+                    { label: 'План наблюдения', value: detailRecord.follow_up_plan, icon: '🔁' },
+                    { label: 'Рекомендации владельцу', value: detailRecord.owner_recommendations, icon: '🏠' },
+                    { label: 'Материалы', value: detailRecord.materials_used, icon: '🧰' },
+                    { label: 'Комментарии врача', value: detailRecord.doctor_notes, icon: '📝' },
+                    { label: 'Следующий контроль', value: detailRecord.next_visit_date ? format(new Date(detailRecord.next_visit_date), 'd MMMM yyyy, HH:mm', { locale: ru }) : '', icon: '📅' },
+                  ].filter(s => s.value).map((section) => (
+                    <div key={section.label} className="group">
+                      <div className="mb-1.5 flex items-center gap-2">
+                        <span className="text-base">{section.icon}</span>
+                        <h4 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">{section.label}</h4>
+                      </div>
+                      <p className="whitespace-pre-wrap pl-7 text-sm leading-relaxed">{section.value}</p>
                     </div>
-                    <p className="text-sm leading-relaxed pl-7 whitespace-pre-wrap">{section.value}</p>
-                  </div>
-                ))}
-              </div>
+                  ))}
+                </TabsContent>
+
+                <TabsContent value="files" className="mt-5 space-y-4">
+                  {!isClient && (
+                    <div className="rounded-lg border border-border bg-background/60 p-4">
+                      <div className="grid gap-3 md:grid-cols-2">
+                        <Input placeholder="Название исследования" value={fileForm.title} onChange={(e) => setFileForm({ ...fileForm, title: e.target.value })} />
+                        <Select value={fileForm.study_type} onValueChange={(v) => setFileForm({ ...fileForm, study_type: v })}>
+                          <SelectTrigger><SelectValue /></SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="analysis">Анализы</SelectItem>
+                            <SelectItem value="ultrasound">УЗИ</SelectItem>
+                            <SelectItem value="xray">Рентген</SelectItem>
+                            <SelectItem value="cardiology">Кардиология</SelectItem>
+                            <SelectItem value="other">Другое исследование</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <Input type="date" value={fileForm.study_date} onChange={(e) => setFileForm({ ...fileForm, study_date: e.target.value })} />
+                        <Input placeholder="Лаборатория / кабинет" value={fileForm.laboratory_name} onChange={(e) => setFileForm({ ...fileForm, laboratory_name: e.target.value })} />
+                        <Input ref={fileInputRef} type="file" accept="application/pdf" className="md:col-span-2" />
+                        <Textarea className="md:col-span-2" placeholder="Комментарий к результатам" value={fileForm.notes} onChange={(e) => setFileForm({ ...fileForm, notes: e.target.value })} />
+                      </div>
+                      <Button className="mt-3" onClick={handleFileUpload} disabled={uploadingFile}>
+                        <Upload className="mr-2 h-4 w-4" />{uploadingFile ? 'Загрузка...' : 'Добавить PDF'}
+                      </Button>
+                    </div>
+                  )}
+
+                  {detailRecord.files?.length ? detailRecord.files.map((file: MedicalRecordFile) => (
+                    <div key={file.id} className="flex flex-col gap-3 rounded-lg border border-border p-4 sm:flex-row sm:items-center sm:justify-between">
+                      <div className="min-w-0">
+                        <p className="font-medium">{file.title}</p>
+                        <p className="text-xs text-muted-foreground">{format(new Date(file.study_date), 'd MMM yyyy', { locale: ru })}{file.laboratory_name ? ` • ${file.laboratory_name}` : ''}</p>
+                        {file.notes && <p className="mt-1 text-sm text-muted-foreground">{file.notes}</p>}
+                      </div>
+                      <Button variant="outline" size="sm" onClick={() => openMedicalFile(file)}>
+                        <FileText className="mr-2 h-4 w-4" />Открыть PDF
+                      </Button>
+                    </div>
+                  )) : (
+                    <div className="rounded-lg border border-dashed border-border p-6 text-center text-sm text-muted-foreground">
+                      <FlaskConical className="mx-auto mb-2 h-8 w-8 opacity-40" />PDF исследований пока не добавлены
+                    </div>
+                  )}
+                </TabsContent>
+              </Tabs>
 
               {/* Footer */}
               <div className="flex justify-end gap-2 p-4 border-t border-border">

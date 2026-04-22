@@ -4,7 +4,7 @@ import { ru } from 'date-fns/locale';
 import {
   FileText, DollarSign, Calendar, Plus, Pencil,
   Clock, Camera, CheckCircle2, AlertCircle, CircleDot,
-  TrendingUp, Stethoscope, Weight, Thermometer, User
+  TrendingUp, Stethoscope, Weight, Thermometer, User, FlaskConical
 } from 'lucide-react';
 import {
   Sheet, SheetContent, SheetHeader, SheetTitle,
@@ -55,7 +55,7 @@ export function PetDetailSheet({ pet, open, onClose, onEdit, onAddAppointment, i
       const [mrRes, apptRes, invRes] = await Promise.all([
         supabase
           .from('medical_records')
-          .select(`*, veterinarian:profiles(full_name), diagnoses:medical_record_diagnoses(*, disease:diseases(name)), services:medical_record_services(*, service:services(name))`)
+          .select(`*, veterinarian:profiles(full_name), diagnoses:medical_record_diagnoses(*, disease:diseases(name)), services:medical_record_services(*, service:services(name)), files:medical_record_files(*)`)
           .eq('pet_id', petId)
           .order('visit_date', { ascending: false })
           .limit(20),
@@ -78,6 +78,15 @@ export function PetDetailSheet({ pet, open, onClose, onEdit, onAddAppointment, i
     } finally {
       setLoading(false);
     }
+  };
+
+  const openMedicalFile = async (filePath: string) => {
+    const { data, error } = await supabase.storage.from('medical-record-files').createSignedUrl(filePath, 60);
+    if (error || !data?.signedUrl) {
+      toast({ variant: 'destructive', title: 'Ошибка', description: 'Не удалось открыть PDF' });
+      return;
+    }
+    window.open(data.signedUrl, '_blank', 'noopener,noreferrer');
   };
 
   const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -225,6 +234,10 @@ export function PetDetailSheet({ pet, open, onClose, onEdit, onAddAppointment, i
               <TabsTrigger value="appointments" className="flex-1">
                 <Calendar className="h-4 w-4 mr-1.5" />
                 Визиты
+              </TabsTrigger>
+              <TabsTrigger value="studies" className="flex-1">
+                <FlaskConical className="h-4 w-4 mr-1.5" />
+                Анализы
               </TabsTrigger>
               <TabsTrigger value="finances" className="flex-1">
                 <DollarSign className="h-4 w-4 mr-1.5" />
@@ -381,6 +394,38 @@ export function PetDetailSheet({ pet, open, onClose, onEdit, onAddAppointment, i
                 <div className="text-center py-8 text-muted-foreground">
                   <Calendar className="h-8 w-8 mx-auto mb-2 opacity-30" />
                   <p className="text-sm">Нет записей</p>
+                </div>
+              )}
+            </TabsContent>
+
+            <TabsContent value="studies" className="mt-4 space-y-2">
+              {medicalRecords.flatMap((mr) => (mr.files || []).map((file: any) => ({ ...file, visit_date: mr.visit_date }))).length > 0 ? (
+                medicalRecords.flatMap((mr) => (mr.files || []).map((file: any) => ({ ...file, visit_date: mr.visit_date }))).map((file: any) => (
+                  <Card key={file.id}>
+                    <CardContent className="p-4">
+                      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                        <div className="min-w-0">
+                          <div className="flex items-center gap-2">
+                            <FileText className="h-4 w-4 text-primary" />
+                            <p className="font-medium text-sm">{file.title}</p>
+                          </div>
+                          <p className="text-xs text-muted-foreground mt-1">
+                            {format(new Date(file.study_date), 'd MMM yyyy', { locale: ru })}
+                            {file.laboratory_name && ` • ${file.laboratory_name}`}
+                          </p>
+                          {file.notes && <p className="mt-1 text-sm text-muted-foreground">{file.notes}</p>}
+                        </div>
+                        <Button variant="outline" size="sm" onClick={() => openMedicalFile(file.file_path)}>
+                          Открыть PDF
+                        </Button>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))
+              ) : (
+                <div className="text-center py-8 text-muted-foreground">
+                  <FlaskConical className="h-8 w-8 mx-auto mb-2 opacity-30" />
+                  <p className="text-sm">Нет PDF исследований</p>
                 </div>
               )}
             </TabsContent>

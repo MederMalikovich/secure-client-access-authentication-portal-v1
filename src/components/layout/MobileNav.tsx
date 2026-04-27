@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Menu, X, Home, Users, PawPrint, Calendar, FileText, DollarSign, Package, ShoppingCart, BarChart3, Settings, Heart, Stethoscope, UserCheck, LogOut, Search } from 'lucide-react';
+import { Menu, X, Home, Users, PawPrint, Calendar, FileText, DollarSign, Package, ShoppingCart, BarChart3, Settings, Heart, Stethoscope, UserCheck, LogOut, Search, GraduationCap } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTrigger, SheetTitle } from '@/components/ui/sheet';
@@ -20,6 +20,7 @@ const staffNavItems = [
   { icon: Package, label: 'Склад', href: '/inventory' },
   { icon: ShoppingCart, label: 'Магазин', href: '/shop' },
   { icon: BarChart3, label: 'Отчёты', href: '/reports' },
+  { icon: GraduationCap, label: 'Обучение', href: '/training' },
   { icon: Settings, label: 'Настройки', href: '/settings' },
 ];
 
@@ -27,6 +28,7 @@ const clientNavItems = [
   { icon: Home, label: 'Мой кабинет', href: '/my-cabinet' },
   { icon: PawPrint, label: 'Мои питомцы', href: '/pets' },
   { icon: FileText, label: 'Медкарты', href: '/medical-records' },
+  { icon: GraduationCap, label: 'Обучение', href: '/client-training' },
 ];
 
 export function MobileNav() {

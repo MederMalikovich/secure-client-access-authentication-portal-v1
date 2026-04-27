@@ -25,6 +25,8 @@ import Settings from "./pages/Settings";
 import ClientPortal from "./pages/ClientPortal";
 import NotFound from "./pages/NotFound";
 import Auth from "./pages/Auth";
+import Training from "./pages/Training";
+import ClientTraining from "./pages/ClientTraining";
 
 const queryClient = new QueryClient();
 
@@ -47,6 +49,8 @@ function AppRoutes() {
       <Route path="/doctors" element={<ProtectedRoute requiredRoles={['admin', 'manager']}><MainLayout><Doctors /></MainLayout></ProtectedRoute>} />
       <Route path="/settings" element={<ProtectedRoute requiredRoles={['admin']}><MainLayout><Settings /></MainLayout></ProtectedRoute>} />
       <Route path="/my-cabinet" element={<ProtectedRoute requiredRoles={['client']}><MainLayout><ClientPortal /></MainLayout></ProtectedRoute>} />
+      <Route path="/training" element={<ProtectedRoute staffOnly><MainLayout><Training /></MainLayout></ProtectedRoute>} />
+      <Route path="/client-training" element={<ProtectedRoute requiredRoles={['client']}><MainLayout><ClientTraining /></MainLayout></ProtectedRoute>} />
       <Route path="*" element={<NotFound />} />
     </Routes>
   );

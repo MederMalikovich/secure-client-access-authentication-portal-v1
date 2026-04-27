@@ -27,6 +27,7 @@ const clientNavItems: NavItem[] = [
   { title: 'Мой кабинет', url: '/my-cabinet', icon: LayoutDashboard },
   { title: 'Мои питомцы', url: '/pets', icon: PawPrint },
   { title: 'Медкарты', url: '/medical-records', icon: FileText },
+  { title: 'Обучение', url: '/client-training', icon: GraduationCap },
 ];
 
 const businessNavItems: NavItem[] = [
@@ -37,6 +38,7 @@ const businessNavItems: NavItem[] = [
 ];
 
 const systemNavItems: NavItem[] = [
+  { title: 'Обучение', url: '/training', icon: GraduationCap },
   { title: 'Настройки', url: '/settings', icon: Settings },
 ];
 

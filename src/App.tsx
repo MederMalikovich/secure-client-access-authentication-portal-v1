@@ -25,6 +25,8 @@ import Settings from "./pages/Settings";
 import ClientPortal from "./pages/ClientPortal";
 import NotFound from "./pages/NotFound";
 import Auth from "./pages/Auth";
+import Training from "./pages/Training";
+import ClientTraining from "./pages/ClientTraining";
 
 const queryClient = new QueryClient();
 

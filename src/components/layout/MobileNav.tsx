@@ -20,6 +20,7 @@ const staffNavItems = [
   { icon: Package, label: 'Склад', href: '/inventory' },
   { icon: ShoppingCart, label: 'Магазин', href: '/shop' },
   { icon: BarChart3, label: 'Отчёты', href: '/reports' },
+  { icon: GraduationCap, label: 'Обучение', href: '/training' },
   { icon: Settings, label: 'Настройки', href: '/settings' },
 ];
 
@@ -27,6 +28,7 @@ const clientNavItems = [
   { icon: Home, label: 'Мой кабинет', href: '/my-cabinet' },
   { icon: PawPrint, label: 'Мои питомцы', href: '/pets' },
   { icon: FileText, label: 'Медкарты', href: '/medical-records' },
+  { icon: GraduationCap, label: 'Обучение', href: '/client-training' },
 ];
 
 export function MobileNav() {

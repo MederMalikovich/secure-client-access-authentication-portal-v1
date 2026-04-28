@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Menu, X, Home, Users, PawPrint, Calendar, FileText, DollarSign, Package, ShoppingCart, BarChart3, Settings, Heart, Stethoscope, UserCheck, LogOut, Search, GraduationCap } from 'lucide-react';
+import { Menu, X, Home, Users, PawPrint, Calendar, FileText, DollarSign, Package, ShoppingCart, BarChart3, Settings, Heart, Stethoscope, UserCheck, LogOut, Search, GraduationCap, Pill, BedDouble } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTrigger, SheetTitle } from '@/components/ui/sheet';
@@ -13,6 +13,8 @@ const staffNavItems = [
   { icon: PawPrint, label: 'Питомцы', href: '/pets' },
   { icon: Calendar, label: 'Календарь', href: '/calendar' },
   { icon: FileText, label: 'Медкарты', href: '/medical-records' },
+  { icon: Pill, label: 'Назначения', href: '/prescriptions' },
+  { icon: BedDouble, label: 'Стационар', href: '/hospitalization' },
   { icon: Stethoscope, label: 'Услуги', href: '/services' },
   { icon: Heart, label: 'Заболевания', href: '/diseases' },
   { icon: UserCheck, label: 'Врачи', href: '/doctors' },
@@ -28,6 +30,8 @@ const clientNavItems = [
   { icon: Home, label: 'Мой кабинет', href: '/my-cabinet' },
   { icon: PawPrint, label: 'Мои питомцы', href: '/pets' },
   { icon: FileText, label: 'Медкарты', href: '/medical-records' },
+  { icon: Pill, label: 'Назначения', href: '/prescriptions' },
+  { icon: BedDouble, label: 'Стационар', href: '/hospitalization' },
   { icon: GraduationCap, label: 'Обучение', href: '/client-training' },
 ];
 

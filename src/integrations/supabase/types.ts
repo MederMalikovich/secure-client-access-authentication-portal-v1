@@ -308,6 +308,113 @@ export type Database = {
           },
         ]
       }
+      hospitalization_logs: {
+        Row: {
+          appetite: string | null
+          created_at: string
+          created_by: string | null
+          description: string | null
+          hospitalization_id: string
+          id: string
+          is_visible_to_client: boolean
+          log_type: string
+          mood: string | null
+          photo_url: string | null
+          temperature: number | null
+          title: string | null
+          weight: number | null
+        }
+        Insert: {
+          appetite?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          hospitalization_id: string
+          id?: string
+          is_visible_to_client?: boolean
+          log_type?: string
+          mood?: string | null
+          photo_url?: string | null
+          temperature?: number | null
+          title?: string | null
+          weight?: number | null
+        }
+        Update: {
+          appetite?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          hospitalization_id?: string
+          id?: string
+          is_visible_to_client?: boolean
+          log_type?: string
+          mood?: string | null
+          photo_url?: string | null
+          temperature?: number | null
+          title?: string | null
+          weight?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "hospitalization_logs_hospitalization_id_fkey"
+            columns: ["hospitalization_id"]
+            isOneToOne: false
+            referencedRelation: "hospitalizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      hospitalizations: {
+        Row: {
+          admission_at: string
+          cage_number: string | null
+          client_id: string
+          created_at: string
+          daily_rate: number
+          diagnosis: string | null
+          discharge_at: string | null
+          id: string
+          notes: string | null
+          pet_id: string
+          reason: string | null
+          status: string
+          updated_at: string
+          veterinarian_id: string | null
+        }
+        Insert: {
+          admission_at?: string
+          cage_number?: string | null
+          client_id: string
+          created_at?: string
+          daily_rate?: number
+          diagnosis?: string | null
+          discharge_at?: string | null
+          id?: string
+          notes?: string | null
+          pet_id: string
+          reason?: string | null
+          status?: string
+          updated_at?: string
+          veterinarian_id?: string | null
+        }
+        Update: {
+          admission_at?: string
+          cage_number?: string | null
+          client_id?: string
+          created_at?: string
+          daily_rate?: number
+          diagnosis?: string | null
+          discharge_at?: string | null
+          id?: string
+          notes?: string | null
+          pet_id?: string
+          reason?: string | null
+          status?: string
+          updated_at?: string
+          veterinarian_id?: string | null
+        }
+        Relationships: []
+      }
       inventory_categories: {
         Row: {
           created_at: string
@@ -1015,6 +1122,101 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      prescription_doses: {
+        Row: {
+          created_at: string
+          id: string
+          notes: string | null
+          prescription_id: string
+          scheduled_at: string
+          status: string
+          taken_at: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          notes?: string | null
+          prescription_id: string
+          scheduled_at: string
+          status?: string
+          taken_at?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          notes?: string | null
+          prescription_id?: string
+          scheduled_at?: string
+          status?: string
+          taken_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "prescription_doses_prescription_id_fkey"
+            columns: ["prescription_id"]
+            isOneToOne: false
+            referencedRelation: "prescriptions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      prescriptions: {
+        Row: {
+          client_id: string
+          created_at: string
+          dosage: string
+          duration_days: number
+          frequency_per_day: number
+          id: string
+          instructions: string | null
+          medical_record_id: string
+          medication_name: string
+          pet_id: string
+          route: string | null
+          start_date: string
+          status: string
+          times_of_day: string[]
+          updated_at: string
+          veterinarian_id: string | null
+        }
+        Insert: {
+          client_id: string
+          created_at?: string
+          dosage: string
+          duration_days?: number
+          frequency_per_day?: number
+          id?: string
+          instructions?: string | null
+          medical_record_id: string
+          medication_name: string
+          pet_id: string
+          route?: string | null
+          start_date?: string
+          status?: string
+          times_of_day?: string[]
+          updated_at?: string
+          veterinarian_id?: string | null
+        }
+        Update: {
+          client_id?: string
+          created_at?: string
+          dosage?: string
+          duration_days?: number
+          frequency_per_day?: number
+          id?: string
+          instructions?: string | null
+          medical_record_id?: string
+          medication_name?: string
+          pet_id?: string
+          route?: string | null
+          start_date?: string
+          status?: string
+          times_of_day?: string[]
+          updated_at?: string
+          veterinarian_id?: string | null
+        }
+        Relationships: []
       }
       profiles: {
         Row: {

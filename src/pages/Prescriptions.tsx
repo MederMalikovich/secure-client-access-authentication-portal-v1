@@ -194,8 +194,7 @@ export default function Prescriptions() {
       <PageHeader
         title="Назначения и рецепты"
         description={isClient ? 'Расписание приёма лекарств для ваших питомцев' : 'Электронные назначения с автоматическим расписанием'}
-        icon={Pill}
-        action={canEdit && (
+        actions={canEdit && (
           <Button onClick={() => setDialogOpen(true)} className="gradient-primary">
             <Plus className="h-4 w-4 mr-2" /> Новое назначение
           </Button>

@@ -854,6 +854,7 @@ export default function MedicalRecords() {
                   )}
                 </TabsContent>
 
+                <TabsContent value="files" className="mt-5 space-y-4">
                   {!isClient && (
                     <div className="rounded-lg border border-border bg-background/60 p-4">
                       <div className="grid gap-3 md:grid-cols-2">

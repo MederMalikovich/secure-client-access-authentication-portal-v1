@@ -38,6 +38,7 @@ const businessNavItems: NavItem[] = [
   { title: 'Финансы', url: '/finances', icon: DollarSign },
   { title: 'Склад', url: '/inventory', icon: Package },
   { title: 'Магазин', url: '/shop', icon: ShoppingCart },
+  { title: 'Лояльность', url: '/loyalty', icon: Gift },
   { title: 'Отчёты', url: '/reports', icon: BarChart3 },
 ];
 

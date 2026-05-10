@@ -29,6 +29,7 @@ import Training from "./pages/Training";
 import ClientTraining from "./pages/ClientTraining";
 import Prescriptions from "./pages/Prescriptions";
 import Hospitalization from "./pages/Hospitalization";
+import Loyalty from "./pages/Loyalty";
 
 const queryClient = new QueryClient();
 

@@ -12,6 +12,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
+import { PetSearchSelect } from '@/components/PetSearchSelect';
 import { Pill, Plus, Clock, Check, X, Trash2, CheckCircle2 } from 'lucide-react';
 import { format, isPast, isToday, parseISO } from 'date-fns';
 import { ru } from 'date-fns/locale';
@@ -330,16 +331,11 @@ export default function Prescriptions() {
           <div className="grid gap-4 py-2">
             <div>
               <Label>Питомец *</Label>
-              <Select value={form.pet_id} onValueChange={v => setForm(f => ({ ...f, pet_id: v }))}>
-                <SelectTrigger><SelectValue placeholder="Выберите питомца" /></SelectTrigger>
-                <SelectContent>
-                  {pets.map(p => (
-                    <SelectItem key={p.id} value={p.id}>
-                      {p.name} {p.clients?.full_name ? `(${p.clients.full_name})` : ''}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <PetSearchSelect
+                pets={pets}
+                value={form.pet_id}
+                onChange={(v) => setForm((f) => ({ ...f, pet_id: v }))}
+              />
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>

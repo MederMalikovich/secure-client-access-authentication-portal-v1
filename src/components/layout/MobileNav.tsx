@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Menu, X, Home, Users, PawPrint, Calendar, FileText, DollarSign, Package, ShoppingCart, BarChart3, Settings, Heart, Stethoscope, UserCheck, LogOut, Search, GraduationCap, Pill, BedDouble } from 'lucide-react';
+import { Menu, X, Home, Users, PawPrint, Calendar, FileText, DollarSign, Package, ShoppingCart, BarChart3, Settings, Heart, Stethoscope, UserCheck, LogOut, Search, GraduationCap, Pill, BedDouble, Gift } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTrigger, SheetTitle } from '@/components/ui/sheet';
@@ -21,6 +21,7 @@ const staffNavItems = [
   { icon: DollarSign, label: 'Финансы', href: '/finances' },
   { icon: Package, label: 'Склад', href: '/inventory' },
   { icon: ShoppingCart, label: 'Магазин', href: '/shop' },
+  { icon: Gift, label: 'Лояльность', href: '/loyalty' },
   { icon: BarChart3, label: 'Отчёты', href: '/reports' },
   { icon: GraduationCap, label: 'Обучение', href: '/training' },
   { icon: Settings, label: 'Настройки', href: '/settings' },

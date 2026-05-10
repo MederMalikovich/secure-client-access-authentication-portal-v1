@@ -2,7 +2,7 @@ import { useRef, useState, useEffect } from 'react';
 import { getUserFriendlyError } from '@/lib/errorHandler';
 import { getValidationError, medicalRecordSchema } from '@/lib/validationSchemas';
 import { useNavigate } from 'react-router-dom';
-import { FileText, MoreVertical, Pencil, Trash2, Eye, Download, Stethoscope, Weight, Thermometer, Upload, FlaskConical, ClipboardList, CalendarClock } from 'lucide-react';
+import { FileText, MoreVertical, Pencil, Trash2, Eye, Download, Stethoscope, Weight, Thermometer, Upload, FlaskConical, ClipboardList, CalendarClock, Pill, Plus, Clock as ClockIcon } from 'lucide-react';
 import { generateMedicalRecordPdf } from '@/lib/generateMedicalRecordPdf';
 import { PageHeader } from '@/components/ui/page-header';
 import { DataTable, Column } from '@/components/ui/data-table';
@@ -140,7 +140,8 @@ export default function MedicalRecords() {
             *,
             pet:pets(id, name, client:clients(full_name)),
             veterinarian:profiles(id, full_name),
-            files:medical_record_files(*)
+            files:medical_record_files(*),
+            prescriptions_list:prescriptions(*)
           `)
           .order('visit_date', { ascending: false }),
         supabase.from('pets').select(`
@@ -770,8 +771,9 @@ export default function MedicalRecords() {
               </div>
 
               <Tabs defaultValue="card" className="p-6">
-                <TabsList className="grid w-full grid-cols-2">
+                <TabsList className="grid w-full grid-cols-3">
                   <TabsTrigger value="card"><ClipboardList className="mr-2 h-4 w-4" />Осмотр</TabsTrigger>
+                  <TabsTrigger value="prescriptions"><Pill className="mr-2 h-4 w-4" />Назначения</TabsTrigger>
                   <TabsTrigger value="files"><FlaskConical className="mr-2 h-4 w-4" />Исследования</TabsTrigger>
                 </TabsList>
 
@@ -801,6 +803,55 @@ export default function MedicalRecords() {
                       <p className="whitespace-pre-wrap pl-7 text-sm leading-relaxed">{section.value}</p>
                     </div>
                   ))}
+                </TabsContent>
+
+                <TabsContent value="prescriptions" className="mt-5 space-y-3">
+                  {((detailRecord.prescriptions_list as any[]) || []).length === 0 ? (
+                    <div className="rounded-lg border border-dashed border-border p-8 text-center text-sm text-muted-foreground">
+                      <Pill className="mx-auto mb-2 h-8 w-8 opacity-50" />
+                      Нет электронных назначений по этой записи.
+                      {!isClient && (
+                        <div className="mt-3">
+                          <Button variant="outline" size="sm" onClick={() => navigate('/prescriptions')}>
+                            <Plus className="mr-2 h-4 w-4" /> Создать назначение
+                          </Button>
+                        </div>
+                      )}
+                    </div>
+                  ) : (
+                    <div className="space-y-2">
+                      {((detailRecord.prescriptions_list as any[]) || []).map((p: any) => (
+                        <div key={p.id} className="rounded-lg border border-border bg-background/60 p-3">
+                          <div className="flex items-start justify-between gap-2">
+                            <div>
+                              <div className="font-medium flex items-center gap-2">
+                                <Pill className="h-4 w-4 text-primary" />
+                                {p.medication_name}
+                              </div>
+                              <div className="text-xs text-muted-foreground mt-0.5">
+                                {p.dosage} · {p.route} · {p.frequency_per_day}× в день × {p.duration_days} дн.
+                              </div>
+                              {p.instructions && (
+                                <div className="text-sm mt-1 text-muted-foreground">{p.instructions}</div>
+                              )}
+                            </div>
+                            <Badge variant={p.status === 'active' ? 'default' : 'secondary'}>
+                              {p.status === 'active' ? 'Активно' : p.status === 'completed' ? 'Завершено' : 'Отменено'}
+                            </Badge>
+                          </div>
+                          <div className="mt-2 flex items-center gap-2 text-xs text-muted-foreground">
+                            <ClockIcon className="h-3 w-3" /> Старт: {format(new Date(p.start_date), 'd MMM yyyy', { locale: ru })}
+                            {p.times_of_day?.length > 0 && (
+                              <span>· Время: {p.times_of_day.join(', ')}</span>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                      <Button variant="ghost" size="sm" className="w-full" onClick={() => navigate('/prescriptions')}>
+                        Открыть раздел «Назначения» →
+                      </Button>
+                    </div>
+                  )}
                 </TabsContent>
 
                 <TabsContent value="files" className="mt-5 space-y-4">

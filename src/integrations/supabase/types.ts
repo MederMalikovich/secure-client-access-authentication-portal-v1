@@ -146,8 +146,11 @@ export type Database = {
           email: string | null
           full_name: string
           id: string
+          loyalty_balance: number
           notes: string | null
           phone: string
+          referral_code: string | null
+          referred_by_client_id: string | null
           updated_at: string
         }
         Insert: {
@@ -157,8 +160,11 @@ export type Database = {
           email?: string | null
           full_name: string
           id?: string
+          loyalty_balance?: number
           notes?: string | null
           phone: string
+          referral_code?: string | null
+          referred_by_client_id?: string | null
           updated_at?: string
         }
         Update: {
@@ -168,11 +174,22 @@ export type Database = {
           email?: string | null
           full_name?: string
           id?: string
+          loyalty_balance?: number
           notes?: string | null
           phone?: string
+          referral_code?: string | null
+          referred_by_client_id?: string | null
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "clients_referred_by_client_id_fkey"
+            columns: ["referred_by_client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       clinic_working_hours: {
         Row: {
@@ -308,6 +325,66 @@ export type Database = {
           },
         ]
       }
+      gift_certificates: {
+        Row: {
+          amount: number
+          code: string
+          created_at: string
+          created_by: string | null
+          expires_at: string | null
+          id: string
+          notes: string | null
+          recipient_name: string | null
+          recipient_phone: string | null
+          redeemed_at: string | null
+          redeemed_by_client_id: string | null
+          status: string
+        }
+        Insert: {
+          amount: number
+          code?: string
+          created_at?: string
+          created_by?: string | null
+          expires_at?: string | null
+          id?: string
+          notes?: string | null
+          recipient_name?: string | null
+          recipient_phone?: string | null
+          redeemed_at?: string | null
+          redeemed_by_client_id?: string | null
+          status?: string
+        }
+        Update: {
+          amount?: number
+          code?: string
+          created_at?: string
+          created_by?: string | null
+          expires_at?: string | null
+          id?: string
+          notes?: string | null
+          recipient_name?: string | null
+          recipient_phone?: string | null
+          redeemed_at?: string | null
+          redeemed_by_client_id?: string | null
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "gift_certificates_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "gift_certificates_redeemed_by_client_id_fkey"
+            columns: ["redeemed_by_client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       hospitalization_logs: {
         Row: {
           appetite: string | null
@@ -355,6 +432,13 @@ export type Database = {
           weight?: number | null
         }
         Relationships: [
+          {
+            foreignKeyName: "hospitalization_logs_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "hospitalization_logs_hospitalization_id_fkey"
             columns: ["hospitalization_id"]
@@ -413,7 +497,29 @@ export type Database = {
           updated_at?: string
           veterinarian_id?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "hospitalizations_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "hospitalizations_pet_id_fkey"
+            columns: ["pet_id"]
+            isOneToOne: false
+            referencedRelation: "pets"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "hospitalizations_veterinarian_id_fkey"
+            columns: ["veterinarian_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       inventory_categories: {
         Row: {
@@ -674,6 +780,107 @@ export type Database = {
           },
         ]
       }
+      loyalty_settings: {
+        Row: {
+          accrual_percent: number
+          created_at: string
+          id: string
+          is_enabled: boolean
+          max_redeem_percent: number
+          points_expire_days: number | null
+          referee_bonus: number
+          referrer_bonus: number
+          updated_at: string
+        }
+        Insert: {
+          accrual_percent?: number
+          created_at?: string
+          id?: string
+          is_enabled?: boolean
+          max_redeem_percent?: number
+          points_expire_days?: number | null
+          referee_bonus?: number
+          referrer_bonus?: number
+          updated_at?: string
+        }
+        Update: {
+          accrual_percent?: number
+          created_at?: string
+          id?: string
+          is_enabled?: boolean
+          max_redeem_percent?: number
+          points_expire_days?: number | null
+          referee_bonus?: number
+          referrer_bonus?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      loyalty_transactions: {
+        Row: {
+          amount: number
+          client_id: string
+          created_at: string
+          created_by: string | null
+          description: string | null
+          id: string
+          invoice_id: string | null
+          payment_id: string | null
+          type: string
+        }
+        Insert: {
+          amount: number
+          client_id: string
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          invoice_id?: string | null
+          payment_id?: string | null
+          type: string
+        }
+        Update: {
+          amount?: number
+          client_id?: string
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          invoice_id?: string | null
+          payment_id?: string | null
+          type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "loyalty_transactions_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "loyalty_transactions_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "loyalty_transactions_invoice_id_fkey"
+            columns: ["invoice_id"]
+            isOneToOne: false
+            referencedRelation: "invoices"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "loyalty_transactions_payment_id_fkey"
+            columns: ["payment_id"]
+            isOneToOne: false
+            referencedRelation: "payments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       medical_record_diagnoses: {
         Row: {
           created_at: string
@@ -771,6 +978,13 @@ export type Database = {
             columns: ["medical_record_id"]
             isOneToOne: false
             referencedRelation: "medical_records"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "medical_record_files_pet_id_fkey"
+            columns: ["pet_id"]
+            isOneToOne: false
+            referencedRelation: "pets"
             referencedColumns: ["id"]
           },
         ]
@@ -1216,7 +1430,36 @@ export type Database = {
           updated_at?: string
           veterinarian_id?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "prescriptions_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "prescriptions_medical_record_id_fkey"
+            columns: ["medical_record_id"]
+            isOneToOne: false
+            referencedRelation: "medical_records"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "prescriptions_pet_id_fkey"
+            columns: ["pet_id"]
+            isOneToOne: false
+            referencedRelation: "pets"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "prescriptions_veterinarian_id_fkey"
+            columns: ["veterinarian_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       profiles: {
         Row: {

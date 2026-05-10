@@ -2,7 +2,7 @@ import { useRef, useState, useEffect } from 'react';
 import { getUserFriendlyError } from '@/lib/errorHandler';
 import { getValidationError, medicalRecordSchema } from '@/lib/validationSchemas';
 import { useNavigate } from 'react-router-dom';
-import { FileText, MoreVertical, Pencil, Trash2, Eye, Download, Stethoscope, Weight, Thermometer, Upload, FlaskConical, ClipboardList, CalendarClock } from 'lucide-react';
+import { FileText, MoreVertical, Pencil, Trash2, Eye, Download, Stethoscope, Weight, Thermometer, Upload, FlaskConical, ClipboardList, CalendarClock, Pill, Plus, Clock as ClockIcon } from 'lucide-react';
 import { generateMedicalRecordPdf } from '@/lib/generateMedicalRecordPdf';
 import { PageHeader } from '@/components/ui/page-header';
 import { DataTable, Column } from '@/components/ui/data-table';

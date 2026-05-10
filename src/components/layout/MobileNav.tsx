@@ -21,6 +21,7 @@ const staffNavItems = [
   { icon: DollarSign, label: 'Финансы', href: '/finances' },
   { icon: Package, label: 'Склад', href: '/inventory' },
   { icon: ShoppingCart, label: 'Магазин', href: '/shop' },
+  { icon: Gift, label: 'Лояльность', href: '/loyalty' },
   { icon: BarChart3, label: 'Отчёты', href: '/reports' },
   { icon: GraduationCap, label: 'Обучение', href: '/training' },
   { icon: Settings, label: 'Настройки', href: '/settings' },

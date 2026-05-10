@@ -346,14 +346,11 @@ export default function Hospitalization() {
           <div className="grid gap-3 py-2">
             <div>
               <Label>Питомец *</Label>
-              <Select value={form.pet_id} onValueChange={v => setForm(f => ({ ...f, pet_id: v }))}>
-                <SelectTrigger><SelectValue placeholder="Выберите питомца" /></SelectTrigger>
-                <SelectContent>
-                  {pets.map(p => (
-                    <SelectItem key={p.id} value={p.id}>{p.name} ({p.clients?.full_name || '—'})</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <PetSearchSelect
+                pets={pets}
+                value={form.pet_id}
+                onChange={(v) => setForm((f) => ({ ...f, pet_id: v }))}
+              />
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div><Label>Бокс / клетка</Label><Input value={form.cage_number} onChange={e => setForm(f => ({ ...f, cage_number: e.target.value }))} placeholder="A-12" /></div>

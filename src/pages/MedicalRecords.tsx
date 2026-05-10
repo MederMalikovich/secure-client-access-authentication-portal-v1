@@ -140,7 +140,8 @@ export default function MedicalRecords() {
             *,
             pet:pets(id, name, client:clients(full_name)),
             veterinarian:profiles(id, full_name),
-            files:medical_record_files(*)
+            files:medical_record_files(*),
+            prescriptions_list:prescriptions(*)
           `)
           .order('visit_date', { ascending: false }),
         supabase.from('pets').select(`

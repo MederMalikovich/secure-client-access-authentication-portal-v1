@@ -14,6 +14,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Switch } from '@/components/ui/switch';
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
+import { PetSearchSelect } from '@/components/PetSearchSelect';
 import { BedDouble, Plus, Camera, Thermometer, Weight, Smile, Utensils, MessageSquare, FileText, Eye, EyeOff, ImagePlus, LogOut as DischargeIcon } from 'lucide-react';
 import { format, differenceInDays, parseISO } from 'date-fns';
 import { ru } from 'date-fns/locale';

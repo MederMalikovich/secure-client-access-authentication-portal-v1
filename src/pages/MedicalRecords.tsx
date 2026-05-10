@@ -771,8 +771,9 @@ export default function MedicalRecords() {
               </div>
 
               <Tabs defaultValue="card" className="p-6">
-                <TabsList className="grid w-full grid-cols-2">
+                <TabsList className="grid w-full grid-cols-3">
                   <TabsTrigger value="card"><ClipboardList className="mr-2 h-4 w-4" />Осмотр</TabsTrigger>
+                  <TabsTrigger value="prescriptions"><Pill className="mr-2 h-4 w-4" />Назначения</TabsTrigger>
                   <TabsTrigger value="files"><FlaskConical className="mr-2 h-4 w-4" />Исследования</TabsTrigger>
                 </TabsList>
 

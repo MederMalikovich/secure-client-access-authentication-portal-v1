@@ -12,6 +12,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
+import { PetSearchSelect } from '@/components/PetSearchSelect';
 import { Pill, Plus, Clock, Check, X, Trash2, CheckCircle2 } from 'lucide-react';
 import { format, isPast, isToday, parseISO } from 'date-fns';
 import { ru } from 'date-fns/locale';

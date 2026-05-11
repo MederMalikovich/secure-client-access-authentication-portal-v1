@@ -530,13 +530,13 @@ export default function Finances() {
 
       {/* Payment Dialog */}
       <Dialog open={paymentDialogOpen} onOpenChange={setPaymentDialogOpen}>
-        <DialogContent className="glass">
+        <DialogContent className="glass max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Принять оплату</DialogTitle>
           </DialogHeader>
           <div className="grid gap-4 py-4">
             <div className="grid gap-2">
-              <Label>Сумма (₸)</Label>
+              <Label>Сумма к оплате (₸)</Label>
               <Input
                 type="number"
                 value={paymentForm.amount}
@@ -565,6 +565,33 @@ export default function Finances() {
                 value={paymentForm.reference_number}
                 onChange={(e) => setPaymentForm({ ...paymentForm, reference_number: e.target.value })}
               />
+            </div>
+
+            <div className="border-t border-border pt-4 grid gap-3">
+              <div className="text-sm font-medium">Бонусы и сертификаты</div>
+              <div className="grid gap-2">
+                <Label>Списать баллов (баланс: {clientBalance})</Label>
+                <Input
+                  type="number"
+                  value={paymentForm.use_points}
+                  onChange={(e) => setPaymentForm({ ...paymentForm, use_points: e.target.value })}
+                />
+                <p className="text-xs text-muted-foreground">Не более {maxRedeemPercent}% от суммы счёта</p>
+              </div>
+              <div className="grid gap-2">
+                <Label>Код подарочного сертификата</Label>
+                <div className="flex gap-2">
+                  <Input
+                    value={paymentForm.certificate_code}
+                    onChange={(e) => setPaymentForm({ ...paymentForm, certificate_code: e.target.value })}
+                    placeholder="GC-XXXXXXXXXX"
+                  />
+                  <Button type="button" variant="outline" onClick={validateCertificate}>Проверить</Button>
+                </div>
+                {certificatePreview && (
+                  <p className="text-xs text-green-500">✓ Будет применён сертификат на {formatCurrency(certificatePreview.amount)}</p>
+                )}
+              </div>
             </div>
           </div>
           <DialogFooter>

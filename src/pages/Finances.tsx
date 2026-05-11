@@ -140,32 +140,141 @@ export default function Finances() {
     }
   };
 
+  const openPaymentDialog = async (invoice: any) => {
+    setSelectedInvoice(invoice);
+    const alreadyPaid = (invoice.payments?.reduce((s: number, p: any) => s + Number(p.amount), 0) || 0);
+    const due = Math.max(0, invoice.total - alreadyPaid);
+    setPaymentForm({
+      amount: due.toString(),
+      payment_method: 'cash',
+      reference_number: '',
+      notes: '',
+      use_points: '0',
+      certificate_code: '',
+    });
+    setCertificatePreview(null);
+    try {
+      const [clientRes, settingsRes] = await Promise.all([
+        supabase.from('clients').select('loyalty_balance').eq('id', invoice.client_id).maybeSingle(),
+        supabase.from('loyalty_settings').select('max_redeem_percent').limit(1).maybeSingle(),
+      ]);
+      setClientBalance(Number(clientRes.data?.loyalty_balance || 0));
+      setMaxRedeemPercent(Number(settingsRes.data?.max_redeem_percent ?? 30));
+    } catch {
+      setClientBalance(0);
+    }
+    setPaymentDialogOpen(true);
+  };
+
+  const validateCertificate = async () => {
+    const code = paymentForm.certificate_code.trim();
+    if (!code) { setCertificatePreview(null); return; }
+    const { data, error } = await supabase
+      .from('gift_certificates')
+      .select('id, amount, status, expires_at')
+      .eq('code', code)
+      .maybeSingle();
+    if (error || !data) {
+      toast({ variant: 'destructive', title: 'Сертификат не найден' });
+      setCertificatePreview(null);
+      return;
+    }
+    if (data.status !== 'active') {
+      toast({ variant: 'destructive', title: 'Сертификат неактивен' });
+      setCertificatePreview(null);
+      return;
+    }
+    if (data.expires_at && new Date(data.expires_at) < new Date()) {
+      toast({ variant: 'destructive', title: 'Срок действия сертификата истёк' });
+      setCertificatePreview(null);
+      return;
+    }
+    setCertificatePreview({ id: data.id, amount: Number(data.amount) });
+    toast({ title: 'Сертификат активирован', description: `На сумму ${formatCurrency(Number(data.amount))}` });
+  };
+
   const handlePayment = async () => {
-    if (!selectedInvoice || !paymentForm.amount) {
-      toast({
-        variant: 'destructive',
-        title: 'Ошибка',
-        description: 'Введите сумму платежа',
-      });
+    if (!selectedInvoice) return;
+
+    const cashAmount = parseFloat(paymentForm.amount) || 0;
+    const usePoints = Math.max(0, parseFloat(paymentForm.use_points) || 0);
+    const certAmount = certificatePreview?.amount || 0;
+    const totalThisOp = cashAmount + usePoints + certAmount;
+
+    if (totalThisOp <= 0) {
+      toast({ variant: 'destructive', title: 'Ошибка', description: 'Укажите сумму, баллы или сертификат' });
       return;
     }
 
-    const amount = parseFloat(paymentForm.amount);
-    const totalPaid = ((selectedInvoice as any).payments?.reduce((sum: number, p: any) => sum + Number(p.amount), 0) || 0) + amount;
-    const newStatus: PaymentStatus = totalPaid >= selectedInvoice.total ? 'paid' : 'partial';
+    const alreadyPaid = ((selectedInvoice as any).payments?.reduce((sum: number, p: any) => sum + Number(p.amount), 0) || 0);
+    const due = selectedInvoice.total - alreadyPaid;
+    const maxRedeem = (selectedInvoice.total * maxRedeemPercent) / 100;
+    if (usePoints > clientBalance) {
+      toast({ variant: 'destructive', title: 'Недостаточно баллов', description: `Баланс: ${clientBalance}` });
+      return;
+    }
+    if (usePoints > maxRedeem) {
+      toast({ variant: 'destructive', title: `Можно списать не более ${maxRedeemPercent}% от счёта (${formatCurrency(maxRedeem)})` });
+      return;
+    }
+    if (totalThisOp > due + 0.01) {
+      toast({ variant: 'destructive', title: 'Сумма превышает остаток к оплате' });
+      return;
+    }
+
+    const newTotalPaid = alreadyPaid + totalThisOp;
+    const newStatus: PaymentStatus = newTotalPaid >= selectedInvoice.total - 0.01 ? 'paid' : 'partial';
 
     try {
-      // Create payment
-      const { error: paymentError } = await supabase.from('payments').insert({
-        invoice_id: selectedInvoice.id,
-        amount,
-        payment_method: paymentForm.payment_method,
-        reference_number: paymentForm.reference_number,
-        notes: paymentForm.notes,
-      });
-      if (paymentError) throw paymentError;
+      if (cashAmount > 0) {
+        const { error } = await supabase.from('payments').insert({
+          invoice_id: selectedInvoice.id,
+          amount: cashAmount,
+          payment_method: paymentForm.payment_method,
+          reference_number: paymentForm.reference_number,
+          notes: paymentForm.notes,
+        });
+        if (error) throw error;
+      }
 
-      // Update invoice status
+      if (usePoints > 0 && selectedInvoice.client_id) {
+        const { error: payErr } = await supabase.from('payments').insert({
+          invoice_id: selectedInvoice.id,
+          amount: usePoints,
+          payment_method: 'loyalty_points',
+          notes: 'Списание бонусных баллов',
+        });
+        if (payErr) throw payErr;
+        const { error: txnErr } = await supabase.from('loyalty_transactions').insert({
+          client_id: selectedInvoice.client_id,
+          amount: -usePoints,
+          type: 'redeem',
+          description: `Списание за счёт ${selectedInvoice.invoice_number}`,
+          invoice_id: selectedInvoice.id,
+        });
+        if (txnErr) throw txnErr;
+      }
+
+      if (certificatePreview && certAmount > 0) {
+        const { error: payErr } = await supabase.from('payments').insert({
+          invoice_id: selectedInvoice.id,
+          amount: certAmount,
+          payment_method: 'gift_certificate',
+          reference_number: paymentForm.certificate_code,
+          notes: 'Оплата подарочным сертификатом',
+        });
+        if (payErr) throw payErr;
+        const { error: certErr } = await supabase
+          .from('gift_certificates')
+          .update({
+            status: 'redeemed',
+            redeemed_by_client_id: selectedInvoice.client_id,
+            redeemed_at: new Date().toISOString(),
+          })
+          .eq('id', certificatePreview.id);
+        if (certErr) throw certErr;
+      }
+
       const { error: updateError } = await supabase
         .from('invoices')
         .update({ status: newStatus })
@@ -174,7 +283,8 @@ export default function Finances() {
 
       toast({ title: 'Успешно', description: 'Платёж зафиксирован' });
       setPaymentDialogOpen(false);
-      setPaymentForm({ amount: '', payment_method: 'cash', reference_number: '', notes: '' });
+      setPaymentForm({ amount: '', payment_method: 'cash', reference_number: '', notes: '', use_points: '0', certificate_code: '' });
+      setCertificatePreview(null);
       fetchData();
     } catch (error: any) {
       toast({

@@ -12,7 +12,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Calendar, Clock, FileText, CreditCard, Plus, PawPrint, Stethoscope, CheckCircle2, AlertCircle, Loader2 } from 'lucide-react';
+import { Calendar, Clock, FileText, CreditCard, Plus, PawPrint, Stethoscope, CheckCircle2, AlertCircle, Loader2, Gift, Sparkles, Copy } from 'lucide-react';
 import { format } from 'date-fns';
 import { ru } from 'date-fns/locale';
 import { formatCurrency } from '@/lib/currency';
@@ -62,6 +62,10 @@ export default function ClientPortal() {
   const [services, setServices] = useState<ServiceRow[]>([]);
   const [vets, setVets] = useState<VeterinarianOption[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loyaltyBalance, setLoyaltyBalance] = useState<number>(0);
+  const [referralCode, setReferralCode] = useState<string>('');
+  const [loyaltyTxns, setLoyaltyTxns] = useState<any[]>([]);
+  const [myCertificates, setMyCertificates] = useState<any[]>([]);
 
   // Booking state
   const [bookingOpen, setBookingOpen] = useState(false);
@@ -96,7 +100,7 @@ export default function ClientPortal() {
   const fetchData = useCallback(async () => {
     setLoading(true);
     try {
-      const [apptRes, invRes, petsRes, svcRes, vetsRes] = await Promise.all([
+      const [apptRes, invRes, petsRes, svcRes, vetsRes, clientRes, txnsRes, certsRes] = await Promise.all([
         supabase
           .from('appointments')
           .select('*, pets(name, species), services(name), profiles!appointments_veterinarian_id_fkey(full_name)')
@@ -117,6 +121,9 @@ export default function ClientPortal() {
           .eq('is_active', true)
           .order('name'),
         supabase.rpc('list_public_veterinarians'),
+        supabase.from('clients').select('loyalty_balance, referral_code').eq('id', clientId!).maybeSingle(),
+        supabase.from('loyalty_transactions').select('*').eq('client_id', clientId!).order('created_at', { ascending: false }).limit(50),
+        supabase.from('gift_certificates').select('*').eq('redeemed_by_client_id', clientId!).order('redeemed_at', { ascending: false }),
       ]);
 
       setAppointments((apptRes.data || []) as ClientPortalAppointment[]);
@@ -124,6 +131,10 @@ export default function ClientPortal() {
       setPets((petsRes.data || []) as PetRow[]);
       setServices((svcRes.data || []) as ServiceRow[]);
       setVets((vetsRes.data || []) as VeterinarianOption[]);
+      setLoyaltyBalance(Number(clientRes.data?.loyalty_balance || 0));
+      setReferralCode(clientRes.data?.referral_code || '');
+      setLoyaltyTxns(txnsRes.data || []);
+      setMyCertificates(certsRes.data || []);
     } catch {
       toast({
         title: 'Ошибка загрузки',
@@ -411,10 +422,21 @@ export default function ClientPortal() {
             </div>
           </CardContent>
         </Card>
+        <Card className="border-primary/30">
+          <CardContent className="flex items-center gap-4 p-4">
+            <div className="p-2 rounded-lg bg-primary/10">
+              <Sparkles className="h-5 w-5 text-primary" />
+            </div>
+            <div>
+              <p className="text-2xl font-bold">{loyaltyBalance}</p>
+              <p className="text-sm text-muted-foreground">Бонусных баллов</p>
+            </div>
+          </CardContent>
+        </Card>
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="grid w-full grid-cols-3">
+        <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4">
           <TabsTrigger value="visits" className="gap-2">
             <Calendar className="h-4 w-4" />
             <span className="hidden sm:inline">Визиты</span>
@@ -426,6 +448,10 @@ export default function ClientPortal() {
           <TabsTrigger value="invoices" className="gap-2">
             <CreditCard className="h-4 w-4" />
             <span className="hidden sm:inline">Счета</span>
+          </TabsTrigger>
+          <TabsTrigger value="loyalty" className="gap-2">
+            <Gift className="h-4 w-4" />
+            <span className="hidden sm:inline">Бонусы</span>
           </TabsTrigger>
         </TabsList>
 
@@ -714,6 +740,88 @@ export default function ClientPortal() {
               ))
             )}
           </div>
+        </TabsContent>
+
+        {/* LOYALTY TAB */}
+        <TabsContent value="loyalty" className="space-y-4">
+          <Card className="border-primary/30">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Sparkles className="h-5 w-5 text-primary" />
+                Программа лояльности
+              </CardTitle>
+              <CardDescription>Ваши бонусы, история и реферальная программа</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="p-4 rounded-lg bg-primary/5 border border-primary/20">
+                  <p className="text-sm text-muted-foreground">Текущий баланс</p>
+                  <p className="text-3xl font-bold text-primary">{loyaltyBalance} баллов</p>
+                  <p className="text-xs text-muted-foreground mt-1">≈ {formatCurrency(loyaltyBalance)}. Списываются при оплате счёта в клинике.</p>
+                </div>
+                <div className="p-4 rounded-lg bg-muted/30 border border-border">
+                  <p className="text-sm text-muted-foreground">Ваш реферальный код</p>
+                  <div className="flex items-center gap-2 mt-1">
+                    <p className="text-2xl font-bold tracking-wider">{referralCode || '—'}</p>
+                    {referralCode && (
+                      <Button size="icon" variant="ghost" onClick={() => { navigator.clipboard.writeText(referralCode); toast({ title: 'Скопировано' }); }}>
+                        <Copy className="h-4 w-4" />
+                      </Button>
+                    )}
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-1">Поделитесь кодом — друг и вы получите бонусы.</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base">История начислений и списаний</CardTitle>
+            </CardHeader>
+            <CardContent>
+              {loyaltyTxns.length === 0 ? (
+                <p className="text-sm text-muted-foreground text-center py-4">Операций пока нет</p>
+              ) : (
+                <div className="space-y-2">
+                  {loyaltyTxns.map((t: any) => (
+                    <div key={t.id} className="flex items-center justify-between py-2 border-b border-border last:border-0">
+                      <div>
+                        <p className="text-sm font-medium">{t.description || (t.type === 'accrual' ? 'Начисление' : t.type === 'redeem' ? 'Списание' : t.type)}</p>
+                        <p className="text-xs text-muted-foreground">{format(new Date(t.created_at), 'dd MMM yyyy, HH:mm', { locale: ru })}</p>
+                      </div>
+                      <span className={cn('font-bold', Number(t.amount) > 0 ? 'text-green-500' : 'text-destructive')}>
+                        {Number(t.amount) > 0 ? '+' : ''}{Number(t.amount)}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          {myCertificates.length > 0 && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-base flex items-center gap-2">
+                  <Gift className="h-4 w-4" /> Ваши подарочные сертификаты
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-2">
+                  {myCertificates.map((c: any) => (
+                    <div key={c.id} className="flex items-center justify-between py-2 border-b border-border last:border-0">
+                      <div>
+                        <p className="text-sm font-mono">{c.code}</p>
+                        <p className="text-xs text-muted-foreground">{c.status === 'redeemed' ? 'Использован' : 'Активен'}</p>
+                      </div>
+                      <span className="font-bold">{formatCurrency(Number(c.amount))}</span>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          )}
         </TabsContent>
       </Tabs>
 

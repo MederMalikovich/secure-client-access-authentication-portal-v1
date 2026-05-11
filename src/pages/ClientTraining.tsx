@@ -4,7 +4,7 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import {
   GraduationCap, LogIn, PawPrint, Calendar, FileText, DollarSign,
-  Bell, Lightbulb, BookOpen, AlertTriangle, Pill, BedDouble,
+  Bell, Lightbulb, BookOpen, AlertTriangle, Pill, BedDouble, Sparkles,
 } from 'lucide-react';
 
 interface Step { text: string; hint?: string }

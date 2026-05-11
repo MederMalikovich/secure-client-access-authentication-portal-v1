@@ -100,7 +100,7 @@ export default function ClientPortal() {
   const fetchData = useCallback(async () => {
     setLoading(true);
     try {
-      const [apptRes, invRes, petsRes, svcRes, vetsRes] = await Promise.all([
+      const [apptRes, invRes, petsRes, svcRes, vetsRes, clientRes, txnsRes, certsRes] = await Promise.all([
         supabase
           .from('appointments')
           .select('*, pets(name, species), services(name), profiles!appointments_veterinarian_id_fkey(full_name)')
@@ -121,6 +121,9 @@ export default function ClientPortal() {
           .eq('is_active', true)
           .order('name'),
         supabase.rpc('list_public_veterinarians'),
+        supabase.from('clients').select('loyalty_balance, referral_code').eq('id', clientId!).maybeSingle(),
+        supabase.from('loyalty_transactions').select('*').eq('client_id', clientId!).order('created_at', { ascending: false }).limit(50),
+        supabase.from('gift_certificates').select('*').eq('redeemed_by_client_id', clientId!).order('redeemed_at', { ascending: false }),
       ]);
 
       setAppointments((apptRes.data || []) as ClientPortalAppointment[]);
@@ -128,6 +131,10 @@ export default function ClientPortal() {
       setPets((petsRes.data || []) as PetRow[]);
       setServices((svcRes.data || []) as ServiceRow[]);
       setVets((vetsRes.data || []) as VeterinarianOption[]);
+      setLoyaltyBalance(Number(clientRes.data?.loyalty_balance || 0));
+      setReferralCode(clientRes.data?.referral_code || '');
+      setLoyaltyTxns(txnsRes.data || []);
+      setMyCertificates(certsRes.data || []);
     } catch {
       toast({
         title: 'Ошибка загрузки',

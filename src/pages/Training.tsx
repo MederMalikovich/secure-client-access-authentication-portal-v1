@@ -6,7 +6,7 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import {
   GraduationCap, Users, PawPrint, Stethoscope, Calendar, FileText,
   DollarSign, Package, ShoppingCart, BarChart3, Settings, Bell,
-  Shield, AlertTriangle, CheckCircle2, Lightbulb, BookOpen, Pill, BedDouble,
+  Shield, AlertTriangle, CheckCircle2, Lightbulb, BookOpen, Pill, BedDouble, Sparkles,
 } from 'lucide-react';
 
 interface Step {

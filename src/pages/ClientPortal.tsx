@@ -62,6 +62,10 @@ export default function ClientPortal() {
   const [services, setServices] = useState<ServiceRow[]>([]);
   const [vets, setVets] = useState<VeterinarianOption[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loyaltyBalance, setLoyaltyBalance] = useState<number>(0);
+  const [referralCode, setReferralCode] = useState<string>('');
+  const [loyaltyTxns, setLoyaltyTxns] = useState<any[]>([]);
+  const [myCertificates, setMyCertificates] = useState<any[]>([]);
 
   // Booking state
   const [bookingOpen, setBookingOpen] = useState(false);

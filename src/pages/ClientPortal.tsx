@@ -422,10 +422,21 @@ export default function ClientPortal() {
             </div>
           </CardContent>
         </Card>
+        <Card className="border-primary/30">
+          <CardContent className="flex items-center gap-4 p-4">
+            <div className="p-2 rounded-lg bg-primary/10">
+              <Sparkles className="h-5 w-5 text-primary" />
+            </div>
+            <div>
+              <p className="text-2xl font-bold">{loyaltyBalance}</p>
+              <p className="text-sm text-muted-foreground">Бонусных баллов</p>
+            </div>
+          </CardContent>
+        </Card>
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="grid w-full grid-cols-3">
+        <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4">
           <TabsTrigger value="visits" className="gap-2">
             <Calendar className="h-4 w-4" />
             <span className="hidden sm:inline">Визиты</span>
@@ -437,6 +448,10 @@ export default function ClientPortal() {
           <TabsTrigger value="invoices" className="gap-2">
             <CreditCard className="h-4 w-4" />
             <span className="hidden sm:inline">Счета</span>
+          </TabsTrigger>
+          <TabsTrigger value="loyalty" className="gap-2">
+            <Gift className="h-4 w-4" />
+            <span className="hidden sm:inline">Бонусы</span>
           </TabsTrigger>
         </TabsList>
 

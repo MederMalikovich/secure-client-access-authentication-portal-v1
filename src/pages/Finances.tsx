@@ -60,7 +60,12 @@ export default function Finances() {
     payment_method: 'cash',
     reference_number: '',
     notes: '',
+    use_points: '0',
+    certificate_code: '',
   });
+  const [clientBalance, setClientBalance] = useState<number>(0);
+  const [maxRedeemPercent, setMaxRedeemPercent] = useState<number>(30);
+  const [certificatePreview, setCertificatePreview] = useState<{ id: string; amount: number } | null>(null);
 
   useEffect(() => {
     fetchData();

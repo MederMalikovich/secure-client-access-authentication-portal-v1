@@ -741,6 +741,88 @@ export default function ClientPortal() {
             )}
           </div>
         </TabsContent>
+
+        {/* LOYALTY TAB */}
+        <TabsContent value="loyalty" className="space-y-4">
+          <Card className="border-primary/30">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Sparkles className="h-5 w-5 text-primary" />
+                Программа лояльности
+              </CardTitle>
+              <CardDescription>Ваши бонусы, история и реферальная программа</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="p-4 rounded-lg bg-primary/5 border border-primary/20">
+                  <p className="text-sm text-muted-foreground">Текущий баланс</p>
+                  <p className="text-3xl font-bold text-primary">{loyaltyBalance} баллов</p>
+                  <p className="text-xs text-muted-foreground mt-1">≈ {formatCurrency(loyaltyBalance)}. Списываются при оплате счёта в клинике.</p>
+                </div>
+                <div className="p-4 rounded-lg bg-muted/30 border border-border">
+                  <p className="text-sm text-muted-foreground">Ваш реферальный код</p>
+                  <div className="flex items-center gap-2 mt-1">
+                    <p className="text-2xl font-bold tracking-wider">{referralCode || '—'}</p>
+                    {referralCode && (
+                      <Button size="icon" variant="ghost" onClick={() => { navigator.clipboard.writeText(referralCode); toast({ title: 'Скопировано' }); }}>
+                        <Copy className="h-4 w-4" />
+                      </Button>
+                    )}
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-1">Поделитесь кодом — друг и вы получите бонусы.</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base">История начислений и списаний</CardTitle>
+            </CardHeader>
+            <CardContent>
+              {loyaltyTxns.length === 0 ? (
+                <p className="text-sm text-muted-foreground text-center py-4">Операций пока нет</p>
+              ) : (
+                <div className="space-y-2">
+                  {loyaltyTxns.map((t: any) => (
+                    <div key={t.id} className="flex items-center justify-between py-2 border-b border-border last:border-0">
+                      <div>
+                        <p className="text-sm font-medium">{t.description || (t.type === 'accrual' ? 'Начисление' : t.type === 'redeem' ? 'Списание' : t.type)}</p>
+                        <p className="text-xs text-muted-foreground">{format(new Date(t.created_at), 'dd MMM yyyy, HH:mm', { locale: ru })}</p>
+                      </div>
+                      <span className={cn('font-bold', Number(t.amount) > 0 ? 'text-green-500' : 'text-destructive')}>
+                        {Number(t.amount) > 0 ? '+' : ''}{Number(t.amount)}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          {myCertificates.length > 0 && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-base flex items-center gap-2">
+                  <Gift className="h-4 w-4" /> Ваши подарочные сертификаты
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-2">
+                  {myCertificates.map((c: any) => (
+                    <div key={c.id} className="flex items-center justify-between py-2 border-b border-border last:border-0">
+                      <div>
+                        <p className="text-sm font-mono">{c.code}</p>
+                        <p className="text-xs text-muted-foreground">{c.status === 'redeemed' ? 'Использован' : 'Активен'}</p>
+                      </div>
+                      <span className="font-bold">{formatCurrency(Number(c.amount))}</span>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          )}
+        </TabsContent>
       </Tabs>
 
       {/* Invoice detail dialog */}

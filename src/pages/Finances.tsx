@@ -397,9 +397,6 @@ export default function Finances() {
               <CreditCard className="h-4 w-4 mr-2" />
               Принять оплату
             </DropdownMenuItem>
-              <CreditCard className="h-4 w-4 mr-2" />
-              Принять оплату
-            </DropdownMenuItem>
             <DropdownMenuItem>
               <Eye className="h-4 w-4 mr-2" />
               Просмотр

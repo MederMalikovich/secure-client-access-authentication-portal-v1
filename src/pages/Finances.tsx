@@ -393,16 +393,10 @@ export default function Finances() {
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
-            <DropdownMenuItem onClick={() => {
-              setSelectedInvoice(invoice);
-              setPaymentForm({ 
-                amount: (invoice.total - ((invoice as any).payments?.reduce((s: number, p: any) => s + Number(p.amount), 0) || 0)).toString(),
-                payment_method: 'cash',
-                reference_number: '',
-                notes: '',
-              });
-              setPaymentDialogOpen(true);
-            }}>
+            <DropdownMenuItem onClick={() => openPaymentDialog(invoice)}>
+              <CreditCard className="h-4 w-4 mr-2" />
+              Принять оплату
+            </DropdownMenuItem>
               <CreditCard className="h-4 w-4 mr-2" />
               Принять оплату
             </DropdownMenuItem>

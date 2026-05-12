@@ -553,7 +553,7 @@ export default function Finances() {
               <Label>Клиент *</Label>
               <Select
                 value={formData.client_id}
-                onValueChange={(v) => setFormData({ ...formData, client_id: v })}
+                onValueChange={(v) => onCreateClientChange(v)}
               >
                 <SelectTrigger>
                   <SelectValue placeholder="Выберите клиента" />

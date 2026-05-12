@@ -53,7 +53,11 @@ export default function Finances() {
     discount: '0',
     tax: '0',
     notes: '',
+    use_points: '0',
+    certificate_code: '',
   });
+  const [createClientBalance, setCreateClientBalance] = useState<number>(0);
+  const [createCertPreview, setCreateCertPreview] = useState<{ id: string; amount: number } | null>(null);
 
   const [paymentForm, setPaymentForm] = useState({
     amount: '',

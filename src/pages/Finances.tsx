@@ -306,7 +306,11 @@ export default function Finances() {
       discount: '0',
       tax: '0',
       notes: '',
+      use_points: '0',
+      certificate_code: '',
     });
+    setCreateClientBalance(0);
+    setCreateCertPreview(null);
   };
 
   const formatCurrency = (value: number) => {

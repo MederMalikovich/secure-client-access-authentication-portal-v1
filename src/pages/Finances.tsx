@@ -544,7 +544,7 @@ export default function Finances() {
 
       {/* Create Invoice Dialog */}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent className="glass">
+        <DialogContent className="glass max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Новый счёт</DialogTitle>
           </DialogHeader>

@@ -110,21 +110,45 @@ export default function Loyalty() {
   const createCert = async () => {
     if (!certForm.amount) { toast({ title: 'Укажите сумму', variant: 'destructive' }); return; }
     try {
-      const { error } = await supabase.from('gift_certificates').insert({
+      const { data, error } = await supabase.from('gift_certificates').insert({
         amount: Number(certForm.amount),
         recipient_name: certForm.recipient_name || null,
         recipient_phone: certForm.recipient_phone || null,
         expires_at: certForm.expires_at ? new Date(certForm.expires_at).toISOString() : null,
         notes: certForm.notes || null,
         created_by: profile?.id,
-      });
+      }).select().single();
       if (error) throw error;
-      toast({ title: 'Сертификат создан' });
+      toast({ title: 'Сертификат создан', description: data.code });
+      // Auto-generate PDF
+      try {
+        await generateCertificatePdf({
+          code: data.code,
+          amount: Number(data.amount),
+          recipient_name: data.recipient_name,
+          recipient_phone: data.recipient_phone,
+          expires_at: data.expires_at,
+        });
+      } catch {}
       setCertDialog(false);
-      setCertForm({ amount: 5000, recipient_name: '', recipient_phone: '', expires_at: '', notes: '' });
+      setCertForm({ amount: 5000, recipient_name: '', recipient_phone: '', expires_at: defaultExpiry(), notes: '' });
       load();
     } catch (e: any) {
       toast({ title: 'Ошибка', description: getUserFriendlyError(e), variant: 'destructive' });
+    }
+  };
+
+  const downloadCertPdf = async (c: any) => {
+    try {
+      await generateCertificatePdf({
+        code: c.code,
+        amount: Number(c.amount),
+        recipient_name: c.recipient_name,
+        recipient_phone: c.recipient_phone,
+        expires_at: c.expires_at,
+      });
+    } catch (e: any) {
+      toast({ title: 'Ошибка генерации PDF', description: getUserFriendlyError(e), variant: 'destructive' });
     }
   };
 

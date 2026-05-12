@@ -37,7 +37,12 @@ export default function Loyalty() {
 
   // Certificate
   const [certDialog, setCertDialog] = useState(false);
-  const [certForm, setCertForm] = useState({ amount: 5000, recipient_name: '', recipient_phone: '', expires_at: '', notes: '' });
+  const defaultExpiry = () => format(addMonths(new Date(), 3), 'yyyy-MM-dd');
+  const [certForm, setCertForm] = useState({ amount: 5000, recipient_name: '', recipient_phone: '', expires_at: defaultExpiry(), notes: '' });
+
+  // History tab
+  const [historySearch, setHistorySearch] = useState('');
+  const [expandedClient, setExpandedClient] = useState<string | null>(null);
 
   const load = async () => {
     setLoading(true);

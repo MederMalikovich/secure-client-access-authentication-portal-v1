@@ -53,7 +53,11 @@ export default function Finances() {
     discount: '0',
     tax: '0',
     notes: '',
+    use_points: '0',
+    certificate_code: '',
   });
+  const [createClientBalance, setCreateClientBalance] = useState<number>(0);
+  const [createCertPreview, setCreateCertPreview] = useState<{ id: string; amount: number } | null>(null);
 
   const [paymentForm, setPaymentForm] = useState({
     amount: '',
@@ -101,8 +105,37 @@ export default function Finances() {
     return `${year}-${random}`;
   };
 
+  const onCreateClientChange = async (clientId: string) => {
+    setFormData((prev) => ({ ...prev, client_id: clientId }));
+    setCreateCertPreview(null);
+    if (!clientId) { setCreateClientBalance(0); return; }
+    const { data } = await supabase.from('clients').select('loyalty_balance').eq('id', clientId).maybeSingle();
+    setCreateClientBalance(Number(data?.loyalty_balance || 0));
+  };
+
+  const validateCreateCertificate = async () => {
+    const code = formData.certificate_code.trim();
+    if (!code) { setCreateCertPreview(null); return; }
+    const { data, error } = await supabase
+      .from('gift_certificates')
+      .select('id, amount, status, expires_at')
+      .eq('code', code)
+      .maybeSingle();
+    if (error || !data) { toast({ variant: 'destructive', title: 'Сертификат не найден' }); setCreateCertPreview(null); return; }
+    if (data.status !== 'active') { toast({ variant: 'destructive', title: 'Сертификат неактивен' }); setCreateCertPreview(null); return; }
+    if (data.expires_at && new Date(data.expires_at) < new Date()) { toast({ variant: 'destructive', title: 'Срок действия истёк' }); setCreateCertPreview(null); return; }
+    setCreateCertPreview({ id: data.id, amount: Number(data.amount) });
+    toast({ title: 'Сертификат активирован', description: `На сумму ${formatCurrency(Number(data.amount))}` });
+  };
+
   const handleSubmit = async () => {
-    const validationError = getValidationError(invoiceSchema, formData);
+    const validationError = getValidationError(invoiceSchema, {
+      client_id: formData.client_id,
+      subtotal: formData.subtotal,
+      discount: formData.discount,
+      tax: formData.tax,
+      notes: formData.notes,
+    });
     if (validationError) {
       toast({ variant: 'destructive', title: 'Ошибка', description: validationError });
       return;
@@ -112,6 +145,23 @@ export default function Finances() {
     const discount = parseFloat(formData.discount) || 0;
     const tax = parseFloat(formData.tax) || 0;
     const total = subtotal - discount + tax;
+
+    const usePoints = Math.max(0, parseFloat(formData.use_points) || 0);
+    const certAmount = createCertPreview?.amount || 0;
+
+    const { data: settingsRow } = await supabase.from('loyalty_settings').select('max_redeem_percent').limit(1).maybeSingle();
+    const maxPct = Number(settingsRow?.max_redeem_percent ?? 30);
+    const maxRedeem = (total * maxPct) / 100;
+
+    if (usePoints > createClientBalance) {
+      toast({ variant: 'destructive', title: 'Недостаточно баллов', description: `Баланс: ${createClientBalance}` }); return;
+    }
+    if (usePoints > maxRedeem) {
+      toast({ variant: 'destructive', title: `Можно списать не более ${maxPct}% от счёта (${formatCurrency(maxRedeem)})` }); return;
+    }
+    if (usePoints + certAmount > total + 0.01) {
+      toast({ variant: 'destructive', title: 'Сумма баллов и сертификата превышает счёт' }); return;
+    }
 
     const data = {
       invoice_number: generateInvoiceNumber(),
@@ -125,8 +175,42 @@ export default function Finances() {
     };
 
     try {
-      const { error } = await supabase.from('invoices').insert(data);
+      const { data: created, error } = await supabase.from('invoices').insert(data).select().single();
       if (error) throw error;
+
+      let paidSoFar = 0;
+      if (usePoints > 0) {
+        const { error: pErr } = await supabase.from('payments').insert({
+          invoice_id: created.id, amount: usePoints, payment_method: 'loyalty_points',
+          notes: 'Списание бонусных баллов при выставлении счёта',
+        });
+        if (pErr) throw pErr;
+        const { error: tErr } = await supabase.from('loyalty_transactions').insert({
+          client_id: formData.client_id, amount: -usePoints, type: 'redeem',
+          description: `Списание за счёт ${created.invoice_number}`, invoice_id: created.id,
+        });
+        if (tErr) throw tErr;
+        paidSoFar += usePoints;
+      }
+
+      if (createCertPreview && certAmount > 0) {
+        const { error: pErr } = await supabase.from('payments').insert({
+          invoice_id: created.id, amount: certAmount, payment_method: 'gift_certificate',
+          reference_number: formData.certificate_code, notes: 'Оплата подарочным сертификатом',
+        });
+        if (pErr) throw pErr;
+        const { error: cErr } = await supabase.from('gift_certificates').update({
+          status: 'redeemed', redeemed_by_client_id: formData.client_id, redeemed_at: new Date().toISOString(),
+        }).eq('id', createCertPreview.id);
+        if (cErr) throw cErr;
+        paidSoFar += certAmount;
+      }
+
+      if (paidSoFar > 0) {
+        const newStatus: PaymentStatus = paidSoFar >= total - 0.01 ? 'paid' : 'partial';
+        await supabase.from('invoices').update({ status: newStatus }).eq('id', created.id);
+      }
+
       toast({ title: 'Успешно', description: 'Счёт создан' });
       setDialogOpen(false);
       resetForm();
@@ -302,7 +386,11 @@ export default function Finances() {
       discount: '0',
       tax: '0',
       notes: '',
+      use_points: '0',
+      certificate_code: '',
     });
+    setCreateClientBalance(0);
+    setCreateCertPreview(null);
   };
 
   const formatCurrency = (value: number) => {
@@ -456,7 +544,7 @@ export default function Finances() {
 
       {/* Create Invoice Dialog */}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent className="glass">
+        <DialogContent className="glass max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Новый счёт</DialogTitle>
           </DialogHeader>
@@ -465,7 +553,7 @@ export default function Finances() {
               <Label>Клиент *</Label>
               <Select
                 value={formData.client_id}
-                onValueChange={(v) => setFormData({ ...formData, client_id: v })}
+                onValueChange={(v) => onCreateClientChange(v)}
               >
                 <SelectTrigger>
                   <SelectValue placeholder="Выберите клиента" />
@@ -516,6 +604,36 @@ export default function Finances() {
                 )}
               </div>
             </div>
+
+            {formData.client_id && (
+              <div className="border-t border-border pt-4 grid gap-3">
+                <div className="text-sm font-medium">Бонусы и сертификаты</div>
+                <div className="grid gap-2">
+                  <Label>Списать баллов (баланс: {createClientBalance})</Label>
+                  <Input
+                    type="number"
+                    min={0}
+                    value={formData.use_points}
+                    onChange={(e) => setFormData({ ...formData, use_points: e.target.value })}
+                  />
+                  <p className="text-xs text-muted-foreground">Лимит — макс. % от счёта (см. настройки лояльности)</p>
+                </div>
+                <div className="grid gap-2">
+                  <Label>Код подарочного сертификата</Label>
+                  <div className="flex gap-2">
+                    <Input
+                      value={formData.certificate_code}
+                      onChange={(e) => setFormData({ ...formData, certificate_code: e.target.value })}
+                      placeholder="GC-XXXXXXXXXX"
+                    />
+                    <Button type="button" variant="outline" onClick={validateCreateCertificate}>Проверить</Button>
+                  </div>
+                  {createCertPreview && (
+                    <p className="text-xs text-green-500">✓ Будет применён сертификат на {formatCurrency(createCertPreview.amount)}</p>
+                  )}
+                </div>
+              </div>
+            )}
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setDialogOpen(false)}>

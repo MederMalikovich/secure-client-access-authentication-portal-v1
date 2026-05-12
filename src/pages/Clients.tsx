@@ -49,6 +49,7 @@ export default function Clients() {
     address: '',
     notes: '',
   });
+  const [referralCode, setReferralCode] = useState('');
 
   useEffect(() => {
     fetchClients();

@@ -207,30 +207,78 @@ export default function Loyalty() {
           </Card>
         </TabsContent>
 
-        {/* Transactions */}
+        {/* Transactions grouped by client */}
         <TabsContent value="transactions" className="space-y-3">
-          <div className="flex justify-end">
+          <div className="flex flex-col sm:flex-row sm:items-center gap-2">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input value={historySearch} onChange={(e) => setHistorySearch(e.target.value)} placeholder="Поиск клиента по ФИО или № клиента..." className="pl-10" />
+            </div>
             {canManage && <Button onClick={() => setTxDialog(true)}><Plus className="h-4 w-4 mr-1" />Ручная операция</Button>}
           </div>
-          {transactions.length === 0 ? (
-            <Card><CardContent className="py-8 text-center text-muted-foreground">Операций пока нет</CardContent></Card>
-          ) : (
-            <div className="space-y-2">
-              {transactions.map((t) => (
-                <Card key={t.id}>
-                  <CardContent className="p-3 flex items-center justify-between gap-2">
-                    <div className="min-w-0">
-                      <div className="font-medium truncate">{t.clients?.full_name || '—'}</div>
-                      <div className="text-xs text-muted-foreground">{t.description || t.type} · {format(new Date(t.created_at), 'd MMM yyyy HH:mm', { locale: ru })}</div>
-                    </div>
-                    <div className={`font-bold ${Number(t.amount) >= 0 ? 'text-green-500' : 'text-orange-500'}`}>
-                      {Number(t.amount) >= 0 ? '+' : ''}{formatCurrency(Number(t.amount))}
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          )}
+          {(() => {
+            const q = historySearch.trim().toLowerCase();
+            // Group transactions by client_id
+            const groups = new Map<string, { name: string; number: string; balance: number; items: any[] }>();
+            for (const t of transactions) {
+              const cid = t.client_id;
+              if (!cid) continue;
+              const cl = clients.find((x) => x.id === cid);
+              const name = t.clients?.full_name || cl?.full_name || '—';
+              const num = t.clients?.client_number || cl?.client_number || '';
+              if (q && !name.toLowerCase().includes(q) && !String(num).includes(q)) continue;
+              if (!groups.has(cid)) groups.set(cid, { name, number: num, balance: Number(cl?.loyalty_balance || 0), items: [] });
+              groups.get(cid)!.items.push(t);
+            }
+            const list = Array.from(groups.entries());
+            if (list.length === 0) {
+              return <Card><CardContent className="py-8 text-center text-muted-foreground">Операций не найдено</CardContent></Card>;
+            }
+            return (
+              <div className="space-y-2">
+                {list.map(([cid, g]) => {
+                  const open = expandedClient === cid;
+                  const accruedC = g.items.filter(i => i.amount > 0).reduce((s, i) => s + Number(i.amount), 0);
+                  const redeemedC = Math.abs(g.items.filter(i => i.amount < 0).reduce((s, i) => s + Number(i.amount), 0));
+                  return (
+                    <Card key={cid} className="overflow-hidden">
+                      <button
+                        type="button"
+                        className="w-full text-left p-3 flex items-center justify-between gap-2 hover:bg-muted/40 transition-colors"
+                        onClick={() => setExpandedClient(open ? null : cid)}
+                      >
+                        <div className="min-w-0 flex-1">
+                          <div className="font-medium truncate">{g.name}</div>
+                          <div className="text-xs text-muted-foreground">№{g.number} · операций: {g.items.length}</div>
+                        </div>
+                        <div className="hidden sm:flex flex-col items-end text-xs">
+                          <span className="text-green-500">+{formatCurrency(accruedC)}</span>
+                          <span className="text-orange-500">−{formatCurrency(redeemedC)}</span>
+                        </div>
+                        <div className="font-bold text-primary whitespace-nowrap">{formatCurrency(g.balance)}</div>
+                        <ChevronRight className={`h-4 w-4 text-muted-foreground transition-transform ${open ? 'rotate-90' : ''}`} />
+                      </button>
+                      {open && (
+                        <div className="border-t border-border divide-y divide-border bg-muted/20">
+                          {g.items.map((t) => (
+                            <div key={t.id} className="p-3 flex items-center justify-between gap-2">
+                              <div className="min-w-0">
+                                <div className="text-sm">{t.description || t.type}</div>
+                                <div className="text-xs text-muted-foreground">{format(new Date(t.created_at), 'd MMM yyyy HH:mm', { locale: ru })}</div>
+                              </div>
+                              <div className={`font-bold ${Number(t.amount) >= 0 ? 'text-green-500' : 'text-orange-500'}`}>
+                                {Number(t.amount) >= 0 ? '+' : ''}{formatCurrency(Number(t.amount))}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </Card>
+                  );
+                })}
+              </div>
+            );
+          })()}
         </TabsContent>
 
         {/* Certificates */}

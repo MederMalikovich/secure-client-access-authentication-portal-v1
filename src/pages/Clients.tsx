@@ -103,9 +103,28 @@ export default function Clients() {
         if (error) throw error;
         toast({ title: 'Успешно', description: 'Клиент обновлён' });
       } else {
-        const { data: newClient, error } = await supabase.from('clients').insert(formData).select().single();
+        // Resolve referral code (optional)
+        let referred_by_client_id: string | null = null;
+        const code = referralCode.trim().toUpperCase();
+        if (code) {
+          const { data: ref } = await supabase
+            .from('clients')
+            .select('id')
+            .eq('referral_code', code)
+            .maybeSingle();
+          if (!ref) {
+            toast({ variant: 'destructive', title: 'Реферальный код не найден', description: 'Проверьте код или оставьте поле пустым.' });
+            return;
+          }
+          referred_by_client_id = ref.id;
+        }
+        const { data: newClient, error } = await supabase
+          .from('clients')
+          .insert({ ...formData, referred_by_client_id })
+          .select()
+          .single();
         if (error) throw error;
-        
+
         // Auto-create client auth account
         if (newClient?.client_number) {
           try {
@@ -120,7 +139,7 @@ export default function Clients() {
             console.error('Failed to create client account:', e);
           }
         }
-        toast({ title: 'Успешно', description: 'Клиент добавлен' });
+        toast({ title: 'Успешно', description: referred_by_client_id ? 'Клиент добавлен. Реферальные бонусы начислены обоим клиентам.' : 'Клиент добавлен' });
       }
       setDialogOpen(false);
       resetForm();

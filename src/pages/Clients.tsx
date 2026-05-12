@@ -410,6 +410,7 @@ export default function Clients() {
                 }
                 placeholder="Дополнительная информация..."
               />
+            </div>
             {!selectedClient && (
               <div className="grid gap-2">
                 <Label htmlFor="referral_code">Реферальный код (если есть)</Label>

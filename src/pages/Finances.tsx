@@ -604,6 +604,36 @@ export default function Finances() {
                 )}
               </div>
             </div>
+
+            {formData.client_id && (
+              <div className="border-t border-border pt-4 grid gap-3">
+                <div className="text-sm font-medium">Бонусы и сертификаты</div>
+                <div className="grid gap-2">
+                  <Label>Списать баллов (баланс: {createClientBalance})</Label>
+                  <Input
+                    type="number"
+                    min={0}
+                    value={formData.use_points}
+                    onChange={(e) => setFormData({ ...formData, use_points: e.target.value })}
+                  />
+                  <p className="text-xs text-muted-foreground">Лимит — макс. % от счёта (см. настройки лояльности)</p>
+                </div>
+                <div className="grid gap-2">
+                  <Label>Код подарочного сертификата</Label>
+                  <div className="flex gap-2">
+                    <Input
+                      value={formData.certificate_code}
+                      onChange={(e) => setFormData({ ...formData, certificate_code: e.target.value })}
+                      placeholder="GC-XXXXXXXXXX"
+                    />
+                    <Button type="button" variant="outline" onClick={validateCreateCertificate}>Проверить</Button>
+                  </div>
+                  {createCertPreview && (
+                    <p className="text-xs text-green-500">✓ Будет применён сертификат на {formatCurrency(createCertPreview.amount)}</p>
+                  )}
+                </div>
+              </div>
+            )}
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setDialogOpen(false)}>

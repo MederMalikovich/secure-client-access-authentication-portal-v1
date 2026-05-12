@@ -200,6 +200,7 @@ export default function Clients() {
       address: '',
       notes: '',
     });
+    setReferralCode('');
   };
 
   const columns: Column<Client>[] = [

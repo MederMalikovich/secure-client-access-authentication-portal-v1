@@ -410,7 +410,21 @@ export default function Clients() {
                 }
                 placeholder="Дополнительная информация..."
               />
-            </div>
+            {!selectedClient && (
+              <div className="grid gap-2">
+                <Label htmlFor="referral_code">Реферальный код (если есть)</Label>
+                <Input
+                  id="referral_code"
+                  value={referralCode}
+                  onChange={(e) => setReferralCode(e.target.value.toUpperCase())}
+                  placeholder="Например, A1B2C3D4"
+                  className="font-mono uppercase"
+                />
+                <p className="text-xs text-muted-foreground">
+                  Если клиент пришёл по рекомендации, укажите код пригласившего — оба получат бонусные баллы согласно настройкам программы лояльности.
+                </p>
+              </div>
+            )}
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setDialogOpen(false)}>

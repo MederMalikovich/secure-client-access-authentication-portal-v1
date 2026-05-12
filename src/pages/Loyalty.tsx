@@ -14,10 +14,11 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
-import { Gift, Settings as SettingsIcon, Coins, History, Users as UsersIcon, Plus, Copy } from 'lucide-react';
-import { format } from 'date-fns';
+import { Gift, Settings as SettingsIcon, Coins, History, Users as UsersIcon, Plus, Copy, FileDown, Search, ChevronRight } from 'lucide-react';
+import { format, addMonths } from 'date-fns';
 import { ru } from 'date-fns/locale';
 import { formatCurrency } from '@/lib/currency';
+import { generateCertificatePdf } from '@/lib/generateCertificatePdf';
 
 export default function Loyalty() {
   const { hasRole, profile } = useAuth();

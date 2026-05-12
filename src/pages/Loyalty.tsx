@@ -304,6 +304,9 @@ export default function Loyalty() {
                     {c.recipient_name && <div className="text-sm">Получатель: {c.recipient_name} {c.recipient_phone && `(${c.recipient_phone})`}</div>}
                     {c.expires_at && <div className="text-xs text-muted-foreground">До: {format(new Date(c.expires_at), 'd MMM yyyy', { locale: ru })}</div>}
                     {c.redeemed_by && <div className="text-xs text-muted-foreground">Активирован: {c.redeemed_by.full_name}</div>}
+                    <Button size="sm" variant="outline" className="w-full" onClick={() => downloadCertPdf(c)}>
+                      <FileDown className="h-3 w-3 mr-1" />Скачать PDF
+                    </Button>
                   </CardContent>
                 </Card>
               ))}

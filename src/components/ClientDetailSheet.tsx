@@ -4,8 +4,9 @@ import { ru } from 'date-fns/locale';
 import {
   Phone, Mail, MapPin, PawPrint, FileText, DollarSign,
   Calendar, Plus, Pencil, Hash, Clock, ChevronRight,
-  TrendingUp, AlertCircle, CheckCircle2, CircleDot, Bell
+  TrendingUp, AlertCircle, CheckCircle2, CircleDot, Bell, Gift, Copy
 } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
 import {
   Sheet, SheetContent, SheetHeader, SheetTitle,
 } from '@/components/ui/sheet';

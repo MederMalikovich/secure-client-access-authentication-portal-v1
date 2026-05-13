@@ -405,7 +405,49 @@ export default function Finances() {
     setCreateCertPreview(null);
   };
 
-  const formatCurrency = (value: number) => {
+  const openEditDialog = (invoice: any) => {
+    setEditInvoice(invoice);
+    setEditForm({
+      subtotal: String(invoice.subtotal ?? invoice.total ?? ''),
+      discount: String(invoice.discount ?? '0'),
+      tax: String(invoice.tax ?? '0'),
+      notes: invoice.notes || '',
+      status: invoice.status,
+    });
+  };
+
+  const handleEditSubmit = async () => {
+    if (!editInvoice) return;
+    const subtotal = parseFloat(editForm.subtotal) || 0;
+    const discount = parseFloat(editForm.discount) || 0;
+    const tax = parseFloat(editForm.tax) || 0;
+    const total = subtotal - discount + tax;
+    try {
+      const { error } = await supabase
+        .from('invoices')
+        .update({ subtotal, discount, tax, total, notes: editForm.notes, status: editForm.status })
+        .eq('id', editInvoice.id);
+      if (error) throw error;
+      toast({ title: 'Счёт обновлён' });
+      setEditInvoice(null);
+      fetchData();
+    } catch (e: any) {
+      toast({ variant: 'destructive', title: 'Ошибка', description: getUserFriendlyError(e) });
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!deleteInvoice) return;
+    try {
+      const { error } = await supabase.from('invoices').delete().eq('id', deleteInvoice.id);
+      if (error) throw error;
+      toast({ title: 'Счёт удалён' });
+      setDeleteInvoice(null);
+      fetchData();
+    } catch (e: any) {
+      toast({ variant: 'destructive', title: 'Ошибка', description: getUserFriendlyError(e) });
+    }
+  };
     return new Intl.NumberFormat('kk-KZ', {
       style: 'currency',
       currency: 'KZT',

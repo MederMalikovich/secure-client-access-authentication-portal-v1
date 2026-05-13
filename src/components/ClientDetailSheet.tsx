@@ -204,20 +204,24 @@ export function ClientDetailSheet({ client, open, onClose, onEdit, onAddAppointm
         {/* Tabs */}
         <div className="p-4">
           <Tabs defaultValue="pets">
-            <TabsList className="w-full">
-              <TabsTrigger value="pets" className="flex-1">
+            <TabsList className="w-full flex-wrap h-auto">
+              <TabsTrigger value="pets" className="flex-1 min-w-[80px]">
                 <PawPrint className="h-4 w-4 mr-1.5" />
                 Питомцы
               </TabsTrigger>
-              <TabsTrigger value="appointments" className="flex-1">
+              <TabsTrigger value="appointments" className="flex-1 min-w-[80px]">
                 <Calendar className="h-4 w-4 mr-1.5" />
                 Визиты
               </TabsTrigger>
-              <TabsTrigger value="finances" className="flex-1">
+              <TabsTrigger value="finances" className="flex-1 min-w-[80px]">
                 <DollarSign className="h-4 w-4 mr-1.5" />
                 Финансы
               </TabsTrigger>
-              <TabsTrigger value="notifications" className="flex-1">
+              <TabsTrigger value="bonuses" className="flex-1 min-w-[80px]">
+                <Gift className="h-4 w-4 mr-1.5" />
+                Бонусы
+              </TabsTrigger>
+              <TabsTrigger value="notifications" className="flex-1 min-w-[80px]">
                 <Bell className="h-4 w-4 mr-1.5" />
                 Уведомления
               </TabsTrigger>

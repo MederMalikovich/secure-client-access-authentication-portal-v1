@@ -794,6 +794,71 @@ export default function Finances() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Edit Invoice Dialog */}
+      <Dialog open={!!editInvoice} onOpenChange={(o) => !o && setEditInvoice(null)}>
+        <DialogContent className="glass max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Редактировать счёт {editInvoice?.invoice_number}</DialogTitle>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="grid gap-2">
+              <Label>Сумма (₸)</Label>
+              <Input type="number" value={editForm.subtotal} onChange={(e) => setEditForm({ ...editForm, subtotal: e.target.value })} />
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="grid gap-2">
+                <Label>Скидка (₸)</Label>
+                <Input type="number" value={editForm.discount} onChange={(e) => setEditForm({ ...editForm, discount: e.target.value })} />
+              </div>
+              <div className="grid gap-2">
+                <Label>Налог (₸)</Label>
+                <Input type="number" value={editForm.tax} onChange={(e) => setEditForm({ ...editForm, tax: e.target.value })} />
+              </div>
+            </div>
+            <div className="grid gap-2">
+              <Label>Статус</Label>
+              <Select value={editForm.status} onValueChange={(v) => setEditForm({ ...editForm, status: v as PaymentStatus })}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="pending">Ожидает оплаты</SelectItem>
+                  <SelectItem value="partial">Частично оплачен</SelectItem>
+                  <SelectItem value="paid">Оплачен</SelectItem>
+                  <SelectItem value="refunded">Возврат</SelectItem>
+                  <SelectItem value="cancelled">Отменён</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="grid gap-2">
+              <Label>Примечания</Label>
+              <Input value={editForm.notes} onChange={(e) => setEditForm({ ...editForm, notes: e.target.value })} />
+            </div>
+            <div className="text-sm text-muted-foreground">
+              Итого: <span className="font-bold text-primary">{formatCurrency((parseFloat(editForm.subtotal) || 0) - (parseFloat(editForm.discount) || 0) + (parseFloat(editForm.tax) || 0))}</span>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setEditInvoice(null)}>Отмена</Button>
+            <Button onClick={handleEditSubmit}>Сохранить</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Invoice Dialog */}
+      <Dialog open={!!deleteInvoice} onOpenChange={(o) => !o && setDeleteInvoice(null)}>
+        <DialogContent className="glass">
+          <DialogHeader>
+            <DialogTitle>Удалить счёт {deleteInvoice?.invoice_number}?</DialogTitle>
+          </DialogHeader>
+          <p className="text-sm text-muted-foreground">
+            Это действие нельзя отменить. Все связанные платежи будут также удалены.
+          </p>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setDeleteInvoice(null)}>Отмена</Button>
+            <Button variant="destructive" onClick={handleDelete}>Удалить</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

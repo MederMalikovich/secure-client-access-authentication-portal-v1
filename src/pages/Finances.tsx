@@ -710,8 +710,8 @@ export default function Finances() {
             <Button variant="outline" onClick={() => setDialogOpen(false)}>
               Отмена
             </Button>
-            <Button onClick={handleSubmit}>
-              Создать
+            <Button onClick={handleSubmit} disabled={submitting}>
+              {submitting ? 'Создание...' : 'Создать'}
             </Button>
           </DialogFooter>
         </DialogContent>

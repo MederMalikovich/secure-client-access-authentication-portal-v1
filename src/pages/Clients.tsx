@@ -89,11 +89,13 @@ export default function Clients() {
   };
 
   const handleSubmit = async () => {
+    if (submitting) return;
     const validationError = getValidationError(clientSchema, formData);
     if (validationError) {
       toast({ variant: 'destructive', title: 'Ошибка', description: validationError });
       return;
     }
+    setSubmitting(true);
 
     try {
       if (selectedClient) {

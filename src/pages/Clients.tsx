@@ -50,6 +50,7 @@ export default function Clients() {
     notes: '',
   });
   const [referralCode, setReferralCode] = useState('');
+  const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
     fetchClients();

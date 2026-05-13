@@ -161,13 +161,16 @@ export default function Finances() {
     const maxRedeem = (total * maxPct) / 100;
 
     if (usePoints > createClientBalance) {
-      toast({ variant: 'destructive', title: 'Недостаточно баллов', description: `Баланс: ${createClientBalance}` }); return;
+      toast({ variant: 'destructive', title: 'Недостаточно баллов', description: `Баланс: ${createClientBalance}` });
+      setSubmitting(false); return;
     }
     if (usePoints > maxRedeem) {
-      toast({ variant: 'destructive', title: `Можно списать не более ${maxPct}% от счёта (${formatCurrency(maxRedeem)})` }); return;
+      toast({ variant: 'destructive', title: `Можно списать не более ${maxPct}% от счёта (${formatCurrency(maxRedeem)})` });
+      setSubmitting(false); return;
     }
     if (usePoints + certAmount > total + 0.01) {
-      toast({ variant: 'destructive', title: 'Сумма баллов и сертификата превышает счёт' }); return;
+      toast({ variant: 'destructive', title: 'Сумма баллов и сертификата превышает счёт' });
+      setSubmitting(false); return;
     }
 
     const data = {
@@ -193,7 +196,7 @@ export default function Finances() {
         });
         if (pErr) throw pErr;
         const { error: tErr } = await supabase.from('loyalty_transactions').insert({
-          client_id: formData.client_id, amount: -usePoints, type: 'redeem',
+          client_id: formData.client_id, amount: -usePoints, type: 'redemption',
           description: `Списание за счёт ${created.invoice_number}`, invoice_id: created.id,
         });
         if (tErr) throw tErr;
@@ -228,6 +231,8 @@ export default function Finances() {
         title: 'Ошибка',
         description: getUserFriendlyError(error),
       });
+    } finally {
+      setSubmitting(false);
     }
   };
 

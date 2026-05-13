@@ -62,7 +62,7 @@ export function ClientDetailSheet({ client, open, onClose, onEdit, onAddAppointm
   const fetchClientData = async (clientId: string) => {
     setLoading(true);
     try {
-      const [apptRes, invoiceRes] = await Promise.all([
+      const [apptRes, invoiceRes, clientRes, txnsRes] = await Promise.all([
         supabase
           .from('appointments')
           .select(`*, pet:pets(id, name, species, breed), service:services(name), veterinarian:profiles(full_name)`)
@@ -75,12 +75,31 @@ export function ClientDetailSheet({ client, open, onClose, onEdit, onAddAppointm
           .eq('client_id', clientId)
           .order('issued_at', { ascending: false })
           .limit(20),
+        supabase
+          .from('clients')
+          .select('loyalty_balance, referral_code')
+          .eq('id', clientId)
+          .maybeSingle(),
+        supabase
+          .from('loyalty_transactions')
+          .select('*')
+          .eq('client_id', clientId)
+          .order('created_at', { ascending: false })
+          .limit(50),
       ]);
       setAppointments(apptRes.data || []);
       setInvoices(invoiceRes.data || []);
+      setLoyaltyBalance(Number(clientRes.data?.loyalty_balance || 0));
+      setLoyaltyTxns(txnsRes.data || []);
     } finally {
       setLoading(false);
     }
+  };
+
+  const copyReferral = (code?: string | null) => {
+    if (!code) return;
+    navigator.clipboard.writeText(code);
+    toast({ title: 'Код скопирован', description: code });
   };
 
   if (!client) return null;

@@ -19,6 +19,7 @@ import { BedDouble, Plus, Camera, Thermometer, Weight, Smile, Utensils, MessageS
 import { format, differenceInDays, parseISO } from 'date-fns';
 import { ru } from 'date-fns/locale';
 import { formatCurrency } from '@/lib/currency';
+import { ProcessHint } from '@/components/ProcessHint';
 
 export default function Hospitalization() {
   const { hasRole, profile } = useAuth();

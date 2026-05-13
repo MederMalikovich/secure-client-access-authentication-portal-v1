@@ -344,7 +344,7 @@ export default function Finances() {
         const { error: txnErr } = await supabase.from('loyalty_transactions').insert({
           client_id: selectedInvoice.client_id,
           amount: -usePoints,
-          type: 'redeem',
+          type: 'redemption',
           description: `Списание за счёт ${selectedInvoice.invoice_number}`,
           invoice_id: selectedInvoice.id,
         });

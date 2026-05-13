@@ -448,7 +448,8 @@ export default function Finances() {
       toast({ variant: 'destructive', title: 'Ошибка', description: getUserFriendlyError(e) });
     }
   };
-    return new Intl.NumberFormat('kk-KZ', {
+
+  const formatCurrency = (value: number) => {
       style: 'currency',
       currency: 'KZT',
       maximumFractionDigits: 0,

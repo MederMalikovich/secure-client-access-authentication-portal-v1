@@ -117,6 +117,7 @@ export default function Clients() {
             .maybeSingle();
           if (!ref) {
             toast({ variant: 'destructive', title: 'Реферальный код не найден', description: 'Проверьте код или оставьте поле пустым.' });
+            setSubmitting(false);
             return;
           }
           referred_by_client_id = ref.id;

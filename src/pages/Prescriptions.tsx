@@ -16,6 +16,7 @@ import { PetSearchSelect } from '@/components/PetSearchSelect';
 import { Pill, Plus, Clock, Check, X, Trash2, CheckCircle2 } from 'lucide-react';
 import { format, isPast, isToday, parseISO } from 'date-fns';
 import { ru } from 'date-fns/locale';
+import { ProcessHint } from '@/components/ProcessHint';
 
 type Prescription = any;
 type Dose = any;

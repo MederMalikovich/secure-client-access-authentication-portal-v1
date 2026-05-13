@@ -437,8 +437,8 @@ export default function Clients() {
             <Button variant="outline" onClick={() => setDialogOpen(false)}>
               Отмена
             </Button>
-            <Button onClick={handleSubmit}>
-              {selectedClient ? 'Сохранить' : 'Добавить'}
+            <Button onClick={handleSubmit} disabled={submitting}>
+              {submitting ? 'Сохранение...' : (selectedClient ? 'Сохранить' : 'Добавить')}
             </Button>
           </DialogFooter>
         </DialogContent>

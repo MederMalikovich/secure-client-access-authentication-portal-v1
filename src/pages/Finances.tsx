@@ -541,9 +541,13 @@ export default function Finances() {
               <CreditCard className="h-4 w-4 mr-2" />
               Принять оплату
             </DropdownMenuItem>
-            <DropdownMenuItem>
-              <Eye className="h-4 w-4 mr-2" />
-              Просмотр
+            <DropdownMenuItem onClick={() => openEditDialog(invoice)}>
+              <Pencil className="h-4 w-4 mr-2" />
+              Редактировать
+            </DropdownMenuItem>
+            <DropdownMenuItem className="text-destructive" onClick={() => setDeleteInvoice(invoice)}>
+              <Trash2 className="h-4 w-4 mr-2" />
+              Удалить
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>

@@ -134,6 +134,7 @@ export default function Finances() {
   };
 
   const handleSubmit = async () => {
+    if (submitting) return;
     const validationError = getValidationError(invoiceSchema, {
       client_id: formData.client_id,
       subtotal: formData.subtotal,
@@ -145,6 +146,7 @@ export default function Finances() {
       toast({ variant: 'destructive', title: 'Ошибка', description: validationError });
       return;
     }
+    setSubmitting(true);
 
     const subtotal = parseFloat(formData.subtotal);
     const discount = parseFloat(formData.discount) || 0;

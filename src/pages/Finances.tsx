@@ -450,6 +450,7 @@ export default function Finances() {
   };
 
   const formatCurrency = (value: number) => {
+    return new Intl.NumberFormat('kk-KZ', {
       style: 'currency',
       currency: 'KZT',
       maximumFractionDigits: 0,

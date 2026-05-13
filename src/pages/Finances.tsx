@@ -47,6 +47,10 @@ export default function Finances() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [paymentDialogOpen, setPaymentDialogOpen] = useState(false);
   const [selectedInvoice, setSelectedInvoice] = useState<Invoice | null>(null);
+  const [editInvoice, setEditInvoice] = useState<any | null>(null);
+  const [deleteInvoice, setDeleteInvoice] = useState<any | null>(null);
+  const [submitting, setSubmitting] = useState(false);
+  const [editForm, setEditForm] = useState({ subtotal: '', discount: '0', tax: '0', notes: '', status: 'pending' as PaymentStatus });
 
   const [formData, setFormData] = useState({
     client_id: '',

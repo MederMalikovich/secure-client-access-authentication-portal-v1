@@ -154,6 +154,8 @@ export default function Clients() {
         title: 'Ошибка',
         description: getUserFriendlyError(error),
       });
+    } finally {
+      setSubmitting(false);
     }
   };
 

@@ -2,7 +2,8 @@ import { useEffect, useState } from 'react';
 import { getUserFriendlyError } from '@/lib/errorHandler';
 import { useAuth } from '@/contexts/AuthContext';
 import { getValidationError, invoiceSchema } from '@/lib/validationSchemas';
-import { DollarSign, TrendingUp, CreditCard, MoreVertical, Eye, Plus, Check } from 'lucide-react';
+import { DollarSign, TrendingUp, CreditCard, MoreVertical, Eye, Plus, Check, Pencil, Trash2 } from 'lucide-react';
+import { ProcessHint } from '@/components/ProcessHint';
 import { PageHeader } from '@/components/ui/page-header';
 import { StatCard } from '@/components/ui/stat-card';
 import { DataTable, Column } from '@/components/ui/data-table';
@@ -46,6 +47,10 @@ export default function Finances() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [paymentDialogOpen, setPaymentDialogOpen] = useState(false);
   const [selectedInvoice, setSelectedInvoice] = useState<Invoice | null>(null);
+  const [editInvoice, setEditInvoice] = useState<any | null>(null);
+  const [deleteInvoice, setDeleteInvoice] = useState<any | null>(null);
+  const [submitting, setSubmitting] = useState(false);
+  const [editForm, setEditForm] = useState({ subtotal: '', discount: '0', tax: '0', notes: '', status: 'pending' as PaymentStatus });
 
   const [formData, setFormData] = useState({
     client_id: '',
@@ -129,6 +134,7 @@ export default function Finances() {
   };
 
   const handleSubmit = async () => {
+    if (submitting) return;
     const validationError = getValidationError(invoiceSchema, {
       client_id: formData.client_id,
       subtotal: formData.subtotal,
@@ -140,6 +146,7 @@ export default function Finances() {
       toast({ variant: 'destructive', title: 'Ошибка', description: validationError });
       return;
     }
+    setSubmitting(true);
 
     const subtotal = parseFloat(formData.subtotal);
     const discount = parseFloat(formData.discount) || 0;
@@ -154,13 +161,16 @@ export default function Finances() {
     const maxRedeem = (total * maxPct) / 100;
 
     if (usePoints > createClientBalance) {
-      toast({ variant: 'destructive', title: 'Недостаточно баллов', description: `Баланс: ${createClientBalance}` }); return;
+      toast({ variant: 'destructive', title: 'Недостаточно баллов', description: `Баланс: ${createClientBalance}` });
+      setSubmitting(false); return;
     }
     if (usePoints > maxRedeem) {
-      toast({ variant: 'destructive', title: `Можно списать не более ${maxPct}% от счёта (${formatCurrency(maxRedeem)})` }); return;
+      toast({ variant: 'destructive', title: `Можно списать не более ${maxPct}% от счёта (${formatCurrency(maxRedeem)})` });
+      setSubmitting(false); return;
     }
     if (usePoints + certAmount > total + 0.01) {
-      toast({ variant: 'destructive', title: 'Сумма баллов и сертификата превышает счёт' }); return;
+      toast({ variant: 'destructive', title: 'Сумма баллов и сертификата превышает счёт' });
+      setSubmitting(false); return;
     }
 
     const data = {
@@ -186,7 +196,7 @@ export default function Finances() {
         });
         if (pErr) throw pErr;
         const { error: tErr } = await supabase.from('loyalty_transactions').insert({
-          client_id: formData.client_id, amount: -usePoints, type: 'redeem',
+          client_id: formData.client_id, amount: -usePoints, type: 'redemption',
           description: `Списание за счёт ${created.invoice_number}`, invoice_id: created.id,
         });
         if (tErr) throw tErr;
@@ -221,6 +231,8 @@ export default function Finances() {
         title: 'Ошибка',
         description: getUserFriendlyError(error),
       });
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -332,7 +344,7 @@ export default function Finances() {
         const { error: txnErr } = await supabase.from('loyalty_transactions').insert({
           client_id: selectedInvoice.client_id,
           amount: -usePoints,
-          type: 'redeem',
+          type: 'redemption',
           description: `Списание за счёт ${selectedInvoice.invoice_number}`,
           invoice_id: selectedInvoice.id,
         });
@@ -391,6 +403,50 @@ export default function Finances() {
     });
     setCreateClientBalance(0);
     setCreateCertPreview(null);
+  };
+
+  const openEditDialog = (invoice: any) => {
+    setEditInvoice(invoice);
+    setEditForm({
+      subtotal: String(invoice.subtotal ?? invoice.total ?? ''),
+      discount: String(invoice.discount ?? '0'),
+      tax: String(invoice.tax ?? '0'),
+      notes: invoice.notes || '',
+      status: invoice.status,
+    });
+  };
+
+  const handleEditSubmit = async () => {
+    if (!editInvoice) return;
+    const subtotal = parseFloat(editForm.subtotal) || 0;
+    const discount = parseFloat(editForm.discount) || 0;
+    const tax = parseFloat(editForm.tax) || 0;
+    const total = subtotal - discount + tax;
+    try {
+      const { error } = await supabase
+        .from('invoices')
+        .update({ subtotal, discount, tax, total, notes: editForm.notes, status: editForm.status })
+        .eq('id', editInvoice.id);
+      if (error) throw error;
+      toast({ title: 'Счёт обновлён' });
+      setEditInvoice(null);
+      fetchData();
+    } catch (e: any) {
+      toast({ variant: 'destructive', title: 'Ошибка', description: getUserFriendlyError(e) });
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!deleteInvoice) return;
+    try {
+      const { error } = await supabase.from('invoices').delete().eq('id', deleteInvoice.id);
+      if (error) throw error;
+      toast({ title: 'Счёт удалён' });
+      setDeleteInvoice(null);
+      fetchData();
+    } catch (e: any) {
+      toast({ variant: 'destructive', title: 'Ошибка', description: getUserFriendlyError(e) });
+    }
   };
 
   const formatCurrency = (value: number) => {
@@ -485,9 +541,13 @@ export default function Finances() {
               <CreditCard className="h-4 w-4 mr-2" />
               Принять оплату
             </DropdownMenuItem>
-            <DropdownMenuItem>
-              <Eye className="h-4 w-4 mr-2" />
-              Просмотр
+            <DropdownMenuItem onClick={() => openEditDialog(invoice)}>
+              <Pencil className="h-4 w-4 mr-2" />
+              Редактировать
+            </DropdownMenuItem>
+            <DropdownMenuItem className="text-destructive" onClick={() => setDeleteInvoice(invoice)}>
+              <Trash2 className="h-4 w-4 mr-2" />
+              Удалить
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
@@ -527,6 +587,17 @@ export default function Finances() {
           description="Неоплаченные счета"
         />
       </div>
+
+      <ProcessHint
+        storageKey="finances"
+        title="Как работать со счетами"
+        steps={[
+          'Создайте счёт через «Создать счёт» — укажите клиента и сумму. При желании сразу спишите бонусы или примените сертификат.',
+          'Принять оплату — в меню «⋯» рядом со счётом выберите «Принять оплату» (наличные/карта/перевод/баллы/сертификат).',
+          'Если данные внесены некорректно — используйте «Редактировать», для отмены — «Удалить».',
+          'Статус «Оплачен» проставится автоматически, когда сумма платежей покроет счёт.',
+        ]}
+      />
 
       <DataTable
         data={invoices}
@@ -639,8 +710,8 @@ export default function Finances() {
             <Button variant="outline" onClick={() => setDialogOpen(false)}>
               Отмена
             </Button>
-            <Button onClick={handleSubmit}>
-              Создать
+            <Button onClick={handleSubmit} disabled={submitting}>
+              {submitting ? 'Создание...' : 'Создать'}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -720,6 +791,71 @@ export default function Finances() {
               <Check className="h-4 w-4 mr-2" />
               Подтвердить
             </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit Invoice Dialog */}
+      <Dialog open={!!editInvoice} onOpenChange={(o) => !o && setEditInvoice(null)}>
+        <DialogContent className="glass max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Редактировать счёт {editInvoice?.invoice_number}</DialogTitle>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="grid gap-2">
+              <Label>Сумма (₸)</Label>
+              <Input type="number" value={editForm.subtotal} onChange={(e) => setEditForm({ ...editForm, subtotal: e.target.value })} />
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="grid gap-2">
+                <Label>Скидка (₸)</Label>
+                <Input type="number" value={editForm.discount} onChange={(e) => setEditForm({ ...editForm, discount: e.target.value })} />
+              </div>
+              <div className="grid gap-2">
+                <Label>Налог (₸)</Label>
+                <Input type="number" value={editForm.tax} onChange={(e) => setEditForm({ ...editForm, tax: e.target.value })} />
+              </div>
+            </div>
+            <div className="grid gap-2">
+              <Label>Статус</Label>
+              <Select value={editForm.status} onValueChange={(v) => setEditForm({ ...editForm, status: v as PaymentStatus })}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="pending">Ожидает оплаты</SelectItem>
+                  <SelectItem value="partial">Частично оплачен</SelectItem>
+                  <SelectItem value="paid">Оплачен</SelectItem>
+                  <SelectItem value="refunded">Возврат</SelectItem>
+                  <SelectItem value="cancelled">Отменён</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="grid gap-2">
+              <Label>Примечания</Label>
+              <Input value={editForm.notes} onChange={(e) => setEditForm({ ...editForm, notes: e.target.value })} />
+            </div>
+            <div className="text-sm text-muted-foreground">
+              Итого: <span className="font-bold text-primary">{formatCurrency((parseFloat(editForm.subtotal) || 0) - (parseFloat(editForm.discount) || 0) + (parseFloat(editForm.tax) || 0))}</span>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setEditInvoice(null)}>Отмена</Button>
+            <Button onClick={handleEditSubmit}>Сохранить</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Invoice Dialog */}
+      <Dialog open={!!deleteInvoice} onOpenChange={(o) => !o && setDeleteInvoice(null)}>
+        <DialogContent className="glass">
+          <DialogHeader>
+            <DialogTitle>Удалить счёт {deleteInvoice?.invoice_number}?</DialogTitle>
+          </DialogHeader>
+          <p className="text-sm text-muted-foreground">
+            Это действие нельзя отменить. Все связанные платежи будут также удалены.
+          </p>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setDeleteInvoice(null)}>Отмена</Button>
+            <Button variant="destructive" onClick={handleDelete}>Удалить</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

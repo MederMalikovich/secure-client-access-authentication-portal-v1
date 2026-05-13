@@ -16,6 +16,7 @@ import { PetSearchSelect } from '@/components/PetSearchSelect';
 import { Pill, Plus, Clock, Check, X, Trash2, CheckCircle2 } from 'lucide-react';
 import { format, isPast, isToday, parseISO } from 'date-fns';
 import { ru } from 'date-fns/locale';
+import { ProcessHint } from '@/components/ProcessHint';
 
 type Prescription = any;
 type Dose = any;
@@ -201,6 +202,28 @@ export default function Prescriptions() {
           </Button>
         )}
       />
+
+      {!isClient ? (
+        <ProcessHint
+          storageKey="prescriptions"
+          title="Как работать с назначениями"
+          steps={[
+            '«Новое назначение» — выберите питомца, препарат, дозу, частоту приёма и длительность. Расписание приёмов сформируется автоматически.',
+            'В карточке назначения отмечайте каждый приём кнопкой «Принят» или «Пропущен» — клиент видит прогресс в своём кабинете.',
+            'Просроченные приёмы подсвечиваются красным. Удаление назначения убирает все запланированные приёмы.',
+          ]}
+        />
+      ) : (
+        <ProcessHint
+          storageKey="prescriptions-client"
+          title="Что делать с назначениями"
+          steps={[
+            'Откройте карточку назначения — увидите расписание приёмов на каждый день.',
+            'Отмечайте «Принят» после каждого приёма препарата — врач увидит вашу динамику.',
+            'Если препарат закончился раньше срока — сообщите врачу через раздел «Сообщения» или в клинике.',
+          ]}
+        />
+      )}
 
       {loading ? (
         <div className="text-center py-10 text-muted-foreground">Загрузка...</div>

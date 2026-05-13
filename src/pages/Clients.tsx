@@ -50,6 +50,7 @@ export default function Clients() {
     notes: '',
   });
   const [referralCode, setReferralCode] = useState('');
+  const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
     fetchClients();
@@ -88,11 +89,13 @@ export default function Clients() {
   };
 
   const handleSubmit = async () => {
+    if (submitting) return;
     const validationError = getValidationError(clientSchema, formData);
     if (validationError) {
       toast({ variant: 'destructive', title: 'Ошибка', description: validationError });
       return;
     }
+    setSubmitting(true);
 
     try {
       if (selectedClient) {
@@ -114,6 +117,7 @@ export default function Clients() {
             .maybeSingle();
           if (!ref) {
             toast({ variant: 'destructive', title: 'Реферальный код не найден', description: 'Проверьте код или оставьте поле пустым.' });
+            setSubmitting(false);
             return;
           }
           referred_by_client_id = ref.id;
@@ -150,6 +154,8 @@ export default function Clients() {
         title: 'Ошибка',
         description: getUserFriendlyError(error),
       });
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -431,8 +437,8 @@ export default function Clients() {
             <Button variant="outline" onClick={() => setDialogOpen(false)}>
               Отмена
             </Button>
-            <Button onClick={handleSubmit}>
-              {selectedClient ? 'Сохранить' : 'Добавить'}
+            <Button onClick={handleSubmit} disabled={submitting}>
+              {submitting ? 'Сохранение...' : (selectedClient ? 'Сохранить' : 'Добавить')}
             </Button>
           </DialogFooter>
         </DialogContent>

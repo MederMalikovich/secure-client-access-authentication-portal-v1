@@ -19,6 +19,7 @@ import { BedDouble, Plus, Camera, Thermometer, Weight, Smile, Utensils, MessageS
 import { format, differenceInDays, parseISO } from 'date-fns';
 import { ru } from 'date-fns/locale';
 import { formatCurrency } from '@/lib/currency';
+import { ProcessHint } from '@/components/ProcessHint';
 
 export default function Hospitalization() {
   const { hasRole, profile } = useAuth();
@@ -203,6 +204,30 @@ export default function Hospitalization() {
           </Button>
         )}
       />
+
+      {!isClient && (
+        <ProcessHint
+          storageKey="hospitalization"
+          title="Как вести стационарного пациента"
+          steps={[
+            '«Госпитализировать» — заведите карту: питомец, бокс, диагноз, тариф/сут.',
+            '«Журнал» — добавляйте наблюдения (температура, вес, аппетит, фото). Переключатель «Видно клиенту» решает, увидит ли владелец запись.',
+            'Сумма за стационар считается автоматически: дни × тариф. Отдельный счёт создайте в «Финансы».',
+            'Когда пациент готов — «Выписать»: статус сменится на «Архив», карта останется доступной для просмотра.',
+          ]}
+        />
+      )}
+      {isClient && (
+        <ProcessHint
+          storageKey="hospitalization-client"
+          title="Что показывают карточки стационара"
+          steps={[
+            'Активные карточки — текущее пребывание ваших питомцев.',
+            'Кнопка «Все обновления» — наблюдения врача, фото и заметки.',
+            'Архив — завершённые госпитализации с итоговой стоимостью.',
+          ]}
+        />
+      )}
 
       {loading ? (
         <div className="text-center py-10 text-muted-foreground">Загрузка...</div>

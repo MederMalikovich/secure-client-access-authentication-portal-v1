@@ -787,7 +787,7 @@ export default function ClientPortal() {
                   {loyaltyTxns.map((t: any) => (
                     <div key={t.id} className="flex items-center justify-between py-2 border-b border-border last:border-0">
                       <div>
-                        <p className="text-sm font-medium">{t.description || (t.type === 'accrual' ? 'Начисление' : t.type === 'redeem' ? 'Списание' : t.type)}</p>
+                        <p className="text-sm font-medium">{t.description || (t.type === 'accrual' ? 'Начисление' : t.type === 'redemption' ? 'Списание' : t.type === 'referral' ? 'Реферальный бонус' : t.type)}</p>
                         <p className="text-xs text-muted-foreground">{format(new Date(t.created_at), 'dd MMM yyyy, HH:mm', { locale: ru })}</p>
                       </div>
                       <span className={cn('font-bold', Number(t.amount) > 0 ? 'text-green-500' : 'text-destructive')}>

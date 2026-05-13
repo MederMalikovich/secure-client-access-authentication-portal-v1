@@ -4,8 +4,9 @@ import { ru } from 'date-fns/locale';
 import {
   Phone, Mail, MapPin, PawPrint, FileText, DollarSign,
   Calendar, Plus, Pencil, Hash, Clock, ChevronRight,
-  TrendingUp, AlertCircle, CheckCircle2, CircleDot, Bell
+  TrendingUp, AlertCircle, CheckCircle2, CircleDot, Bell, Gift, Copy
 } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
 import {
   Sheet, SheetContent, SheetHeader, SheetTitle,
 } from '@/components/ui/sheet';
@@ -45,9 +46,12 @@ const apptStatusColors: Record<string, string> = {
 };
 
 export function ClientDetailSheet({ client, open, onClose, onEdit, onAddAppointment }: ClientDetailSheetProps) {
+  const { toast } = useToast();
   const [appointments, setAppointments] = useState<any[]>([]);
   const [invoices, setInvoices] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
+  const [loyaltyBalance, setLoyaltyBalance] = useState<number>(0);
+  const [loyaltyTxns, setLoyaltyTxns] = useState<any[]>([]);
 
   useEffect(() => {
     if (open && client?.id) {
@@ -58,7 +62,7 @@ export function ClientDetailSheet({ client, open, onClose, onEdit, onAddAppointm
   const fetchClientData = async (clientId: string) => {
     setLoading(true);
     try {
-      const [apptRes, invoiceRes] = await Promise.all([
+      const [apptRes, invoiceRes, clientRes, txnsRes] = await Promise.all([
         supabase
           .from('appointments')
           .select(`*, pet:pets(id, name, species, breed), service:services(name), veterinarian:profiles(full_name)`)
@@ -71,12 +75,31 @@ export function ClientDetailSheet({ client, open, onClose, onEdit, onAddAppointm
           .eq('client_id', clientId)
           .order('issued_at', { ascending: false })
           .limit(20),
+        supabase
+          .from('clients')
+          .select('loyalty_balance, referral_code')
+          .eq('id', clientId)
+          .maybeSingle(),
+        supabase
+          .from('loyalty_transactions')
+          .select('*')
+          .eq('client_id', clientId)
+          .order('created_at', { ascending: false })
+          .limit(50),
       ]);
       setAppointments(apptRes.data || []);
       setInvoices(invoiceRes.data || []);
+      setLoyaltyBalance(Number(clientRes.data?.loyalty_balance || 0));
+      setLoyaltyTxns(txnsRes.data || []);
     } finally {
       setLoading(false);
     }
+  };
+
+  const copyReferral = (code?: string | null) => {
+    if (!code) return;
+    navigator.clipboard.writeText(code);
+    toast({ title: 'Код скопирован', description: code });
   };
 
   if (!client) return null;
@@ -181,20 +204,24 @@ export function ClientDetailSheet({ client, open, onClose, onEdit, onAddAppointm
         {/* Tabs */}
         <div className="p-4">
           <Tabs defaultValue="pets">
-            <TabsList className="w-full">
-              <TabsTrigger value="pets" className="flex-1">
+            <TabsList className="w-full flex-wrap h-auto">
+              <TabsTrigger value="pets" className="flex-1 min-w-[80px]">
                 <PawPrint className="h-4 w-4 mr-1.5" />
                 Питомцы
               </TabsTrigger>
-              <TabsTrigger value="appointments" className="flex-1">
+              <TabsTrigger value="appointments" className="flex-1 min-w-[80px]">
                 <Calendar className="h-4 w-4 mr-1.5" />
                 Визиты
               </TabsTrigger>
-              <TabsTrigger value="finances" className="flex-1">
+              <TabsTrigger value="finances" className="flex-1 min-w-[80px]">
                 <DollarSign className="h-4 w-4 mr-1.5" />
                 Финансы
               </TabsTrigger>
-              <TabsTrigger value="notifications" className="flex-1">
+              <TabsTrigger value="bonuses" className="flex-1 min-w-[80px]">
+                <Gift className="h-4 w-4 mr-1.5" />
+                Бонусы
+              </TabsTrigger>
+              <TabsTrigger value="notifications" className="flex-1 min-w-[80px]">
                 <Bell className="h-4 w-4 mr-1.5" />
                 Уведомления
               </TabsTrigger>
@@ -354,6 +381,64 @@ export function ClientDetailSheet({ client, open, onClose, onEdit, onAddAppointm
             </TabsContent>
 
             {/* Notifications tab */}
+            {/* Bonuses tab */}
+            <TabsContent value="bonuses" className="mt-4 space-y-3">
+              <Card>
+                <CardContent className="p-4 flex items-center justify-between gap-3">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-primary/15 flex items-center justify-center">
+                      <Gift className="h-5 w-5 text-primary" />
+                    </div>
+                    <div>
+                      <p className="text-xs text-muted-foreground">Баланс баллов</p>
+                      <p className="text-2xl font-bold text-primary">{loyaltyBalance}</p>
+                    </div>
+                  </div>
+                  {client.referral_code && (
+                    <button
+                      type="button"
+                      onClick={() => copyReferral(client.referral_code)}
+                      className="flex items-center gap-2 px-3 py-2 rounded-lg bg-muted/40 hover:bg-muted/60 transition-colors"
+                      title="Скопировать реферальный код"
+                    >
+                      <span className="font-mono text-sm">{client.referral_code}</span>
+                      <Copy className="h-3.5 w-3.5 text-muted-foreground" />
+                    </button>
+                  )}
+                </CardContent>
+              </Card>
+
+              {loading ? (
+                <div className="text-center py-8 text-muted-foreground text-sm">Загрузка...</div>
+              ) : loyaltyTxns.length > 0 ? (
+                <div className="space-y-2">
+                  <p className="text-xs uppercase text-muted-foreground tracking-wide px-1">История начислений и списаний</p>
+                  {loyaltyTxns.map((t) => (
+                    <Card key={t.id}>
+                      <CardContent className="p-3 flex items-center justify-between gap-2">
+                        <div className="min-w-0">
+                          <div className="text-sm font-medium truncate">
+                            {t.description || (t.type === 'accrual' ? 'Начисление' : t.type === 'redemption' ? 'Списание' : t.type === 'referral' ? 'Реферальный бонус' : t.type)}
+                          </div>
+                          <div className="text-xs text-muted-foreground">
+                            {format(new Date(t.created_at), 'd MMM yyyy, HH:mm', { locale: ru })}
+                          </div>
+                        </div>
+                        <div className={`font-bold text-sm shrink-0 ${Number(t.amount) >= 0 ? 'text-primary' : 'text-destructive'}`}>
+                          {Number(t.amount) >= 0 ? '+' : ''}{Number(t.amount)}
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-8 text-muted-foreground">
+                  <Gift className="h-8 w-8 mx-auto mb-2 opacity-30" />
+                  <p className="text-sm">Нет операций по программе лояльности</p>
+                </div>
+              )}
+            </TabsContent>
+
             <TabsContent value="notifications" className="mt-4">
               <ClientNotificationPreferences clientId={client.id} />
             </TabsContent>

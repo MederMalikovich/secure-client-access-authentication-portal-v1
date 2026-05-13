@@ -46,9 +46,12 @@ const apptStatusColors: Record<string, string> = {
 };
 
 export function ClientDetailSheet({ client, open, onClose, onEdit, onAddAppointment }: ClientDetailSheetProps) {
+  const { toast } = useToast();
   const [appointments, setAppointments] = useState<any[]>([]);
   const [invoices, setInvoices] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
+  const [loyaltyBalance, setLoyaltyBalance] = useState<number>(0);
+  const [loyaltyTxns, setLoyaltyTxns] = useState<any[]>([]);
 
   useEffect(() => {
     if (open && client?.id) {

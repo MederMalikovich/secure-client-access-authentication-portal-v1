@@ -463,7 +463,46 @@ export default function MedicalRecords() {
           { label: 'Дашборд', href: '/dashboard' },
           { label: 'Медкарты' },
         ]}
+        actions={!isClient && (
+          <Button onClick={() => { setVisitDialogId(null); setVisitDialogOpen(true); }}>
+            <Stethoscope className="h-4 w-4 mr-1" />
+            Новый визит
+          </Button>
+        )}
       />
+
+      <Tabs value={viewMode} onValueChange={(v) => setViewMode(v as any)} className="mb-4">
+        <TabsList>
+          <TabsTrigger value="timeline"><ClockIcon className="h-4 w-4 mr-1" />Timeline визитов</TabsTrigger>
+          <TabsTrigger value="classic"><FileText className="h-4 w-4 mr-1" />Классические записи</TabsTrigger>
+        </TabsList>
+        <TabsContent value="timeline" className="mt-4 space-y-3">
+          <Card>
+            <CardContent className="p-4 space-y-3">
+              <Label>Питомец</Label>
+              <Select value={timelinePetId} onValueChange={setTimelinePetId}>
+                <SelectTrigger><SelectValue placeholder="Выберите питомца для просмотра timeline" /></SelectTrigger>
+                <SelectContent>
+                  {pets.map((p: any) => (
+                    <SelectItem key={p.id} value={p.id}>
+                      {p.name}{p.client?.full_name ? ` — ${p.client.full_name}` : ''}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {timelinePetId && (
+                <VisitTimeline
+                  petId={timelinePetId}
+                  onOpenVisit={(id) => { setVisitDialogId(id); setVisitDialogOpen(true); }}
+                />
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+        <TabsContent value="classic" className="mt-4">
+          {/* классическая раскладка ниже */}
+        </TabsContent>
+      </Tabs>
 
       <div className="mb-6 space-y-4">
         {loading ? (
@@ -942,6 +981,13 @@ export default function MedicalRecords() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <VisitDialog
+        open={visitDialogOpen}
+        visitId={visitDialogId}
+        onClose={() => setVisitDialogOpen(false)}
+        onSaved={() => fetchData()}
+      />
     </div>
   );
 }

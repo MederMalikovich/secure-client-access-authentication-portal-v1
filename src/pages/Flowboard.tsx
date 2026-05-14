@@ -66,10 +66,16 @@ export default function Flowboard() {
 
   return (
     <div className="space-y-4">
-      <PageHeader title="Flowboard" description="Поток клиники сегодня">
-        <Button variant="outline" onClick={() => void load()} disabled={loading}><RefreshCw className={cn('h-4 w-4 mr-1', loading && 'animate-spin')} />Обновить</Button>
-        <Button onClick={() => { setEditingId(null); setDialogOpen(true); }}><Plus className="h-4 w-4 mr-1" />Новый визит</Button>
-      </PageHeader>
+      <PageHeader
+        title="Flowboard"
+        description="Поток клиники сегодня"
+        actions={(
+          <>
+            <Button variant="outline" onClick={() => void load()} disabled={loading}><RefreshCw className={cn('h-4 w-4 mr-1', loading && 'animate-spin')} />Обновить</Button>
+            <Button onClick={() => { setEditingId(null); setDialogOpen(true); }}><Plus className="h-4 w-4 mr-1" />Новый визит</Button>
+          </>
+        )}
+      />
 
       <ProcessHint
         storageKey="flowboard-flow"

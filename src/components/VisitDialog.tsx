@@ -139,7 +139,7 @@ export function VisitDialog({ open, onClose, visitId, initialPetId, initialAppoi
         client_id: data.client_id,
         veterinarian_id: data.veterinarian_id || '',
         visit_date: data.visit_date ? format(new Date(data.visit_date), "yyyy-MM-dd'T'HH:mm") : '',
-        status: data.status,
+        status: data.status as VisitStatus,
         chief_complaint: data.chief_complaint || '',
         subjective: data.subjective || '',
         objective: data.objective || '',

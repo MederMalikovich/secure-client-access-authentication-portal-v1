@@ -205,9 +205,43 @@ export default function Reports() {
           { label: 'Отчёты' },
         ]}
         actions={
-          <Button variant="outline">
+          <Button variant="outline" onClick={async () => {
+            const XLSX = await import('xlsx');
+            const { data: invoices } = await supabase.from('invoices')
+              .select('invoice_number, issued_at, total, status, client:clients(full_name)')
+              .gte('issued_at', dateFrom).lte('issued_at', dateTo + 'T23:59:59');
+            const { data: appointments } = await supabase.from('appointments')
+              .select('scheduled_at, status, client:clients(full_name), pet:pets(name), service:services(name)')
+              .gte('scheduled_at', dateFrom).lte('scheduled_at', dateTo + 'T23:59:59');
+            const wb = XLSX.utils.book_new();
+            const summary = [
+              ['Период', `${dateFrom} — ${dateTo}`],
+              ['Выручка (₸)', stats.revenue],
+              ['Приёмы', stats.appointments],
+              ['Новые клиенты', stats.newClients],
+              ['Новые питомцы', stats.newPets],
+              ['Средний чек (₸)', Math.round(stats.avgCheck)],
+            ];
+            const wsSum = XLSX.utils.aoa_to_sheet(summary);
+            wsSum['!cols'] = [{ wch: 25 }, { wch: 25 }];
+            XLSX.utils.book_append_sheet(wb, wsSum, 'Сводка');
+            const wsInv = XLSX.utils.json_to_sheet((invoices || []).map((i: any) => ({
+              '№ счёта': i.invoice_number, 'Дата': format(new Date(i.issued_at), 'dd.MM.yyyy'),
+              'Клиент': i.client?.full_name || '', 'Сумма (₸)': Number(i.total), 'Статус': i.status,
+            })));
+            wsInv['!cols'] = [{ wch: 15 }, { wch: 12 }, { wch: 30 }, { wch: 14 }, { wch: 12 }];
+            XLSX.utils.book_append_sheet(wb, wsInv, 'Счета');
+            const wsApt = XLSX.utils.json_to_sheet((appointments || []).map((a: any) => ({
+              'Дата': format(new Date(a.scheduled_at), 'dd.MM.yyyy HH:mm'),
+              'Клиент': a.client?.full_name || '', 'Питомец': a.pet?.name || '',
+              'Услуга': a.service?.name || '', 'Статус': a.status,
+            })));
+            wsApt['!cols'] = [{ wch: 18 }, { wch: 30 }, { wch: 20 }, { wch: 30 }, { wch: 14 }];
+            XLSX.utils.book_append_sheet(wb, wsApt, 'Приёмы');
+            XLSX.writeFile(wb, `отчёт_${dateFrom}_${dateTo}.xlsx`);
+          }}>
             <Download className="h-4 w-4 mr-2" />
-            Экспорт
+            Экспорт в Excel
           </Button>
         }
       />

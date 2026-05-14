@@ -36,6 +36,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { ShopSale, PaymentStatus, paymentStatusLabels, InventoryItem } from '@/lib/types';
 import { format } from 'date-fns';
 import { ru } from 'date-fns/locale';
+import { ExcelImporter } from '@/components/ExcelImporter';
 
 interface CartItem {
   item: InventoryItem;
@@ -393,6 +394,36 @@ export default function Shop() {
           )}
         </CardContent>
       </Card>
+
+      <ExcelImporter
+        title="Импорт продаж из Excel"
+        description="Загрузите .xlsx файл с историей продаж"
+        expectedColumns={['Дата', 'Клиент', 'Товары', 'Сумма', 'Статус', 'Вид оплаты']}
+        exampleRow={{ 'Дата': '2026-05-14', 'Клиент': 'Иванов И.И.', 'Товары': 'Корм Royal Canin', 'Сумма': 4500, 'Статус': 'paid', 'Вид оплаты': 'cash' }}
+        onParsed={async (rows) => {
+          let inserted = 0, failed = 0;
+          const clientMap: Record<string, string> = {};
+          clients.forEach((c: any) => { clientMap[c.full_name.toLowerCase()] = c.id; });
+          for (const r of rows) {
+            const total = Number(r['Сумма']) || 0;
+            if (!total) { failed++; continue; }
+            const clientName = String(r['Клиент'] || '').trim().toLowerCase();
+            const dateStr = String(r['Дата'] || '');
+            const created = dateStr ? new Date(dateStr).toISOString() : new Date().toISOString();
+            const { error } = await supabase.from('shop_sales').insert({
+              client_id: clientMap[clientName] || null,
+              total,
+              payment_method: String(r['Вид оплаты'] || 'cash'),
+              payment_status: String(r['Статус'] || 'paid') as PaymentStatus,
+              notes: String(r['Товары'] || ''),
+              created_at: created,
+            });
+            if (error) failed++; else inserted++;
+          }
+          fetchData();
+          return { inserted, failed };
+        }}
+      />
 
       <DataTable
         data={sales}

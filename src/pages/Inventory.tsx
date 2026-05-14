@@ -36,6 +36,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { InventoryItem, InventoryCategory, MovementType } from '@/lib/types';
+import { ExcelImporter } from '@/components/ExcelImporter';
 
 export default function Inventory() {
   const { toast } = useToast();
@@ -461,6 +462,40 @@ export default function Inventory() {
           </CardContent>
         </Card>
       </div>
+
+      {canManage && (
+        <ExcelImporter
+          title="Импорт товаров склада из Excel"
+          description="Загрузите .xlsx файл, чтобы массово добавить позиции склада"
+          expectedColumns={['Название', 'Категория', 'Остаток', 'Закупка', 'Продажа']}
+          exampleRow={{ 'Название': 'Амоксициллин 500мг', 'Категория': 'Антибиотики', 'Остаток': 50, 'Закупка': 200, 'Продажа': 350 }}
+          onParsed={async (rows) => {
+            let inserted = 0, failed = 0;
+            const catMap: Record<string, string> = {};
+            categories.forEach((c: any) => { catMap[c.name.toLowerCase()] = c.id; });
+            for (const r of rows) {
+              const name = String(r['Название'] || '').trim();
+              if (!name) { failed++; continue; }
+              const catName = String(r['Категория'] || '').trim();
+              let category_id = catMap[catName.toLowerCase()] || null;
+              if (catName && !category_id) {
+                const { data: nc } = await supabase.from('inventory_categories').insert({ name: catName }).select('id').single();
+                if (nc) { category_id = nc.id; catMap[catName.toLowerCase()] = nc.id; }
+              }
+              const { error } = await supabase.from('inventory_items').insert({
+                name, category_id,
+                quantity: Number(r['Остаток']) || 0,
+                purchase_price: Number(r['Закупка']) || 0,
+                sale_price: Number(r['Продажа']) || 0,
+                unit: 'шт', min_quantity: 0, is_active: true,
+              });
+              if (error) failed++; else inserted++;
+            }
+            fetchData();
+            return { inserted, failed };
+          }}
+        />
+      )}
 
       <DataTable
         data={items}

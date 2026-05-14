@@ -36,6 +36,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Service, ServiceCategory } from '@/lib/types';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { subDays } from 'date-fns';
+import { ExcelImporter } from '@/components/ExcelImporter';
 
 type PeriodKey = '7d' | '30d' | '90d' | '365d';
 const periodLabels: Record<PeriodKey, string> = {
@@ -493,6 +494,36 @@ export default function Services() {
         </TabsList>
 
         <TabsContent value="services">
+          <ExcelImporter
+            title="Импорт услуг из Excel"
+            description="Загрузите .xlsx файл, чтобы массово добавить услуги"
+            expectedColumns={['Название', 'Категория', 'Цена', 'Статус']}
+            exampleRow={{ 'Название': 'Первичный осмотр', 'Категория': 'Диагностика', 'Цена': 5000, 'Статус': 'Активна' }}
+            onParsed={async (rows) => {
+              let inserted = 0, failed = 0;
+              const catMap: Record<string, string> = {};
+              categories.forEach((c: any) => { catMap[c.name.toLowerCase()] = c.id; });
+              for (const r of rows) {
+                const name = String(r['Название'] || '').trim();
+                const catName = String(r['Категория'] || '').trim();
+                const price = Number(r['Цена']) || 0;
+                const status = String(r['Статус'] || '').toLowerCase();
+                if (!name || !price) { failed++; continue; }
+                let category_id = catMap[catName.toLowerCase()] || null;
+                if (catName && !category_id) {
+                  const { data: nc } = await supabase.from('service_categories').insert({ name: catName, is_active: true }).select('id').single();
+                  if (nc) { category_id = nc.id; catMap[catName.toLowerCase()] = nc.id; }
+                }
+                const { error } = await supabase.from('services').insert({
+                  name, category_id, price, is_active: !status.includes('неактив'),
+                });
+                if (error) failed++; else inserted++;
+              }
+              fetchData();
+              return { inserted, failed };
+            }}
+          />
+
           <DataTable
             data={services}
             columns={serviceColumns}

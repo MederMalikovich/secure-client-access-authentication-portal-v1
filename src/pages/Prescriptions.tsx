@@ -245,16 +245,19 @@ export default function Prescriptions() {
                 <CardHeader className="pb-3">
                   <div className="flex items-start justify-between gap-3 flex-wrap">
                     <div>
+                      <div className="text-xl font-bold leading-tight mb-1">
+                        {p.pets?.name || 'Питомец'}
+                        {!isClient && p.clients?.full_name && (
+                          <span className="text-base font-medium text-muted-foreground ml-2">• {p.clients.full_name}</span>
+                        )}
+                      </div>
                       <CardTitle className="flex items-center gap-2 text-lg">
                         <Pill className="h-5 w-5 text-primary" />
                         {p.medication_name}
                       </CardTitle>
                       <p className="text-sm text-muted-foreground mt-1">
-                        {p.pets?.name} • {p.dosage} • {p.route} • {p.frequency_per_day}× в день × {p.duration_days} дн.
+                        {p.dosage} • {p.route} • {p.frequency_per_day}× в день × {p.duration_days} дн.
                       </p>
-                      {!isClient && p.clients?.full_name && (
-                        <p className="text-xs text-muted-foreground">Клиент: {p.clients.full_name}</p>
-                      )}
                     </div>
                     <div className="flex items-center gap-2">
                       <Badge variant={p.status === 'active' ? 'default' : 'secondary'}>

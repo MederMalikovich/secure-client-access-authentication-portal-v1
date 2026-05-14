@@ -93,13 +93,13 @@ export function VisitDialog({ open, onClose, visitId, initialPetId, initialAppoi
   const loadRefs = async () => {
     const [petsRes, vetsRes, servicesRes, invRes, tplRes] = await Promise.all([
       supabase.from('pets').select('id, name, species, client_id, clients:clients(full_name)').order('name'),
-      supabase.from('profiles').select('id, full_name').order('full_name'),
+      supabase.rpc('list_public_veterinarians'),
       supabase.from('services').select('id, name, price').eq('is_active', true).order('name'),
       supabase.from('inventory_items').select('id, name, sale_price, quantity, unit').eq('is_active', true).order('name'),
       supabase.from('visit_templates').select('*').eq('is_active', true).order('name'),
     ]);
     setPets(petsRes.data || []);
-    setVets(vetsRes.data || []);
+    setVets((vetsRes.data as any[]) || []);
     setServices(servicesRes.data || []);
     setInventory(invRes.data || []);
     setTemplates(tplRes.data || []);

@@ -27,6 +27,7 @@ import { Switch } from '@/components/ui/switch';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { Disease } from '@/lib/types';
+import { ExcelImporter } from '@/components/ExcelImporter';
 
 export default function Diseases() {
   const { toast } = useToast();
@@ -218,6 +219,30 @@ export default function Diseases() {
           { label: 'Заболевания' },
         ]}
       />
+      <ExcelImporter
+        title="Импорт заболеваний из Excel"
+        description="Загрузите .xlsx файл, чтобы массово добавить заболевания"
+        expectedColumns={['Название', 'Описание', 'Симптомы', 'Статус']}
+        exampleRow={{ 'Название': 'Парвовирусный энтерит', 'Описание': 'Острое вирусное заболевание', 'Симптомы': 'Рвота, диарея, обезвоживание', 'Статус': 'Активно' }}
+        onParsed={async (rows) => {
+          let inserted = 0, failed = 0;
+          for (const r of rows) {
+            const name = String(r['Название'] || '').trim();
+            if (!name) { failed++; continue; }
+            const status = String(r['Статус'] || '').toLowerCase();
+            const { error } = await supabase.from('diseases').insert({
+              name,
+              description: String(r['Описание'] || '') || null,
+              symptoms: String(r['Симптомы'] || '') || null,
+              is_active: !status.includes('неактив'),
+            });
+            if (error) failed++; else inserted++;
+          }
+          fetchDiseases();
+          return { inserted, failed };
+        }}
+      />
+
 
       <DataTable
         data={diseases}

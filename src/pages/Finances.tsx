@@ -36,6 +36,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Invoice, PaymentStatus, paymentStatusLabels, Client } from '@/lib/types';
 import { format } from 'date-fns';
 import { ru } from 'date-fns/locale';
+import { DateScopeSelector, DateScope, filterByScope } from '@/components/DateScopeSelector';
 
 export default function Finances() {
   const { toast } = useToast();
@@ -50,6 +51,8 @@ export default function Finances() {
   const [editInvoice, setEditInvoice] = useState<any | null>(null);
   const [deleteInvoice, setDeleteInvoice] = useState<any | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [scope, setScope] = useState<DateScope>('today');
+  const [customDate, setCustomDate] = useState(format(new Date(), 'yyyy-MM-dd'));
   const [editForm, setEditForm] = useState({ subtotal: '', discount: '0', tax: '0', notes: '', status: 'pending' as PaymentStatus });
 
   const [formData, setFormData] = useState({
@@ -599,8 +602,14 @@ export default function Finances() {
         ]}
       />
 
+      <DateScopeSelector
+        scope={scope}
+        customDate={customDate}
+        onChange={(s, d) => { setScope(s); if (d) setCustomDate(d); }}
+      />
+
       <DataTable
-        data={invoices}
+        data={filterByScope(invoices, scope, customDate, 'issued_at')}
         columns={columns}
         searchPlaceholder="Поиск по номеру..."
         searchKey="invoice_number"
@@ -610,7 +619,7 @@ export default function Finances() {
         } : undefined}
         addLabel="Создать счёт"
         isLoading={loading}
-        emptyMessage="Нет счетов"
+        emptyMessage="Нет счетов за выбранный период"
       />
 
       {/* Create Invoice Dialog */}

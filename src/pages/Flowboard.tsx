@@ -67,8 +67,8 @@ export default function Flowboard() {
   return (
     <div className="space-y-4">
       <PageHeader
-        title="Flowboard"
-        description="Поток клиники сегодня"
+        title="Доска визитов"
+        description="Поток клиники сегодня — перетаскивайте карточки между статусами"
         actions={(
           <>
             <Button variant="outline" onClick={() => void load()} disabled={loading}><RefreshCw className={cn('h-4 w-4 mr-1', loading && 'animate-spin')} />Обновить</Button>

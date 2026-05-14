@@ -457,6 +457,10 @@ export default function Settings() {
             })}
           </div>
         </TabsContent>
+
+        <TabsContent value="visit-templates">
+          <VisitTemplatesManager />
+        </TabsContent>
       </Tabs>
 
       {/* Role Assignment Dialog */}

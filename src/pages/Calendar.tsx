@@ -661,10 +661,20 @@ export default function Calendar() {
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>
+            <DialogTitle className="flex items-center gap-2 flex-wrap">
               {selectedAppointment ? 'Редактировать запись' : 'Новая запись'}
+              {selectedAppointment && (
+                <Badge className={getStatusColor(selectedAppointment.status)}>
+                  {appointmentStatusLabels[selectedAppointment.status as AppointmentStatus]}
+                </Badge>
+              )}
+              {selectedAppointment?.status === 'completed' && (
+                <Badge variant="outline" className="text-xs">только просмотр</Badge>
+              )}
             </DialogTitle>
           </DialogHeader>
+          <fieldset disabled={selectedAppointment?.status === 'completed'} className="contents">
+
           <div className="grid gap-4 py-4 md:grid-cols-2">
             <div className="grid gap-2">
               <Label>Клиент *</Label>

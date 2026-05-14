@@ -317,6 +317,7 @@ export default function Settings() {
           <TabsTrigger value="notifications">Уведомления</TabsTrigger>
           <TabsTrigger value="users">Пользователи</TabsTrigger>
           <TabsTrigger value="roles">Роли</TabsTrigger>
+          <TabsTrigger value="visit-templates">Шаблоны визитов</TabsTrigger>
         </TabsList>
 
         <TabsContent value="schedule">

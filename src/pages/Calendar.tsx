@@ -34,6 +34,8 @@ import { Appointment, AppointmentStatus, appointmentStatusLabels } from '@/lib/t
 import { cn } from '@/lib/utils';
 import { TimePicker } from '@/components/ui/time-picker';
 import { useWorkingHours, isHourWorking, isDayWorking } from '@/hooks/useWorkingHours';
+import { VisitDialog } from '@/components/VisitDialog';
+import { Stethoscope } from 'lucide-react';
 
 const hours = Array.from({ length: 15 }, (_, i) => i + 7); // 7:00 - 21:00 visible range
 
@@ -59,6 +61,9 @@ export default function Calendar() {
   const [petSearch, setPetSearch] = useState('');
   const [dragOverSlot, setDragOverSlot] = useState<string | null>(null);
   const [showWorkload, setShowWorkload] = useState(true);
+  const [visitDialogOpen, setVisitDialogOpen] = useState(false);
+  const [visitInitialPet, setVisitInitialPet] = useState<string | undefined>(undefined);
+  const [visitInitialAppointment, setVisitInitialAppointment] = useState<string | undefined>(undefined);
 
   const [formData, setFormData] = useState({
     client_id: '',

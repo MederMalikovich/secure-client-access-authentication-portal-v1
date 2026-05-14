@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { getUserFriendlyError } from '@/lib/errorHandler';
-import { Users, Shield, MoreVertical, Pencil, UserPlus, Sun, Moon, Palette, Bell } from 'lucide-react';
+import { Users, Shield, MoreVertical, Pencil, UserPlus, Sun, Moon, Palette, Bell, Trash2 } from 'lucide-react';
+import { useAuth } from '@/contexts/AuthContext';
 import { PageHeader } from '@/components/ui/page-header';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { DataTable, Column } from '@/components/ui/data-table';
@@ -44,10 +45,14 @@ import { ru } from 'date-fns/locale';
 export default function Settings() {
   const { toast } = useToast();
   const { theme, setTheme } = useTheme();
+  const { hasRole, user } = useAuth();
+  const isAdmin = hasRole('admin');
   const [profiles, setProfiles] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [roleDialogOpen, setRoleDialogOpen] = useState(false);
   const [profileDialogOpen, setProfileDialogOpen] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [deletingUser, setDeletingUser] = useState(false);
   const [selectedProfile, setSelectedProfile] = useState<Profile | null>(null);
   const [selectedRole, setSelectedRole] = useState<AppRole>('viewer');
 
@@ -180,6 +185,30 @@ export default function Settings() {
     }
   };
 
+  const handleDeleteUser = async () => {
+    if (!selectedProfile || deletingUser) return;
+    setDeletingUser(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('delete-user', {
+        body: { user_id: selectedProfile.user_id },
+      });
+      if (error) throw error;
+      if ((data as any)?.error) throw new Error((data as any).error);
+      toast({ title: 'Успешно', description: 'Пользователь удалён' });
+      setDeleteDialogOpen(false);
+      setSelectedProfile(null);
+      fetchData();
+    } catch (error: any) {
+      toast({
+        variant: 'destructive',
+        title: 'Ошибка',
+        description: error?.message || getUserFriendlyError(error),
+      });
+    } finally {
+      setDeletingUser(false);
+    }
+  };
+
   const openProfileEdit = (profile: Profile) => {
     setSelectedProfile(profile);
     setProfileForm({
@@ -293,6 +322,18 @@ export default function Settings() {
               <Pencil className="h-4 w-4 mr-2" />
               Редактировать
             </DropdownMenuItem>
+            {isAdmin && profile.user_id !== user?.id && (
+              <DropdownMenuItem
+                className="text-destructive"
+                onClick={() => {
+                  setSelectedProfile(profile);
+                  setDeleteDialogOpen(true);
+                }}
+              >
+                <Trash2 className="h-4 w-4 mr-2" />
+                Удалить пользователя
+              </DropdownMenuItem>
+            )}
           </DropdownMenuContent>
         </DropdownMenu>
       ),
@@ -550,6 +591,25 @@ export default function Settings() {
               Отмена
             </Button>
             <Button onClick={handleUpdateProfile}>Сохранить</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <DialogContent className="glass">
+          <DialogHeader>
+            <DialogTitle>Удалить пользователя?</DialogTitle>
+            <DialogDescription>
+              Аккаунт пользователя <span className="font-medium text-foreground">{selectedProfile?.full_name}</span> и все его роли будут удалены безвозвратно. Это действие нельзя отменить.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setDeleteDialogOpen(false)} disabled={deletingUser}>
+              Отмена
+            </Button>
+            <Button variant="destructive" onClick={handleDeleteUser} disabled={deletingUser}>
+              {deletingUser ? 'Удаление...' : 'Удалить'}
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

@@ -483,7 +483,7 @@ export function VisitDialog({ open, onClose, visitId, initialPetId, initialAppoi
               </Card>
             </TabsContent>
           </Tabs>
-        </ScrollArea>
+        </div>
 
         <DialogFooter className="px-6 py-4 border-t flex-row gap-2 flex-wrap">
           <Button variant="outline" onClick={onClose} disabled={saving}>Отмена</Button>

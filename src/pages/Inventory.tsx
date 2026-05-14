@@ -497,7 +497,8 @@ export default function Inventory() {
         />
       )}
 
-
+      <DataTable
+        data={items}
         columns={columns}
         searchPlaceholder="Поиск товара..."
         searchKey="name"

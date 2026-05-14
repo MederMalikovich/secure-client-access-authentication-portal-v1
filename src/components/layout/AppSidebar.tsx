@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useLocation } from 'react-router-dom';
-import { LayoutDashboard, Users, PawPrint, Stethoscope, Calendar, FileText, DollarSign, Package, ShoppingCart, BarChart3, Settings, ChevronLeft, ChevronRight, Heart, Syringe, UserCheck, Search, LogOut, GraduationCap, Pill, BedDouble, Gift } from 'lucide-react';
+import { LayoutDashboard, Users, PawPrint, Stethoscope, Calendar, FileText, DollarSign, Package, ShoppingCart, BarChart3, Settings, ChevronLeft, ChevronRight, Heart, Syringe, UserCheck, Search, LogOut, GraduationCap, Pill, BedDouble, Gift, Workflow } from 'lucide-react';
 import { NavLink } from '@/components/NavLink';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
@@ -20,6 +20,7 @@ const mainNavItems: NavItem[] = [
   { title: 'Назначения', url: '/prescriptions', icon: Pill },
   { title: 'Стационар', url: '/hospitalization', icon: BedDouble },
   { title: 'Календарь', url: '/calendar', icon: Calendar },
+  { title: 'Flowboard', url: '/flowboard', icon: Workflow },
   { title: 'Услуги', url: '/services', icon: Stethoscope },
   { title: 'Заболевания', url: '/diseases', icon: Syringe },
   { title: 'Врачи', url: '/doctors', icon: UserCheck },

@@ -130,7 +130,22 @@ export default function Hospitalization() {
         .update({ status: 'discharged', discharge_at: new Date().toISOString() })
         .eq('id', h.id);
       if (error) throw error;
-      toast({ title: 'Питомец выписан' });
+      // Поиск автосчёта (создаётся триггером auto_invoice_on_discharge)
+      const { data: inv } = await supabase
+        .from('invoices')
+        .select('invoice_number, total')
+        .eq('hospitalization_id', h.id)
+        .order('issued_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      if (inv) {
+        toast({
+          title: 'Питомец выписан',
+          description: `Автоматически создан счёт ${inv.invoice_number} на ${formatCurrency(Number(inv.total))}`,
+        });
+      } else {
+        toast({ title: 'Питомец выписан' });
+      }
       loadData();
     } catch (e: any) {
       toast({ title: 'Ошибка', description: getUserFriendlyError(e), variant: 'destructive' });

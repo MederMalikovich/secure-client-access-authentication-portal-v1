@@ -40,6 +40,8 @@ import { useAuth } from '@/contexts/AuthContext';
 import { MedicalRecord, Pet, Profile } from '@/lib/types';
 import { format } from 'date-fns';
 import { ru } from 'date-fns/locale';
+import { VisitTimeline } from '@/components/VisitTimeline';
+import { VisitDialog } from '@/components/VisitDialog';
 
 type PetMedicalTimeline = {
   petId: string;
@@ -79,6 +81,10 @@ export default function MedicalRecords() {
   const [petSearch, setPetSearch] = useState('');
   const [uploadingFile, setUploadingFile] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [viewMode, setViewMode] = useState<'classic' | 'timeline'>('timeline');
+  const [timelinePetId, setTimelinePetId] = useState<string>('');
+  const [visitDialogOpen, setVisitDialogOpen] = useState(false);
+  const [visitDialogId, setVisitDialogId] = useState<string | null>(null);
   const [fileForm, setFileForm] = useState({
     title: '',
     study_type: 'analysis',

@@ -19,6 +19,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { speciesLabels, paymentStatusLabels, appointmentStatusLabels } from '@/lib/types';
 import { formatCurrency } from '@/lib/currency';
 import { ClientNotificationPreferences } from '@/components/ClientNotificationPreferences';
+import { LoyaltyTierBadge } from '@/components/LoyaltyTierBadge';
 
 interface ClientDetailSheetProps {
   client: any;
@@ -135,7 +136,10 @@ export function ClientDetailSheet({ client, open, onClose, onEdit, onAddAppointm
                   </span>
                 </div>
                 <div>
-                  <SheetTitle className="text-xl">{client.full_name}</SheetTitle>
+                  <SheetTitle className="text-xl flex items-center gap-2 flex-wrap">
+                    {client.full_name}
+                    <LoyaltyTierBadge tier={client.loyalty_tier} />
+                  </SheetTitle>
                   {client.client_number && (
                     <div className="flex items-center gap-1 mt-1">
                       <Hash className="h-3 w-3 text-muted-foreground" />

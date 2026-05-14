@@ -229,6 +229,35 @@ export default function Prescriptions() {
         />
       )}
 
+      <Tabs value={viewMode} onValueChange={(v) => setViewMode(v as any)}>
+        <TabsList>
+          <TabsTrigger value="timeline"><ClockIcon className="h-4 w-4 mr-1" />Timeline назначений</TabsTrigger>
+          <TabsTrigger value="classic"><List className="h-4 w-4 mr-1" />Список</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="timeline" className="mt-4">
+          <Card>
+            <CardContent className="p-4 space-y-3">
+              <Label>Питомец</Label>
+              <Select value={timelinePetId} onValueChange={setTimelinePetId}>
+                <SelectTrigger><SelectValue placeholder="Выберите питомца для просмотра timeline" /></SelectTrigger>
+                <SelectContent>
+                  {pets.map((p: any) => (
+                    <SelectItem key={p.id} value={p.id}>
+                      {p.name}{p.clients?.full_name ? ` — ${p.clients.full_name}` : ''}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {timelinePetId && <PrescriptionTimeline petId={timelinePetId} />}
+              {!timelinePetId && (
+                <p className="text-sm text-muted-foreground">Выберите питомца, чтобы увидеть хронологию назначений.</p>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="classic" className="mt-4">
       {loading ? (
         <div className="text-center py-10 text-muted-foreground">Загрузка...</div>
       ) : prescriptions.length === 0 ? (

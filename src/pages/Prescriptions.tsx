@@ -379,6 +379,8 @@ export default function Prescriptions() {
           })}
         </div>
       )}
+        </TabsContent>
+      </Tabs>
 
       {/* Create dialog */}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>

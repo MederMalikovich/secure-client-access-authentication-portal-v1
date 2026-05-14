@@ -485,6 +485,10 @@ export function PetDetailSheet({ pet, open, onClose, onEdit, onAddAppointment, i
                 </div>
               )}
             </TabsContent>
+
+            <TabsContent value="prescriptions" className="mt-4">
+              <PrescriptionTimeline petId={pet.id} />
+            </TabsContent>
           </Tabs>
 
           {pet.notes && (

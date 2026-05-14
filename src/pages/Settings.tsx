@@ -7,6 +7,7 @@ import { DataTable, Column } from '@/components/ui/data-table';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { VisitTemplatesManager } from '@/components/VisitTemplatesManager';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -316,6 +317,7 @@ export default function Settings() {
           <TabsTrigger value="notifications">Уведомления</TabsTrigger>
           <TabsTrigger value="users">Пользователи</TabsTrigger>
           <TabsTrigger value="roles">Роли</TabsTrigger>
+          <TabsTrigger value="visit-templates">Шаблоны визитов</TabsTrigger>
         </TabsList>
 
         <TabsContent value="schedule">
@@ -454,6 +456,10 @@ export default function Settings() {
               );
             })}
           </div>
+        </TabsContent>
+
+        <TabsContent value="visit-templates">
+          <VisitTemplatesManager />
         </TabsContent>
       </Tabs>
 

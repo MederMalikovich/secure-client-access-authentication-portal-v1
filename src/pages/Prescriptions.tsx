@@ -35,6 +35,8 @@ export default function Prescriptions() {
   const [pets, setPets] = useState<any[]>([]);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [viewMode, setViewMode] = useState<'classic' | 'timeline'>('timeline');
+  const [timelinePetId, setTimelinePetId] = useState<string>('');
 
   const [form, setForm] = useState({
     pet_id: '',

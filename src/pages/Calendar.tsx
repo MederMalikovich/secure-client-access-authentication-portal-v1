@@ -861,6 +861,20 @@ export default function Calendar() {
                 Удалить
               </Button>
             )}
+            {selectedAppointment && canManage && (
+              <Button
+                variant="secondary"
+                onClick={() => {
+                  setVisitInitialPet(selectedAppointment.pet_id);
+                  setVisitInitialAppointment(selectedAppointment.id);
+                  setDialogOpen(false);
+                  setVisitDialogOpen(true);
+                }}
+              >
+                <Stethoscope className="h-4 w-4 mr-1" />
+                Начать приём
+              </Button>
+            )}
             <Button variant="outline" onClick={() => setDialogOpen(false)}>
               Отмена
             </Button>
@@ -870,6 +884,14 @@ export default function Calendar() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <VisitDialog
+        open={visitDialogOpen}
+        initialPetId={visitInitialPet}
+        initialAppointmentId={visitInitialAppointment}
+        onClose={() => { setVisitDialogOpen(false); setVisitInitialPet(undefined); setVisitInitialAppointment(undefined); }}
+        onSaved={() => { fetchData(); }}
+      />
 
       {/* Delete Dialog */}
       <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>

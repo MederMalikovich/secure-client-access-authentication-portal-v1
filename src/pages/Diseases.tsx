@@ -218,6 +218,7 @@ export default function Diseases() {
           { label: 'Дашборд', href: '/dashboard' },
           { label: 'Заболевания' },
         ]}
+      />
       <ExcelImporter
         title="Импорт заболеваний из Excel"
         description="Загрузите .xlsx файл, чтобы массово добавить заболевания"

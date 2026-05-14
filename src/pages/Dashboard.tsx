@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Users, PawPrint, Calendar, DollarSign, Plus, TrendingUp, Clock, FileText, Receipt, Trophy, Bell } from 'lucide-react';
+import { Users, PawPrint, Calendar, DollarSign, Plus, TrendingUp, Clock, FileText, Receipt, Trophy, Bell, Stethoscope } from 'lucide-react';
 import { PageHeader } from '@/components/ui/page-header';
 import { StatCard } from '@/components/ui/stat-card';
 import { Button } from '@/components/ui/button';
@@ -219,6 +219,9 @@ export default function Dashboard() {
             </Button>
             <Button variant="outline" size="sm" className="text-xs md:text-sm" onClick={() => navigate('/finances')}>
               <Receipt className="h-4 w-4 mr-1 md:mr-2" /><span className="hidden sm:inline">Счёт</span><span className="sm:hidden">+</span>
+            </Button>
+            <Button variant="outline" size="sm" className="text-xs md:text-sm" onClick={() => navigate('/flowboard', { state: { openNew: true } })}>
+              <Stethoscope className="h-4 w-4 mr-1 md:mr-2" /><span className="hidden sm:inline">Новый визит</span><span className="sm:hidden">Визит</span>
             </Button>
             <Button size="sm" className="text-xs md:text-sm" onClick={() => navigate('/calendar')}>
               <Calendar className="h-4 w-4 mr-1 md:mr-2" /><span className="hidden sm:inline">Новая запись</span><span className="sm:hidden">Запись</span>

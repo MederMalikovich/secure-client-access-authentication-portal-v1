@@ -13,10 +13,12 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { PetSearchSelect } from '@/components/PetSearchSelect';
-import { Pill, Plus, Clock, Check, X, Trash2, CheckCircle2 } from 'lucide-react';
+import { Pill, Plus, Clock, Check, X, Trash2, CheckCircle2, Clock as ClockIcon, List } from 'lucide-react';
 import { format, isPast, isToday, parseISO } from 'date-fns';
 import { ru } from 'date-fns/locale';
 import { ProcessHint } from '@/components/ProcessHint';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { PrescriptionTimeline } from '@/components/PrescriptionTimeline';
 
 type Prescription = any;
 type Dose = any;
@@ -33,6 +35,8 @@ export default function Prescriptions() {
   const [pets, setPets] = useState<any[]>([]);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [viewMode, setViewMode] = useState<'classic' | 'timeline'>('timeline');
+  const [timelinePetId, setTimelinePetId] = useState<string>('');
 
   const [form, setForm] = useState({
     pet_id: '',
@@ -225,6 +229,35 @@ export default function Prescriptions() {
         />
       )}
 
+      <Tabs value={viewMode} onValueChange={(v) => setViewMode(v as any)}>
+        <TabsList>
+          <TabsTrigger value="timeline"><ClockIcon className="h-4 w-4 mr-1" />Timeline назначений</TabsTrigger>
+          <TabsTrigger value="classic"><List className="h-4 w-4 mr-1" />Список</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="timeline" className="mt-4">
+          <Card>
+            <CardContent className="p-4 space-y-3">
+              <Label>Питомец</Label>
+              <Select value={timelinePetId} onValueChange={setTimelinePetId}>
+                <SelectTrigger><SelectValue placeholder="Выберите питомца для просмотра timeline" /></SelectTrigger>
+                <SelectContent>
+                  {pets.map((p: any) => (
+                    <SelectItem key={p.id} value={p.id}>
+                      {p.name}{p.clients?.full_name ? ` — ${p.clients.full_name}` : ''}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {timelinePetId && <PrescriptionTimeline petId={timelinePetId} />}
+              {!timelinePetId && (
+                <p className="text-sm text-muted-foreground">Выберите питомца, чтобы увидеть хронологию назначений.</p>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="classic" className="mt-4">
       {loading ? (
         <div className="text-center py-10 text-muted-foreground">Загрузка...</div>
       ) : prescriptions.length === 0 ? (
@@ -346,6 +379,8 @@ export default function Prescriptions() {
           })}
         </div>
       )}
+        </TabsContent>
+      </Tabs>
 
       {/* Create dialog */}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>

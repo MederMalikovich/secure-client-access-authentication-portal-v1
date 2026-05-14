@@ -240,6 +240,10 @@ export function PetDetailSheet({ pet, open, onClose, onEdit, onAddAppointment, i
                 <FlaskConical className="h-4 w-4 mr-1.5" />
                 Анализы
               </TabsTrigger>
+              <TabsTrigger value="prescriptions" className="flex-1">
+                <Pill className="h-4 w-4 mr-1.5" />
+                Назначения
+              </TabsTrigger>
               <TabsTrigger value="finances" className="flex-1">
                 <DollarSign className="h-4 w-4 mr-1.5" />
                 Счета

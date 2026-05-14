@@ -100,12 +100,17 @@ export default function ClientPortal() {
   const fetchData = useCallback(async () => {
     setLoading(true);
     try {
-      const [apptRes, invRes, petsRes, svcRes, vetsRes, clientRes, txnsRes, certsRes] = await Promise.all([
+      const [apptRes, visitsRes, invRes, petsRes, svcRes, vetsRes, clientRes, txnsRes, certsRes] = await Promise.all([
         supabase
           .from('appointments')
           .select('*, pets(name, species), services(name), profiles!appointments_veterinarian_id_fkey(full_name)')
           .eq('client_id', clientId!)
           .order('scheduled_at', { ascending: false }),
+        supabase
+          .from('visits')
+          .select('id, appointment_id, pet_id, client_id, veterinarian_id, visit_date, status, chief_complaint, completed_at, pets(name, species), profiles:veterinarian_id(full_name)')
+          .eq('client_id', clientId!)
+          .order('visit_date', { ascending: false }),
         supabase
           .from('invoices')
           .select('*, pets(name)')
@@ -126,7 +131,36 @@ export default function ClientPortal() {
         supabase.from('gift_certificates').select('*').eq('redeemed_by_client_id', clientId!).order('redeemed_at', { ascending: false }),
       ]);
 
-      setAppointments((apptRes.data || []) as ClientPortalAppointment[]);
+      // Merge appointments + visits. Visits without linked appointment become standalone records.
+      const apptList = (apptRes.data || []) as ClientPortalAppointment[];
+      const linkedApptIds = new Set((visitsRes.data || []).map((v: any) => v.appointment_id).filter(Boolean));
+      const visitStatusMap: Record<string, string> = {
+        waiting: 'scheduled', in_progress: 'in_progress', completed: 'completed', cancelled: 'cancelled',
+      };
+      const visitsAsAppts = (visitsRes.data || []).map((v: any) => ({
+        id: `visit-${v.id}`,
+        client_id: v.client_id,
+        pet_id: v.pet_id,
+        veterinarian_id: v.veterinarian_id,
+        service_id: null,
+        scheduled_at: v.visit_date,
+        duration_minutes: 30,
+        status: visitStatusMap[v.status] || v.status,
+        notes: v.chief_complaint || null,
+        created_at: v.visit_date,
+        updated_at: v.visit_date,
+        pets: v.pets,
+        services: null,
+        profiles: v.profiles,
+      })) as unknown as ClientPortalAppointment[];
+
+      // Keep appointments that don't yet have a visit (avoid duplicates), plus all visits
+      const apptsWithoutVisit = apptList.filter((a) => !linkedApptIds.has(a.id));
+      const merged = [...visitsAsAppts, ...apptsWithoutVisit].sort(
+        (a, b) => new Date(b.scheduled_at).getTime() - new Date(a.scheduled_at).getTime()
+      );
+
+      setAppointments(merged);
       setInvoices((invRes.data || []) as ClientPortalInvoice[]);
       setPets((petsRes.data || []) as PetRow[]);
       setServices((svcRes.data || []) as ServiceRow[]);

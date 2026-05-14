@@ -4,8 +4,9 @@ import { ru } from 'date-fns/locale';
 import {
   FileText, DollarSign, Calendar, Plus, Pencil,
   Clock, Camera, CheckCircle2, AlertCircle, CircleDot,
-  TrendingUp, Stethoscope, Weight, Thermometer, User, FlaskConical
+  TrendingUp, Stethoscope, Weight, Thermometer, User, FlaskConical, Pill
 } from 'lucide-react';
+import { PrescriptionTimeline } from '@/components/PrescriptionTimeline';
 import {
   Sheet, SheetContent, SheetHeader, SheetTitle,
 } from '@/components/ui/sheet';
@@ -238,6 +239,10 @@ export function PetDetailSheet({ pet, open, onClose, onEdit, onAddAppointment, i
               <TabsTrigger value="studies" className="flex-1">
                 <FlaskConical className="h-4 w-4 mr-1.5" />
                 Анализы
+              </TabsTrigger>
+              <TabsTrigger value="prescriptions" className="flex-1">
+                <Pill className="h-4 w-4 mr-1.5" />
+                Назначения
               </TabsTrigger>
               <TabsTrigger value="finances" className="flex-1">
                 <DollarSign className="h-4 w-4 mr-1.5" />
@@ -479,6 +484,10 @@ export function PetDetailSheet({ pet, open, onClose, onEdit, onAddAppointment, i
                   <p className="text-sm">Нет счетов</p>
                 </div>
               )}
+            </TabsContent>
+
+            <TabsContent value="prescriptions" className="mt-4">
+              <PrescriptionTimeline petId={pet.id} />
             </TabsContent>
           </Tabs>
 

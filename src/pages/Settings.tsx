@@ -45,10 +45,14 @@ import { ru } from 'date-fns/locale';
 export default function Settings() {
   const { toast } = useToast();
   const { theme, setTheme } = useTheme();
+  const { hasRole, user } = useAuth();
+  const isAdmin = hasRole('admin');
   const [profiles, setProfiles] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [roleDialogOpen, setRoleDialogOpen] = useState(false);
   const [profileDialogOpen, setProfileDialogOpen] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [deletingUser, setDeletingUser] = useState(false);
   const [selectedProfile, setSelectedProfile] = useState<Profile | null>(null);
   const [selectedRole, setSelectedRole] = useState<AppRole>('viewer');
 

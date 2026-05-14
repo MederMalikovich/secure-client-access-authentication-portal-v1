@@ -314,7 +314,7 @@ export function VisitDialog({ open, onClose, visitId, initialPetId, initialAppoi
           </div>
         </DialogHeader>
 
-        <ScrollArea className="flex-1 min-h-0 px-6 py-4">
+        <div className="flex-1 min-h-0 overflow-y-auto px-6 py-4">
           <ProcessHint
             storageKey="visit-dialog-flow"
             title="Как заполнить визит"
@@ -483,7 +483,7 @@ export function VisitDialog({ open, onClose, visitId, initialPetId, initialAppoi
               </Card>
             </TabsContent>
           </Tabs>
-        </ScrollArea>
+        </div>
 
         <DialogFooter className="px-6 py-4 border-t flex-row gap-2 flex-wrap">
           <Button variant="outline" onClick={onClose} disabled={saving}>Отмена</Button>

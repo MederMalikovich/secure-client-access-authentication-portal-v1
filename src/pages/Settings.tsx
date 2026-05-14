@@ -594,6 +594,25 @@ export default function Settings() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <DialogContent className="glass">
+          <DialogHeader>
+            <DialogTitle>Удалить пользователя?</DialogTitle>
+            <DialogDescription>
+              Аккаунт пользователя <span className="font-medium text-foreground">{selectedProfile?.full_name}</span> и все его роли будут удалены безвозвратно. Это действие нельзя отменить.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setDeleteDialogOpen(false)} disabled={deletingUser}>
+              Отмена
+            </Button>
+            <Button variant="destructive" onClick={handleDeleteUser} disabled={deletingUser}>
+              {deletingUser ? 'Удаление...' : 'Удалить'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

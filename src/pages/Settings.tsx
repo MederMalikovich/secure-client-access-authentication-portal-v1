@@ -208,6 +208,8 @@ export default function Settings() {
       setDeletingUser(false);
     }
   };
+
+  const openProfileEdit = (profile: Profile) => {
     setSelectedProfile(profile);
     setProfileForm({
       full_name: profile.full_name,

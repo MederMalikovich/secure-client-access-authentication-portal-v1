@@ -858,8 +858,9 @@ export default function Calendar() {
               />
             </div>
           </div>
+          </fieldset>
           <DialogFooter className="flex-col sm:flex-row gap-2">
-            {selectedAppointment && canManage && (
+            {selectedAppointment && canManage && selectedAppointment.status !== 'completed' && (
               <Button
                 variant="destructive"
                 className="sm:mr-auto"
@@ -871,7 +872,7 @@ export default function Calendar() {
                 Удалить
               </Button>
             )}
-            {selectedAppointment && canManage && (
+            {selectedAppointment && canManage && selectedAppointment.status !== 'completed' && (
               <Button
                 variant="secondary"
                 onClick={() => {
@@ -886,12 +887,15 @@ export default function Calendar() {
               </Button>
             )}
             <Button variant="outline" onClick={() => setDialogOpen(false)}>
-              Отмена
+              {selectedAppointment?.status === 'completed' ? 'Закрыть' : 'Отмена'}
             </Button>
-            <Button onClick={handleSubmit}>
-              {selectedAppointment ? 'Сохранить' : 'Создать'}
-            </Button>
+            {selectedAppointment?.status !== 'completed' && (
+              <Button onClick={handleSubmit}>
+                {selectedAppointment ? 'Сохранить' : 'Создать'}
+              </Button>
+            )}
           </DialogFooter>
+
         </DialogContent>
       </Dialog>
 

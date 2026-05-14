@@ -11,6 +11,7 @@ import { getUserFriendlyError } from '@/lib/errorHandler';
 import { format } from 'date-fns';
 import { VisitDialog, VisitStatus, visitStatusLabels, visitStatusColors } from '@/components/VisitDialog';
 import { ProcessHint } from '@/components/ProcessHint';
+import { DateScopeSelector, DateScope, filterByScope } from '@/components/DateScopeSelector';
 import { cn } from '@/lib/utils';
 
 const COLUMNS: VisitStatus[] = ['waiting', 'in_consultation', 'procedures', 'hospital', 'completed'];
@@ -24,6 +25,8 @@ export default function Flowboard() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [draggingId, setDraggingId] = useState<string | null>(null);
+  const [scope, setScope] = useState<DateScope>('today');
+  const [customDate, setCustomDate] = useState(format(new Date(), 'yyyy-MM-dd'));
 
   useEffect(() => {
     const st = location.state as any;
@@ -37,14 +40,11 @@ export default function Flowboard() {
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const start = new Date(); start.setHours(0, 0, 0, 0);
-      const end = new Date(); end.setHours(23, 59, 59, 999);
       const { data, error } = await supabase
         .from('visits')
         .select('*, pet:pets(name, species), client:clients(full_name), veterinarian:profiles(full_name)')
-        .gte('visit_date', start.toISOString())
-        .lte('visit_date', end.toISOString())
-        .order('visit_date', { ascending: true });
+        .order('visit_date', { ascending: false })
+        .limit(500);
       if (error) throw error;
       setVisits(data || []);
     } catch (e) {
@@ -76,11 +76,13 @@ export default function Flowboard() {
     setDraggingId(null);
   };
 
+  const visible = filterByScope(visits, scope, customDate, 'visit_date');
+
   return (
     <div className="space-y-4">
       <PageHeader
         title="Доска визитов"
-        description="Поток клиники сегодня — перетаскивайте карточки между статусами"
+        description="Поток клиники — перетаскивайте карточки между статусами"
         actions={(
           <>
             <Button variant="outline" onClick={() => void load()} disabled={loading}><RefreshCw className={cn('h-4 w-4 mr-1', loading && 'animate-spin')} />Обновить</Button>
@@ -93,15 +95,21 @@ export default function Flowboard() {
         storageKey="flowboard-flow"
         title="Как пользоваться Flowboard"
         steps={[
-          'Каждая карточка — визит сегодня. Перетащите её в нужную колонку, чтобы сменить статус.',
-          'Новые приёмы попадают сюда из календаря или по кнопке «Новый визит».',
+          'По умолчанию показаны визиты сегодняшнего дня. Используйте фильтры выше, чтобы посмотреть прошлые визиты.',
+          'Перетащите карточку в нужную колонку, чтобы сменить статус приёма.',
           'Когда визит готов к закрытию — переместите в «Завершён»: спишутся материалы и сформируется счёт.',
         ]}
       />
 
+      <DateScopeSelector
+        scope={scope}
+        customDate={customDate}
+        onChange={(s, d) => { setScope(s); if (d) setCustomDate(d); }}
+      />
+
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-3">
         {COLUMNS.map(col => {
-          const items = visits.filter(v => v.status === col);
+          const items = visible.filter(v => v.status === col);
           return (
             <div
               key={col}
@@ -130,7 +138,7 @@ export default function Flowboard() {
                       <User className="h-3 w-3" /> <span className="truncate">{v.client?.full_name || '—'}</span>
                     </div>
                     <div className="flex items-center justify-between text-xs text-muted-foreground mt-1">
-                      <span className="flex items-center gap-1"><Clock className="h-3 w-3" /> {format(new Date(v.visit_date), 'HH:mm')}</span>
+                      <span className="flex items-center gap-1"><Clock className="h-3 w-3" /> {format(new Date(v.visit_date), 'd MMM HH:mm')}</span>
                       {v.veterinarian?.full_name && <span className="flex items-center gap-1 truncate"><Stethoscope className="h-3 w-3" />{v.veterinarian.full_name.split(' ')[0]}</span>}
                     </div>
                   </Card>

@@ -146,7 +146,9 @@ export type Database = {
           email: string | null
           full_name: string
           id: string
+          lifetime_spend: number
           loyalty_balance: number
+          loyalty_tier: string
           notes: string | null
           phone: string
           referral_code: string | null
@@ -160,7 +162,9 @@ export type Database = {
           email?: string | null
           full_name: string
           id?: string
+          lifetime_spend?: number
           loyalty_balance?: number
+          loyalty_tier?: string
           notes?: string | null
           phone: string
           referral_code?: string | null
@@ -174,7 +178,9 @@ export type Database = {
           email?: string | null
           full_name?: string
           id?: string
+          lifetime_spend?: number
           loyalty_balance?: number
+          loyalty_tier?: string
           notes?: string | null
           phone?: string
           referral_code?: string | null
@@ -464,6 +470,7 @@ export type Database = {
           status: string
           updated_at: string
           veterinarian_id: string | null
+          visit_id: string | null
         }
         Insert: {
           admission_at?: string
@@ -480,6 +487,7 @@ export type Database = {
           status?: string
           updated_at?: string
           veterinarian_id?: string | null
+          visit_id?: string | null
         }
         Update: {
           admission_at?: string
@@ -496,6 +504,7 @@ export type Database = {
           status?: string
           updated_at?: string
           veterinarian_id?: string | null
+          visit_id?: string | null
         }
         Relationships: [
           {
@@ -721,6 +730,7 @@ export type Database = {
           tax: number | null
           total: number
           updated_at: string
+          visit_id: string | null
         }
         Insert: {
           client_id: string
@@ -738,6 +748,7 @@ export type Database = {
           tax?: number | null
           total?: number
           updated_at?: string
+          visit_id?: string | null
         }
         Update: {
           client_id?: string
@@ -755,6 +766,7 @@ export type Database = {
           tax?: number | null
           total?: number
           updated_at?: string
+          visit_id?: string | null
         }
         Relationships: [
           {
@@ -784,35 +796,50 @@ export type Database = {
         Row: {
           accrual_percent: number
           created_at: string
+          gold_percent: number
+          gold_threshold: number
           id: string
           is_enabled: boolean
           max_redeem_percent: number
           points_expire_days: number | null
           referee_bonus: number
           referrer_bonus: number
+          silver_percent: number
           updated_at: string
+          vip_percent: number
+          vip_threshold: number
         }
         Insert: {
           accrual_percent?: number
           created_at?: string
+          gold_percent?: number
+          gold_threshold?: number
           id?: string
           is_enabled?: boolean
           max_redeem_percent?: number
           points_expire_days?: number | null
           referee_bonus?: number
           referrer_bonus?: number
+          silver_percent?: number
           updated_at?: string
+          vip_percent?: number
+          vip_threshold?: number
         }
         Update: {
           accrual_percent?: number
           created_at?: string
+          gold_percent?: number
+          gold_threshold?: number
           id?: string
           is_enabled?: boolean
           max_redeem_percent?: number
           points_expire_days?: number | null
           referee_bonus?: number
           referrer_bonus?: number
+          silver_percent?: number
           updated_at?: string
+          vip_percent?: number
+          vip_threshold?: number
         }
         Relationships: []
       }
@@ -1393,6 +1420,7 @@ export type Database = {
           times_of_day: string[]
           updated_at: string
           veterinarian_id: string | null
+          visit_id: string | null
         }
         Insert: {
           client_id: string
@@ -1411,6 +1439,7 @@ export type Database = {
           times_of_day?: string[]
           updated_at?: string
           veterinarian_id?: string | null
+          visit_id?: string | null
         }
         Update: {
           client_id?: string
@@ -1429,6 +1458,7 @@ export type Database = {
           times_of_day?: string[]
           updated_at?: string
           veterinarian_id?: string | null
+          visit_id?: string | null
         }
         Relationships: [
           {
@@ -1724,11 +1754,210 @@ export type Database = {
         }
         Relationships: []
       }
+      visit_materials: {
+        Row: {
+          charged_to_client: boolean
+          created_at: string
+          deducted: boolean
+          description: string
+          id: string
+          inventory_item_id: string
+          quantity: number
+          total: number
+          unit_price: number
+          visit_id: string
+        }
+        Insert: {
+          charged_to_client?: boolean
+          created_at?: string
+          deducted?: boolean
+          description: string
+          id?: string
+          inventory_item_id: string
+          quantity?: number
+          total?: number
+          unit_price?: number
+          visit_id: string
+        }
+        Update: {
+          charged_to_client?: boolean
+          created_at?: string
+          deducted?: boolean
+          description?: string
+          id?: string
+          inventory_item_id?: string
+          quantity?: number
+          total?: number
+          unit_price?: number
+          visit_id?: string
+        }
+        Relationships: []
+      }
+      visit_services: {
+        Row: {
+          created_at: string
+          description: string
+          id: string
+          notes: string | null
+          quantity: number
+          service_id: string | null
+          total: number
+          unit_price: number
+          visit_id: string
+        }
+        Insert: {
+          created_at?: string
+          description: string
+          id?: string
+          notes?: string | null
+          quantity?: number
+          service_id?: string | null
+          total?: number
+          unit_price?: number
+          visit_id: string
+        }
+        Update: {
+          created_at?: string
+          description?: string
+          id?: string
+          notes?: string | null
+          quantity?: number
+          service_id?: string | null
+          total?: number
+          unit_price?: number
+          visit_id?: string
+        }
+        Relationships: []
+      }
+      visit_templates: {
+        Row: {
+          assessment: string | null
+          created_at: string
+          created_by: string | null
+          description: string | null
+          id: string
+          is_active: boolean
+          name: string
+          objective: string | null
+          plan: string | null
+          service_ids: string[] | null
+          subjective: string | null
+          updated_at: string
+        }
+        Insert: {
+          assessment?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          name: string
+          objective?: string | null
+          plan?: string | null
+          service_ids?: string[] | null
+          subjective?: string | null
+          updated_at?: string
+        }
+        Update: {
+          assessment?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          name?: string
+          objective?: string | null
+          plan?: string | null
+          service_ids?: string[] | null
+          subjective?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      visits: {
+        Row: {
+          appointment_id: string | null
+          assessment: string | null
+          chief_complaint: string | null
+          client_id: string
+          completed_at: string | null
+          created_at: string
+          created_by: string | null
+          id: string
+          medical_record_id: string
+          next_visit_date: string | null
+          notes: string | null
+          objective: string | null
+          pet_id: string
+          plan: string | null
+          pulse: number | null
+          respiratory_rate: number | null
+          status: string
+          subjective: string | null
+          temperature: number | null
+          updated_at: string
+          veterinarian_id: string | null
+          visit_date: string
+          weight: number | null
+        }
+        Insert: {
+          appointment_id?: string | null
+          assessment?: string | null
+          chief_complaint?: string | null
+          client_id: string
+          completed_at?: string | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          medical_record_id: string
+          next_visit_date?: string | null
+          notes?: string | null
+          objective?: string | null
+          pet_id: string
+          plan?: string | null
+          pulse?: number | null
+          respiratory_rate?: number | null
+          status?: string
+          subjective?: string | null
+          temperature?: number | null
+          updated_at?: string
+          veterinarian_id?: string | null
+          visit_date?: string
+          weight?: number | null
+        }
+        Update: {
+          appointment_id?: string | null
+          assessment?: string | null
+          chief_complaint?: string | null
+          client_id?: string
+          completed_at?: string | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          medical_record_id?: string
+          next_visit_date?: string | null
+          notes?: string | null
+          objective?: string | null
+          pet_id?: string
+          plan?: string | null
+          pulse?: number | null
+          respiratory_rate?: number | null
+          status?: string
+          subjective?: string | null
+          temperature?: number | null
+          updated_at?: string
+          veterinarian_id?: string | null
+          visit_date?: string
+          weight?: number | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
+      ensure_pet_medical_record: { Args: { _pet_id: string }; Returns: string }
       generate_invoice_number: { Args: never; Returns: string }
       get_user_roles: {
         Args: { _user_id: string }
@@ -1755,6 +1984,7 @@ export type Database = {
           id: string
         }[]
       }
+      recalc_client_tier: { Args: { _client_id: string }; Returns: undefined }
     }
     Enums: {
       app_role:

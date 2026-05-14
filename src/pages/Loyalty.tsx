@@ -76,6 +76,11 @@ export default function Loyalty() {
         max_redeem_percent: Number(settings.max_redeem_percent),
         referrer_bonus: Number(settings.referrer_bonus),
         referee_bonus: Number(settings.referee_bonus),
+        gold_threshold: Number(settings.gold_threshold || 0),
+        vip_threshold: Number(settings.vip_threshold || 0),
+        silver_percent: Number(settings.silver_percent || 0),
+        gold_percent: Number(settings.gold_percent || 0),
+        vip_percent: Number(settings.vip_percent || 0),
       }).eq('id', settings.id);
       if (error) throw error;
       toast({ title: 'Настройки сохранены' });
@@ -202,6 +207,19 @@ export default function Loyalty() {
                 <div><Label>Бонус пригласившему (₸)</Label><Input type="number" min={0} value={settings?.referrer_bonus ?? 0} onChange={(e) => setSettings({ ...settings, referrer_bonus: e.target.value })} disabled={!canManage} /></div>
                 <div><Label>Бонус приглашённому (₸)</Label><Input type="number" min={0} value={settings?.referee_bonus ?? 0} onChange={(e) => setSettings({ ...settings, referee_bonus: e.target.value })} disabled={!canManage} /></div>
               </div>
+
+              <div className="border-t pt-4">
+                <h4 className="font-semibold mb-3 flex items-center gap-2"><Gift className="h-4 w-4 text-primary" />Уровни клиентов</h4>
+                <p className="text-xs text-muted-foreground mb-3">Уровень определяется по сумме оплат за последние 12 месяцев. Процент начисления зависит от уровня.</p>
+                <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                  <div><Label>Silver — % начисления</Label><Input type="number" min={0} max={100} value={settings?.silver_percent ?? 3} onChange={(e) => setSettings({ ...settings, silver_percent: e.target.value })} disabled={!canManage} /></div>
+                  <div><Label>Gold — порог (₸)</Label><Input type="number" min={0} value={settings?.gold_threshold ?? 50000} onChange={(e) => setSettings({ ...settings, gold_threshold: e.target.value })} disabled={!canManage} /></div>
+                  <div><Label>Gold — % начисления</Label><Input type="number" min={0} max={100} value={settings?.gold_percent ?? 5} onChange={(e) => setSettings({ ...settings, gold_percent: e.target.value })} disabled={!canManage} /></div>
+                  <div><Label>VIP — порог (₸)</Label><Input type="number" min={0} value={settings?.vip_threshold ?? 200000} onChange={(e) => setSettings({ ...settings, vip_threshold: e.target.value })} disabled={!canManage} /></div>
+                  <div><Label>VIP — % начисления</Label><Input type="number" min={0} max={100} value={settings?.vip_percent ?? 10} onChange={(e) => setSettings({ ...settings, vip_percent: e.target.value })} disabled={!canManage} /></div>
+                </div>
+              </div>
+
               {canManage && <Button onClick={saveSettings} className="gradient-primary">Сохранить настройки</Button>}
             </CardContent>
           </Card>

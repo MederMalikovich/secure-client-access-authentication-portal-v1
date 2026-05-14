@@ -30,6 +30,7 @@ import ClientTraining from "./pages/ClientTraining";
 import Prescriptions from "./pages/Prescriptions";
 import Hospitalization from "./pages/Hospitalization";
 import Loyalty from "./pages/Loyalty";
+import Flowboard from "./pages/Flowboard";
 
 const queryClient = new QueryClient();
 
@@ -57,6 +58,7 @@ function AppRoutes() {
       <Route path="/prescriptions" element={<ProtectedRoute><MainLayout><Prescriptions /></MainLayout></ProtectedRoute>} />
       <Route path="/hospitalization" element={<ProtectedRoute><MainLayout><Hospitalization /></MainLayout></ProtectedRoute>} />
       <Route path="/loyalty" element={<ProtectedRoute requiredRoles={['admin', 'manager', 'accountant']}><MainLayout><Loyalty /></MainLayout></ProtectedRoute>} />
+      <Route path="/flowboard" element={<ProtectedRoute requiredRoles={['admin', 'veterinarian', 'registrar', 'manager']}><MainLayout><Flowboard /></MainLayout></ProtectedRoute>} />
       <Route path="*" element={<NotFound />} />
     </Routes>
   );

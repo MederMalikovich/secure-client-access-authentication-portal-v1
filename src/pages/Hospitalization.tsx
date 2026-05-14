@@ -134,14 +134,12 @@ export default function Hospitalization() {
       const { data: inv } = await supabase
         .from('invoices')
         .select('invoice_number, total')
-        .eq('hospitalization_id', h.id)
-        .order('issued_at', { ascending: false })
-        .limit(1)
+        .like('notes', `HOSP:${h.id}%`)
         .maybeSingle();
       if (inv) {
         toast({
           title: 'Питомец выписан',
-          description: `Автоматически создан счёт ${inv.invoice_number} на ${formatCurrency(Number(inv.total))}`,
+          description: `Счёт ${inv.invoice_number} на ${formatCurrency(Number(inv.total))} создан автоматически`,
         });
       } else {
         toast({ title: 'Питомец выписан' });

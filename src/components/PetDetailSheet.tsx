@@ -4,8 +4,9 @@ import { ru } from 'date-fns/locale';
 import {
   FileText, DollarSign, Calendar, Plus, Pencil,
   Clock, Camera, CheckCircle2, AlertCircle, CircleDot,
-  TrendingUp, Stethoscope, Weight, Thermometer, User, FlaskConical
+  TrendingUp, Stethoscope, Weight, Thermometer, User, FlaskConical, Pill
 } from 'lucide-react';
+import { PrescriptionTimeline } from '@/components/PrescriptionTimeline';
 import {
   Sheet, SheetContent, SheetHeader, SheetTitle,
 } from '@/components/ui/sheet';

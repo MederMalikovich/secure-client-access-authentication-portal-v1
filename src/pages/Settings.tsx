@@ -185,7 +185,29 @@ export default function Settings() {
     }
   };
 
-  const openProfileEdit = (profile: Profile) => {
+  const handleDeleteUser = async () => {
+    if (!selectedProfile || deletingUser) return;
+    setDeletingUser(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('delete-user', {
+        body: { user_id: selectedProfile.user_id },
+      });
+      if (error) throw error;
+      if ((data as any)?.error) throw new Error((data as any).error);
+      toast({ title: 'Успешно', description: 'Пользователь удалён' });
+      setDeleteDialogOpen(false);
+      setSelectedProfile(null);
+      fetchData();
+    } catch (error: any) {
+      toast({
+        variant: 'destructive',
+        title: 'Ошибка',
+        description: error?.message || getUserFriendlyError(error),
+      });
+    } finally {
+      setDeletingUser(false);
+    }
+  };
     setSelectedProfile(profile);
     setProfileForm({
       full_name: profile.full_name,

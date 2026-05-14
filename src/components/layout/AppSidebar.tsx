@@ -20,7 +20,7 @@ const mainNavItems: NavItem[] = [
   { title: 'Назначения', url: '/prescriptions', icon: Pill },
   { title: 'Стационар', url: '/hospitalization', icon: BedDouble },
   { title: 'Календарь', url: '/calendar', icon: Calendar },
-  { title: 'Flowboard', url: '/flowboard', icon: Workflow },
+  { title: 'Доска визитов', url: '/flowboard', icon: Workflow },
   { title: 'Услуги', url: '/services', icon: Stethoscope },
   { title: 'Заболевания', url: '/diseases', icon: Syringe },
   { title: 'Врачи', url: '/doctors', icon: UserCheck },

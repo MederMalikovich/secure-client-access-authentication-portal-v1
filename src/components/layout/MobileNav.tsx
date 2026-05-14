@@ -12,7 +12,7 @@ const staffNavItems = [
   { icon: Users, label: 'Клиенты', href: '/clients' },
   { icon: PawPrint, label: 'Питомцы', href: '/pets' },
   { icon: Calendar, label: 'Календарь', href: '/calendar' },
-  { icon: Workflow, label: 'Flowboard', href: '/flowboard' },
+  { icon: Workflow, label: 'Визиты', href: '/flowboard' },
   { icon: FileText, label: 'Медкарты', href: '/medical-records' },
   { icon: Pill, label: 'Назначения', href: '/prescriptions' },
   { icon: BedDouble, label: 'Стационар', href: '/hospitalization' },

@@ -504,7 +504,7 @@ export default function MedicalRecords() {
         </TabsContent>
       </Tabs>
 
-      <div className="mb-6 space-y-4">
+      {viewMode === 'classic' && <div className="mb-6 space-y-4">
         {loading ? (
           <Card>
             <CardContent className="p-6 text-center text-sm text-muted-foreground">Загрузка истории визитов...</CardContent>
@@ -560,9 +560,9 @@ export default function MedicalRecords() {
             <CardContent className="p-6 text-center text-sm text-muted-foreground">Пока нет медицинских записей</CardContent>
           </Card>
         )}
-      </div>
+      </div>}
 
-      <DataTable
+      {viewMode === 'classic' && <DataTable
         data={records}
         columns={columns}
         searchPlaceholder="Поиск..."
@@ -573,7 +573,7 @@ export default function MedicalRecords() {
         addLabel="Новая запись"
         isLoading={loading}
         emptyMessage="Нет записей"
-      />
+      />}
 
       {/* Add/Edit Dialog */}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>

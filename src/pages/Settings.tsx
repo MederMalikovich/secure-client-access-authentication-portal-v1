@@ -322,6 +322,18 @@ export default function Settings() {
               <Pencil className="h-4 w-4 mr-2" />
               Редактировать
             </DropdownMenuItem>
+            {isAdmin && profile.user_id !== user?.id && (
+              <DropdownMenuItem
+                className="text-destructive"
+                onClick={() => {
+                  setSelectedProfile(profile);
+                  setDeleteDialogOpen(true);
+                }}
+              >
+                <Trash2 className="h-4 w-4 mr-2" />
+                Удалить пользователя
+              </DropdownMenuItem>
+            )}
           </DropdownMenuContent>
         </DropdownMenu>
       ),

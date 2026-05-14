@@ -314,7 +314,7 @@ export function VisitDialog({ open, onClose, visitId, initialPetId, initialAppoi
           </div>
         </DialogHeader>
 
-        <ScrollArea className="flex-1 min-h-0 px-6 py-4">
+        <div className="flex-1 min-h-0 overflow-y-auto px-6 py-4">
           <ProcessHint
             storageKey="visit-dialog-flow"
             title="Как заполнить визит"

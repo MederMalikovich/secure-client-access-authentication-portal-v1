@@ -17,11 +17,22 @@ const COLUMNS: VisitStatus[] = ['waiting', 'in_consultation', 'procedures', 'hos
 
 export default function Flowboard() {
   const { toast } = useToast();
+  const location = useLocation();
+  const navigate = useNavigate();
   const [visits, setVisits] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [draggingId, setDraggingId] = useState<string | null>(null);
+
+  useEffect(() => {
+    const st = location.state as any;
+    if (st?.openNew) {
+      setEditingId(null);
+      setDialogOpen(true);
+      navigate(location.pathname, { replace: true, state: {} });
+    }
+  }, [location, navigate]);
 
   const load = useCallback(async () => {
     setLoading(true);

@@ -1,4 +1,5 @@
 import { useEffect, useState, useCallback } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { PageHeader } from '@/components/ui/page-header';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -16,11 +17,22 @@ const COLUMNS: VisitStatus[] = ['waiting', 'in_consultation', 'procedures', 'hos
 
 export default function Flowboard() {
   const { toast } = useToast();
+  const location = useLocation();
+  const navigate = useNavigate();
   const [visits, setVisits] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [draggingId, setDraggingId] = useState<string | null>(null);
+
+  useEffect(() => {
+    const st = location.state as any;
+    if (st?.openNew) {
+      setEditingId(null);
+      setDialogOpen(true);
+      navigate(location.pathname, { replace: true, state: {} });
+    }
+  }, [location, navigate]);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -67,8 +79,8 @@ export default function Flowboard() {
   return (
     <div className="space-y-4">
       <PageHeader
-        title="Flowboard"
-        description="Поток клиники сегодня"
+        title="Доска визитов"
+        description="Поток клиники сегодня — перетаскивайте карточки между статусами"
         actions={(
           <>
             <Button variant="outline" onClick={() => void load()} disabled={loading}><RefreshCw className={cn('h-4 w-4 mr-1', loading && 'animate-spin')} />Обновить</Button>

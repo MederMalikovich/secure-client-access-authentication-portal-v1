@@ -40,6 +40,8 @@ import { useAuth } from '@/contexts/AuthContext';
 import { MedicalRecord, Pet, Profile } from '@/lib/types';
 import { format } from 'date-fns';
 import { ru } from 'date-fns/locale';
+import { VisitTimeline } from '@/components/VisitTimeline';
+import { VisitDialog } from '@/components/VisitDialog';
 
 type PetMedicalTimeline = {
   petId: string;
@@ -79,6 +81,10 @@ export default function MedicalRecords() {
   const [petSearch, setPetSearch] = useState('');
   const [uploadingFile, setUploadingFile] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [viewMode, setViewMode] = useState<'classic' | 'timeline'>('timeline');
+  const [timelinePetId, setTimelinePetId] = useState<string>('');
+  const [visitDialogOpen, setVisitDialogOpen] = useState(false);
+  const [visitDialogId, setVisitDialogId] = useState<string | null>(null);
   const [fileForm, setFileForm] = useState({
     title: '',
     study_type: 'analysis',
@@ -457,9 +463,48 @@ export default function MedicalRecords() {
           { label: 'Дашборд', href: '/dashboard' },
           { label: 'Медкарты' },
         ]}
+        actions={!isClient && (
+          <Button onClick={() => { setVisitDialogId(null); setVisitDialogOpen(true); }}>
+            <Stethoscope className="h-4 w-4 mr-1" />
+            Новый визит
+          </Button>
+        )}
       />
 
-      <div className="mb-6 space-y-4">
+      <Tabs value={viewMode} onValueChange={(v) => setViewMode(v as any)} className="mb-4">
+        <TabsList>
+          <TabsTrigger value="timeline"><ClockIcon className="h-4 w-4 mr-1" />Timeline визитов</TabsTrigger>
+          <TabsTrigger value="classic"><FileText className="h-4 w-4 mr-1" />Классические записи</TabsTrigger>
+        </TabsList>
+        <TabsContent value="timeline" className="mt-4 space-y-3">
+          <Card>
+            <CardContent className="p-4 space-y-3">
+              <Label>Питомец</Label>
+              <Select value={timelinePetId} onValueChange={setTimelinePetId}>
+                <SelectTrigger><SelectValue placeholder="Выберите питомца для просмотра timeline" /></SelectTrigger>
+                <SelectContent>
+                  {pets.map((p: any) => (
+                    <SelectItem key={p.id} value={p.id}>
+                      {p.name}{p.client?.full_name ? ` — ${p.client.full_name}` : ''}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {timelinePetId && (
+                <VisitTimeline
+                  petId={timelinePetId}
+                  onOpenVisit={(id) => { setVisitDialogId(id); setVisitDialogOpen(true); }}
+                />
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+        <TabsContent value="classic" className="mt-4">
+          {/* классическая раскладка ниже */}
+        </TabsContent>
+      </Tabs>
+
+      {viewMode === 'classic' && <div className="mb-6 space-y-4">
         {loading ? (
           <Card>
             <CardContent className="p-6 text-center text-sm text-muted-foreground">Загрузка истории визитов...</CardContent>
@@ -515,9 +560,9 @@ export default function MedicalRecords() {
             <CardContent className="p-6 text-center text-sm text-muted-foreground">Пока нет медицинских записей</CardContent>
           </Card>
         )}
-      </div>
+      </div>}
 
-      <DataTable
+      {viewMode === 'classic' && <DataTable
         data={records}
         columns={columns}
         searchPlaceholder="Поиск..."
@@ -528,7 +573,7 @@ export default function MedicalRecords() {
         addLabel="Новая запись"
         isLoading={loading}
         emptyMessage="Нет записей"
-      />
+      />}
 
       {/* Add/Edit Dialog */}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
@@ -936,6 +981,13 @@ export default function MedicalRecords() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <VisitDialog
+        open={visitDialogOpen}
+        visitId={visitDialogId}
+        onClose={() => setVisitDialogOpen(false)}
+        onSaved={() => fetchData()}
+      />
     </div>
   );
 }

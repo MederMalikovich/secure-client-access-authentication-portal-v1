@@ -34,6 +34,8 @@ import { Appointment, AppointmentStatus, appointmentStatusLabels } from '@/lib/t
 import { cn } from '@/lib/utils';
 import { TimePicker } from '@/components/ui/time-picker';
 import { useWorkingHours, isHourWorking, isDayWorking } from '@/hooks/useWorkingHours';
+import { VisitDialog } from '@/components/VisitDialog';
+import { Stethoscope } from 'lucide-react';
 
 const hours = Array.from({ length: 15 }, (_, i) => i + 7); // 7:00 - 21:00 visible range
 
@@ -59,6 +61,9 @@ export default function Calendar() {
   const [petSearch, setPetSearch] = useState('');
   const [dragOverSlot, setDragOverSlot] = useState<string | null>(null);
   const [showWorkload, setShowWorkload] = useState(true);
+  const [visitDialogOpen, setVisitDialogOpen] = useState(false);
+  const [visitInitialPet, setVisitInitialPet] = useState<string | undefined>(undefined);
+  const [visitInitialAppointment, setVisitInitialAppointment] = useState<string | undefined>(undefined);
 
   const [formData, setFormData] = useState({
     client_id: '',
@@ -856,6 +861,20 @@ export default function Calendar() {
                 Удалить
               </Button>
             )}
+            {selectedAppointment && canManage && (
+              <Button
+                variant="secondary"
+                onClick={() => {
+                  setVisitInitialPet(selectedAppointment.pet_id);
+                  setVisitInitialAppointment(selectedAppointment.id);
+                  setDialogOpen(false);
+                  setVisitDialogOpen(true);
+                }}
+              >
+                <Stethoscope className="h-4 w-4 mr-1" />
+                Начать приём
+              </Button>
+            )}
             <Button variant="outline" onClick={() => setDialogOpen(false)}>
               Отмена
             </Button>
@@ -865,6 +884,14 @@ export default function Calendar() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <VisitDialog
+        open={visitDialogOpen}
+        initialPetId={visitInitialPet}
+        initialAppointmentId={visitInitialAppointment}
+        onClose={() => { setVisitDialogOpen(false); setVisitInitialPet(undefined); setVisitInitialAppointment(undefined); }}
+        onSaved={() => { fetchData(); }}
+      />
 
       {/* Delete Dialog */}
       <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>

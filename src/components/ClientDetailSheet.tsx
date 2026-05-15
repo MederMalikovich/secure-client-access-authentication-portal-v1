@@ -191,8 +191,14 @@ export function ClientDetailSheet({ client, open, onClose, onEdit, onAddAppointm
                 {totalDebt > 0 ? formatCurrency(totalDebt) : '—'}
               </div>
               <div className="text-xs text-muted-foreground">Долг</div>
-            </div>
           </div>
+        </div>
+
+        {/* Loyalty tier card */}
+        <div className="px-4 mt-4">
+          <LoyaltyTierCard tier={client.loyalty_tier} lifetimeSpend={Number(client.lifetime_spend || 0)} />
+        </div>
+
         </div>
 
         {/* Upcoming appointments alert */}

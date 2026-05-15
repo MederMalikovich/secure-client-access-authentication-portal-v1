@@ -23,6 +23,7 @@ import { cn } from '@/lib/utils';
 import { TimePicker } from '@/components/ui/time-picker';
 import { useWorkingHours, generateDaySlots, isDayWorking } from '@/hooks/useWorkingHours';
 import { getUserFriendlyError } from '@/lib/errorHandler';
+import { LoyaltyTierCard } from '@/components/LoyaltyTierCard';
 
 type AppointmentRow = Database['public']['Tables']['appointments']['Row'];
 type InvoiceRow = Database['public']['Tables']['invoices']['Row'];
@@ -63,6 +64,8 @@ export default function ClientPortal() {
   const [vets, setVets] = useState<VeterinarianOption[]>([]);
   const [loading, setLoading] = useState(true);
   const [loyaltyBalance, setLoyaltyBalance] = useState<number>(0);
+  const [loyaltyTier, setLoyaltyTier] = useState<string>('silver');
+  const [lifetimeSpend, setLifetimeSpend] = useState<number>(0);
   const [referralCode, setReferralCode] = useState<string>('');
   const [loyaltyTxns, setLoyaltyTxns] = useState<any[]>([]);
   const [myCertificates, setMyCertificates] = useState<any[]>([]);
@@ -126,7 +129,7 @@ export default function ClientPortal() {
           .eq('is_active', true)
           .order('name'),
         supabase.rpc('list_public_veterinarians'),
-        supabase.from('clients').select('loyalty_balance, referral_code').eq('id', clientId!).maybeSingle(),
+        supabase.from('clients').select('loyalty_balance, referral_code, loyalty_tier, lifetime_spend').eq('id', clientId!).maybeSingle(),
         supabase.from('loyalty_transactions').select('*').eq('client_id', clientId!).order('created_at', { ascending: false }).limit(50),
         supabase.from('gift_certificates').select('*').eq('redeemed_by_client_id', clientId!).order('redeemed_at', { ascending: false }),
       ]);
@@ -167,6 +170,8 @@ export default function ClientPortal() {
       setVets((vetsRes.data || []) as VeterinarianOption[]);
       setLoyaltyBalance(Number(clientRes.data?.loyalty_balance || 0));
       setReferralCode(clientRes.data?.referral_code || '');
+      setLoyaltyTier((clientRes.data as any)?.loyalty_tier || 'silver');
+      setLifetimeSpend(Number((clientRes.data as any)?.lifetime_spend || 0));
       setLoyaltyTxns(txnsRes.data || []);
       setMyCertificates(certsRes.data || []);
     } catch {

@@ -20,6 +20,7 @@ import { speciesLabels, paymentStatusLabels, appointmentStatusLabels } from '@/l
 import { formatCurrency } from '@/lib/currency';
 import { ClientNotificationPreferences } from '@/components/ClientNotificationPreferences';
 import { LoyaltyTierBadge } from '@/components/LoyaltyTierBadge';
+import { LoyaltyTierCard } from '@/components/LoyaltyTierCard';
 
 interface ClientDetailSheetProps {
   client: any;

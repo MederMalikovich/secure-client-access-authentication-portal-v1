@@ -295,25 +295,32 @@ export default function Finances() {
   const handlePayment = async () => {
     if (!selectedInvoice) return;
 
-    const cashAmount = parseFloat(paymentForm.amount) || 0;
+    let cashAmount = parseFloat(paymentForm.amount) || 0;
     const usePoints = Math.max(0, parseFloat(paymentForm.use_points) || 0);
     const certAmount = certificatePreview?.amount || 0;
-    const totalThisOp = cashAmount + usePoints + certAmount;
-
-    if (totalThisOp <= 0) {
-      toast({ variant: 'destructive', title: 'Ошибка', description: 'Укажите сумму, баллы или сертификат' });
-      return;
-    }
 
     const alreadyPaid = ((selectedInvoice as any).payments?.reduce((sum: number, p: any) => sum + Number(p.amount), 0) || 0);
     const due = selectedInvoice.total - alreadyPaid;
     const maxRedeem = (selectedInvoice.total * maxRedeemPercent) / 100;
+
     if (usePoints > clientBalance) {
       toast({ variant: 'destructive', title: 'Недостаточно баллов', description: `Баланс: ${clientBalance}` });
       return;
     }
     if (usePoints > maxRedeem) {
       toast({ variant: 'destructive', title: `Можно списать не более ${maxRedeemPercent}% от счёта (${formatCurrency(maxRedeem)})` });
+      return;
+    }
+
+    // Бонусы и сертификат закрывают часть счёта — автоматически уменьшаем сумму
+    // наличными/картой, чтобы не было ошибки «превышает остаток», если введена полная сумма.
+    const cashCap = Math.max(0, due - usePoints - certAmount);
+    if (cashAmount > cashCap) cashAmount = cashCap;
+
+    const totalThisOp = cashAmount + usePoints + certAmount;
+
+    if (totalThisOp <= 0) {
+      toast({ variant: 'destructive', title: 'Ошибка', description: 'Укажите сумму, баллы или сертификат' });
       return;
     }
     if (totalThisOp > due + 0.01) {

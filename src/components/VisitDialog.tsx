@@ -239,13 +239,17 @@ export function VisitDialog({ open, onClose, visitId, initialPetId, initialAppoi
     if (!form.pet_id) { toast({ title: 'Выберите питомца', variant: 'destructive' }); return; }
     setSaving(true);
     try {
-      const targetStatus: VisitStatus = markCompleted ? 'completed' : form.status;
+      // Сначала сохраняем визит БЕЗ перевода в "completed",
+      // чтобы триггер авто-завершения не сработал до синхронизации услуг/материалов.
+      const baseStatus: VisitStatus = markCompleted
+        ? (form.status === 'completed' ? 'in_consultation' : form.status)
+        : form.status;
       const payload: any = {
         pet_id: form.pet_id,
         client_id: form.client_id,
         veterinarian_id: form.veterinarian_id || null,
         visit_date: new Date(form.visit_date).toISOString(),
-        status: targetStatus,
+        status: baseStatus,
         chief_complaint: form.chief_complaint || null,
         subjective: form.subjective || null,
         objective: form.objective || null,
@@ -287,6 +291,13 @@ export function VisitDialog({ open, onClose, visitId, initialPetId, initialAppoi
           quantity: m.quantity, unit_price: m.unit_price, total: m.quantity * m.unit_price, charged_to_client: m.charged_to_client,
         }));
         const { error } = await supabase.from('visit_materials').insert(rows);
+        if (error) throw error;
+      }
+
+      // Теперь, когда услуги и материалы сохранены, переводим визит в completed —
+      // триггер спишет материалы и сформирует счёт по актуальным данным.
+      if (markCompleted) {
+        const { error } = await supabase.from('visits').update({ status: 'completed' }).eq('id', vid!);
         if (error) throw error;
       }
 

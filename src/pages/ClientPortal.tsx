@@ -426,6 +426,9 @@ export default function ClientPortal() {
         description="Визиты, записи и счета"
       />
 
+      {/* Loyalty tier */}
+      <LoyaltyTierCard tier={loyaltyTier} lifetimeSpend={lifetimeSpend} />
+
       {/* Quick stats */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <Card>

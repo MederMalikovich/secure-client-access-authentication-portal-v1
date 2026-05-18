@@ -31,6 +31,7 @@ import Prescriptions from "./pages/Prescriptions";
 import Hospitalization from "./pages/Hospitalization";
 import Loyalty from "./pages/Loyalty";
 import Flowboard from "./pages/Flowboard";
+import Notifications from "./pages/Notifications";
 
 const queryClient = new QueryClient();
 

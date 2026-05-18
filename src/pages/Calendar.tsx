@@ -792,16 +792,31 @@ export default function Calendar() {
                 }
               >
                 <SelectTrigger>
-                  <SelectValue placeholder="Выберите врача" />
+                  <SelectValue placeholder={formData.scheduled_at ? "Выберите свободного врача" : "Сначала укажите дату и время"} />
                 </SelectTrigger>
                 <SelectContent>
-                  {vets.map((vet) => (
+                  {vets.filter(v => !busyVetIds.has(v.id)).map((vet) => (
                     <SelectItem key={vet.id} value={vet.id}>
                       {vet.full_name}
                     </SelectItem>
                   ))}
+                  {vets.filter(v => busyVetIds.has(v.id)).map((vet) => (
+                    <SelectItem key={vet.id} value={vet.id} disabled>
+                      {vet.full_name} — занят
+                    </SelectItem>
+                  ))}
+                  {vets.length > 0 && vets.every(v => busyVetIds.has(v.id)) && (
+                    <div className="p-2 text-center text-sm text-muted-foreground">
+                      Все врачи заняты в это время
+                    </div>
+                  )}
                 </SelectContent>
               </Select>
+              {formData.scheduled_at && busyVetIds.size > 0 && (
+                <p className="text-xs text-muted-foreground">
+                  Занятых врачей: {busyVetIds.size} из {vets.length}
+                </p>
+              )}
             </div>
             <div className="grid gap-2">
               <Label>Услуга</Label>

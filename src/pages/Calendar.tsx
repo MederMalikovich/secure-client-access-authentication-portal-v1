@@ -84,6 +84,48 @@ export default function Calendar() {
     fetchData();
   }, [currentDate]);
 
+  // Compute busy vets for the chosen slot (excluding currently edited appointment)
+  useEffect(() => {
+    let cancelled = false;
+    const compute = async () => {
+      if (!dialogOpen || !formData.scheduled_at) {
+        setBusyVetIds(new Set());
+        return;
+      }
+      const start = new Date(formData.scheduled_at);
+      if (isNaN(start.getTime())) { setBusyVetIds(new Set()); return; }
+      const duration = parseInt(formData.duration_minutes || '30', 10);
+      const end = new Date(start.getTime() + duration * 60000);
+      // Fetch appointments that could overlap (same day +/- 1)
+      const dayStart = new Date(start); dayStart.setHours(0, 0, 0, 0);
+      const dayEnd = new Date(dayStart.getTime() + 24 * 60 * 60 * 1000);
+      const { data } = await supabase
+        .from('appointments')
+        .select('id, veterinarian_id, scheduled_at, duration_minutes, status')
+        .gte('scheduled_at', dayStart.toISOString())
+        .lt('scheduled_at', dayEnd.toISOString())
+        .not('veterinarian_id', 'is', null);
+      if (cancelled) return;
+      const busy = new Set<string>();
+      for (const apt of data || []) {
+        if (selectedAppointment && apt.id === selectedAppointment.id) continue;
+        if (apt.status === 'cancelled' || apt.status === 'no_show') continue;
+        const aStart = new Date(apt.scheduled_at);
+        const aEnd = new Date(aStart.getTime() + (apt.duration_minutes ?? 30) * 60000);
+        if (aStart < end && aEnd > start) {
+          if (apt.veterinarian_id) busy.add(apt.veterinarian_id);
+        }
+      }
+      setBusyVetIds(busy);
+      // Reset chosen vet if now busy
+      if (formData.veterinarian_id && busy.has(formData.veterinarian_id)) {
+        setFormData((f) => ({ ...f, veterinarian_id: '' }));
+      }
+    };
+    compute();
+    return () => { cancelled = true; };
+  }, [dialogOpen, formData.scheduled_at, formData.duration_minutes, selectedAppointment]);
+
   const fetchData = async () => {
     try {
       const weekEnd = addDays(weekStart, 7);

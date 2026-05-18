@@ -99,15 +99,23 @@ export default function Calendar() {
       // Fetch appointments that could overlap (same day +/- 1)
       const dayStart = new Date(start); dayStart.setHours(0, 0, 0, 0);
       const dayEnd = new Date(dayStart.getTime() + 24 * 60 * 60 * 1000);
-      const { data } = await supabase
-        .from('appointments')
-        .select('id, veterinarian_id, scheduled_at, duration_minutes, status')
-        .gte('scheduled_at', dayStart.toISOString())
-        .lt('scheduled_at', dayEnd.toISOString())
-        .not('veterinarian_id', 'is', null);
+      const [aptRes, visRes] = await Promise.all([
+        supabase
+          .from('appointments')
+          .select('id, veterinarian_id, scheduled_at, duration_minutes, status')
+          .gte('scheduled_at', dayStart.toISOString())
+          .lt('scheduled_at', dayEnd.toISOString())
+          .not('veterinarian_id', 'is', null),
+        supabase
+          .from('visits')
+          .select('id, veterinarian_id, visit_date, status, appointment_id')
+          .gte('visit_date', dayStart.toISOString())
+          .lt('visit_date', dayEnd.toISOString())
+          .not('veterinarian_id', 'is', null),
+      ]);
       if (cancelled) return;
       const busy = new Set<string>();
-      for (const apt of data || []) {
+      for (const apt of aptRes.data || []) {
         if (selectedAppointment && apt.id === selectedAppointment.id) continue;
         if (apt.status === 'cancelled' || apt.status === 'no_show') continue;
         const aStart = new Date(apt.scheduled_at);
@@ -115,6 +123,13 @@ export default function Calendar() {
         if (aStart < end && aEnd > start) {
           if (apt.veterinarian_id) busy.add(apt.veterinarian_id);
         }
+      }
+      for (const v of visRes.data || []) {
+        if (v.status === 'cancelled') continue;
+        if (selectedAppointment && v.appointment_id === selectedAppointment.id) continue;
+        const vS = new Date(v.visit_date);
+        const vE = new Date(vS.getTime() + 30 * 60000);
+        if (vS < end && vE > start && v.veterinarian_id) busy.add(v.veterinarian_id);
       }
       setBusyVetIds(busy);
       // Reset chosen vet if now busy

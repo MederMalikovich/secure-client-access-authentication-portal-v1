@@ -64,6 +64,7 @@ export default function Calendar() {
   const [visitDialogOpen, setVisitDialogOpen] = useState(false);
   const [visitInitialPet, setVisitInitialPet] = useState<string | undefined>(undefined);
   const [visitInitialAppointment, setVisitInitialAppointment] = useState<string | undefined>(undefined);
+  const [busyVetIds, setBusyVetIds] = useState<Set<string>>(new Set());
 
   const [formData, setFormData] = useState({
     client_id: '',

@@ -397,13 +397,36 @@ export function VisitDialog({ open, onClose, visitId, initialPetId, initialAppoi
               <Select value={form.veterinarian_id} onValueChange={(v) => setForm(f => ({ ...f, veterinarian_id: v }))}>
                 <SelectTrigger><SelectValue placeholder="—" /></SelectTrigger>
                 <SelectContent>
-                  {vets.map(v => <SelectItem key={v.id} value={v.id}>{v.full_name}</SelectItem>)}
+                  {(() => {
+                    const free = vets.filter(v => !busyVetIds.has(v.id));
+                    const busy = vets.filter(v => busyVetIds.has(v.id));
+                    return (
+                      <>
+                        {free.length > 0 && (
+                          <>
+                            <div className="px-2 py-1 text-xs text-muted-foreground">Свободны</div>
+                            {free.map(v => <SelectItem key={v.id} value={v.id}>{v.full_name}</SelectItem>)}
+                          </>
+                        )}
+                        {busy.length > 0 && (
+                          <>
+                            <div className="px-2 py-1 text-xs text-muted-foreground mt-1">Заняты</div>
+                            {busy.map(v => <SelectItem key={v.id} value={v.id} disabled>{v.full_name} — занят</SelectItem>)}
+                          </>
+                        )}
+                      </>
+                    );
+                  })()}
                 </SelectContent>
               </Select>
             </div>
             <div>
               <Label>Дата и время</Label>
               <Input type="datetime-local" value={form.visit_date} onChange={(e) => setForm(f => ({ ...f, visit_date: e.target.value }))} />
+            </div>
+            <div>
+              <Label>Длительность (мин)</Label>
+              <Input type="number" min={5} step={5} value={duration} onChange={(e) => setDuration(parseInt(e.target.value) || 30)} />
             </div>
             <div>
               <Label>Статус</Label>

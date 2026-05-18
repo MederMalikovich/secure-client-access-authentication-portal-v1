@@ -322,6 +322,24 @@ export function VisitDialog({ open, onClose, visitId, initialPetId, initialAppoi
         const { error } = await supabase.from('visits').update(payload).eq('id', vid);
         if (error) throw error;
       } else {
+        // Auto-create an appointment so the visit is visible in calendar
+        if (!payload.appointment_id) {
+          const aptStatus = baseStatus === 'completed' ? 'completed'
+            : baseStatus === 'cancelled' ? 'cancelled'
+            : baseStatus === 'in_consultation' || baseStatus === 'procedures' || baseStatus === 'hospital' ? 'in_progress'
+            : 'scheduled';
+          const { data: apt, error: aptErr } = await supabase.from('appointments').insert({
+            client_id: form.client_id,
+            pet_id: form.pet_id,
+            veterinarian_id: form.veterinarian_id || null,
+            scheduled_at: payload.visit_date,
+            duration_minutes: duration,
+            status: aptStatus,
+            notes: form.chief_complaint || null,
+          }).select('id').single();
+          if (aptErr) throw aptErr;
+          payload.appointment_id = apt.id;
+        }
         const { data, error } = await supabase.from('visits').insert(payload).select('id').single();
         if (error) throw error;
         vid = data.id;

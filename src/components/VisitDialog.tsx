@@ -82,6 +82,55 @@ export function VisitDialog({ open, onClose, visitId, initialPetId, initialAppoi
   const [visitServices, setVisitServices] = useState<ServiceLine[]>([]);
   const [visitMaterials, setVisitMaterials] = useState<MaterialLine[]>([]);
   const [activeTab, setActiveTab] = useState('soap');
+  const [duration, setDuration] = useState<number>(30);
+  const [busyVetIds, setBusyVetIds] = useState<Set<string>>(new Set());
+
+  // Check vet availability against appointments AND other visits
+  useEffect(() => {
+    let cancelled = false;
+    const run = async () => {
+      if (!open || !form.visit_date) { setBusyVetIds(new Set()); return; }
+      const start = new Date(form.visit_date);
+      if (isNaN(start.getTime())) { setBusyVetIds(new Set()); return; }
+      const end = new Date(start.getTime() + duration * 60000);
+      const dayStart = new Date(start); dayStart.setHours(0, 0, 0, 0);
+      const dayEnd = new Date(dayStart.getTime() + 24 * 60 * 60 * 1000);
+      const [aptRes, visRes] = await Promise.all([
+        supabase.from('appointments')
+          .select('id, veterinarian_id, scheduled_at, duration_minutes, status')
+          .gte('scheduled_at', dayStart.toISOString())
+          .lt('scheduled_at', dayEnd.toISOString())
+          .not('veterinarian_id', 'is', null),
+        supabase.from('visits')
+          .select('id, veterinarian_id, visit_date, status, appointment_id')
+          .gte('visit_date', dayStart.toISOString())
+          .lt('visit_date', dayEnd.toISOString())
+          .not('veterinarian_id', 'is', null),
+      ]);
+      if (cancelled) return;
+      const busy = new Set<string>();
+      for (const a of aptRes.data || []) {
+        if (a.status === 'cancelled' || a.status === 'no_show') continue;
+        const aS = new Date(a.scheduled_at);
+        const aE = new Date(aS.getTime() + (a.duration_minutes ?? 30) * 60000);
+        if (aS < end && aE > start && a.veterinarian_id) busy.add(a.veterinarian_id);
+      }
+      for (const v of visRes.data || []) {
+        if (visitId && v.id === visitId) continue;
+        if (v.status === 'cancelled') continue;
+        const vS = new Date(v.visit_date);
+        const vE = new Date(vS.getTime() + duration * 60000);
+        if (vS < end && vE > start && v.veterinarian_id) busy.add(v.veterinarian_id);
+      }
+      setBusyVetIds(busy);
+      if (form.veterinarian_id && busy.has(form.veterinarian_id)) {
+        setForm(f => ({ ...f, veterinarian_id: '' }));
+        toast({ title: 'Врач занят', description: 'Выбранный врач занят в это время — выберите другого или измените время.', variant: 'destructive' });
+      }
+    };
+    void run();
+    return () => { cancelled = true; };
+  }, [open, form.visit_date, duration, visitId]);
 
   useEffect(() => {
     if (!open) return;

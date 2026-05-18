@@ -60,6 +60,7 @@ function AppRoutes() {
       <Route path="/hospitalization" element={<ProtectedRoute><MainLayout><Hospitalization /></MainLayout></ProtectedRoute>} />
       <Route path="/loyalty" element={<ProtectedRoute requiredRoles={['admin', 'manager', 'accountant']}><MainLayout><Loyalty /></MainLayout></ProtectedRoute>} />
       <Route path="/flowboard" element={<ProtectedRoute requiredRoles={['admin', 'veterinarian', 'registrar', 'manager']}><MainLayout><Flowboard /></MainLayout></ProtectedRoute>} />
+      <Route path="/notifications" element={<ProtectedRoute staffOnly><MainLayout><Notifications /></MainLayout></ProtectedRoute>} />
       <Route path="*" element={<NotFound />} />
     </Routes>
   );

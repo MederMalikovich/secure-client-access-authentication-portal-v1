@@ -286,6 +286,10 @@ export function VisitDialog({ open, onClose, visitId, initialPetId, initialAppoi
 
   const save = async (markCompleted = false) => {
     if (!form.pet_id) { toast({ title: 'Выберите питомца', variant: 'destructive' }); return; }
+    if (form.veterinarian_id && busyVetIds.has(form.veterinarian_id)) {
+      toast({ title: 'Врач занят', description: 'В выбранное время этот врач уже занят. Измените время или врача.', variant: 'destructive' });
+      return;
+    }
     setSaving(true);
     try {
       // Сначала сохраняем визит БЕЗ перевода в "completed",

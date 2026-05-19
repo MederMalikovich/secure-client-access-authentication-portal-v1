@@ -117,7 +117,7 @@ export default function Calendar() {
       const busy = new Set<string>();
       for (const apt of aptRes.data || []) {
         if (selectedAppointment && apt.id === selectedAppointment.id) continue;
-        if (apt.status === 'cancelled' || apt.status === 'no_show') continue;
+        if (apt.status === 'cancelled' || apt.status === 'no_show' || apt.status === 'completed') continue;
         const aStart = new Date(apt.scheduled_at);
         const aEnd = new Date(aStart.getTime() + (apt.duration_minutes ?? 30) * 60000);
         if (aStart < end && aEnd > start) {
@@ -125,7 +125,7 @@ export default function Calendar() {
         }
       }
       for (const v of visRes.data || []) {
-        if (v.status === 'cancelled') continue;
+        if (v.status === 'cancelled' || v.status === 'completed') continue;
         if (selectedAppointment && v.appointment_id === selectedAppointment.id) continue;
         const vS = new Date(v.visit_date);
         const vE = new Date(vS.getTime() + 30 * 60000);

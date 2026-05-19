@@ -108,16 +108,20 @@ export function VisitDialog({ open, onClose, visitId, initialPetId, initialAppoi
           .not('veterinarian_id', 'is', null),
       ]);
       if (cancelled) return;
+      // Determine linked appointment_id of the currently-edited visit so we don't count its own slot
+      const currentVisit = visitId ? (visRes.data || []).find((v: any) => v.id === visitId) : null;
+      const selfAppointmentId = currentVisit?.appointment_id || initialAppointmentId || null;
       const busy = new Set<string>();
       for (const a of aptRes.data || []) {
-        if (a.status === 'cancelled' || a.status === 'no_show') continue;
+        if (a.status === 'cancelled' || a.status === 'no_show' || a.status === 'completed') continue;
+        if (selfAppointmentId && a.id === selfAppointmentId) continue;
         const aS = new Date(a.scheduled_at);
         const aE = new Date(aS.getTime() + (a.duration_minutes ?? 30) * 60000);
         if (aS < end && aE > start && a.veterinarian_id) busy.add(a.veterinarian_id);
       }
       for (const v of visRes.data || []) {
         if (visitId && v.id === visitId) continue;
-        if (v.status === 'cancelled') continue;
+        if (v.status === 'cancelled' || v.status === 'completed') continue;
         const vS = new Date(v.visit_date);
         const vE = new Date(vS.getTime() + duration * 60000);
         if (vS < end && vE > start && v.veterinarian_id) busy.add(v.veterinarian_id);
@@ -130,7 +134,7 @@ export function VisitDialog({ open, onClose, visitId, initialPetId, initialAppoi
     };
     void run();
     return () => { cancelled = true; };
-  }, [open, form.visit_date, duration, visitId]);
+  }, [open, form.visit_date, duration, visitId, initialAppointmentId]);
 
   useEffect(() => {
     if (!open) return;

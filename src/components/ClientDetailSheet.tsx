@@ -487,6 +487,12 @@ export function ClientDetailSheet({ client, open, onClose, onEdit, onAddAppointm
           </div>
         </div>
       </SheetContent>
+      <VisitDialog
+        open={!!quickVisitId}
+        visitId={quickVisitId}
+        onClose={() => setQuickVisitId(null)}
+        onSaved={() => client?.id && fetchClientData(client.id)}
+      />
     </Sheet>
   );
 }

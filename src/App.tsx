@@ -45,7 +45,7 @@ function AppRoutes() {
       <Route path="/pets" element={<ProtectedRoute><MainLayout><Pets /></MainLayout></ProtectedRoute>} />
       <Route path="/services" element={<ProtectedRoute staffOnly><MainLayout><Services /></MainLayout></ProtectedRoute>} />
       <Route path="/diseases" element={<ProtectedRoute staffOnly><MainLayout><Diseases /></MainLayout></ProtectedRoute>} />
-      <Route path="/calendar" element={<ProtectedRoute requiredRoles={['admin', 'veterinarian', 'registrar', 'manager']}><MainLayout><Calendar /></MainLayout></ProtectedRoute>} />
+      <Route path="/calendar" element={<Navigate to="/flowboard" replace />} />
       <Route path="/medical-records" element={<ProtectedRoute><MainLayout><MedicalRecords /></MainLayout></ProtectedRoute>} />
       <Route path="/inventory" element={<ProtectedRoute requiredRoles={['admin', 'veterinarian', 'manager']}><MainLayout><Inventory /></MainLayout></ProtectedRoute>} />
       <Route path="/shop" element={<ProtectedRoute staffOnly><MainLayout><Shop /></MainLayout></ProtectedRoute>} />

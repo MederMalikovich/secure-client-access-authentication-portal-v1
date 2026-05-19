@@ -107,10 +107,8 @@ export default function Finances() {
     }
   };
 
-  const generateInvoiceNumber = () => {
-    const year = new Date().getFullYear();
-    const random = Math.floor(Math.random() * 1000000).toString().padStart(6, '0');
-    return `${year}-${random}`;
+  const statusPriority: Record<PaymentStatus, number> = {
+    pending: 0, partial: 1, paid: 2, refunded: 3, cancelled: 4,
   };
 
   const onCreateClientChange = async (clientId: string) => {

@@ -4,8 +4,10 @@ import { ru } from 'date-fns/locale';
 import {
   Phone, Mail, MapPin, PawPrint, FileText, DollarSign,
   Calendar, Plus, Pencil, Hash, Clock, ChevronRight,
-  TrendingUp, AlertCircle, CheckCircle2, CircleDot, Bell, Gift, Copy
+  TrendingUp, AlertCircle, CheckCircle2, CircleDot, Bell, Gift, Copy, Stethoscope
 } from 'lucide-react';
+import { startQuickReceive } from '@/lib/quickReceive';
+import { VisitDialog } from '@/components/VisitDialog';
 import { useToast } from '@/hooks/use-toast';
 import {
   Sheet, SheetContent, SheetHeader, SheetTitle,
@@ -54,6 +56,7 @@ export function ClientDetailSheet({ client, open, onClose, onEdit, onAddAppointm
   const [loading, setLoading] = useState(false);
   const [loyaltyBalance, setLoyaltyBalance] = useState<number>(0);
   const [loyaltyTxns, setLoyaltyTxns] = useState<any[]>([]);
+  const [quickVisitId, setQuickVisitId] = useState<string | null>(null);
 
   useEffect(() => {
     if (open && client?.id) {
@@ -254,12 +257,29 @@ export function ClientDetailSheet({ client, open, onClose, onEdit, onAddAppointm
                           </p>
                         </div>
                       </div>
-                      {onAddAppointment && (
-                        <Button size="sm" variant="outline" onClick={() => onAddAppointment(client.id, pet.id)}>
-                          <Plus className="h-4 w-4 mr-1" />
-                          Записать
+                      <div className="flex items-center gap-2">
+                        <Button
+                          size="sm"
+                          onClick={async () => {
+                            try {
+                              const visitId = await startQuickReceive(pet.id, client.id);
+                              setQuickVisitId(visitId);
+                              toast({ title: 'Приём начат', description: `${pet.name}: визит создан` });
+                            } catch (e: any) {
+                              toast({ variant: 'destructive', title: 'Ошибка', description: e.message });
+                            }
+                          }}
+                        >
+                          <Stethoscope className="h-4 w-4 mr-1" />
+                          Принять
                         </Button>
-                      )}
+                        {onAddAppointment && (
+                          <Button size="sm" variant="outline" onClick={() => onAddAppointment(client.id, pet.id)}>
+                            <Plus className="h-4 w-4 mr-1" />
+                            Записать
+                          </Button>
+                        )}
+                      </div>
                     </CardContent>
                   </Card>
                 ))
@@ -467,6 +487,12 @@ export function ClientDetailSheet({ client, open, onClose, onEdit, onAddAppointm
           </div>
         </div>
       </SheetContent>
+      <VisitDialog
+        open={!!quickVisitId}
+        visitId={quickVisitId}
+        onClose={() => setQuickVisitId(null)}
+        onSaved={() => client?.id && fetchClientData(client.id)}
+      />
     </Sheet>
   );
 }

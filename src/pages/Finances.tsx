@@ -107,10 +107,8 @@ export default function Finances() {
     }
   };
 
-  const generateInvoiceNumber = () => {
-    const year = new Date().getFullYear();
-    const random = Math.floor(Math.random() * 1000000).toString().padStart(6, '0');
-    return `${year}-${random}`;
+  const statusPriority: Record<PaymentStatus, number> = {
+    pending: 0, partial: 1, paid: 2, refunded: 3, cancelled: 4,
   };
 
   const onCreateClientChange = async (clientId: string) => {
@@ -176,8 +174,18 @@ export default function Finances() {
       setSubmitting(false); return;
     }
 
+    let invoiceNumber: string;
+    try {
+      const { data: num, error: numErr } = await supabase.rpc('generate_invoice_number');
+      if (numErr) throw numErr;
+      invoiceNumber = num as string;
+    } catch (e: any) {
+      toast({ variant: 'destructive', title: 'Ошибка', description: getUserFriendlyError(e) });
+      setSubmitting(false); return;
+    }
+
     const data = {
-      invoice_number: generateInvoiceNumber(),
+      invoice_number: invoiceNumber,
       client_id: formData.client_id,
       subtotal,
       discount,
@@ -190,6 +198,7 @@ export default function Finances() {
     try {
       const { data: created, error } = await supabase.from('invoices').insert(data).select().single();
       if (error) throw error;
+
 
       let paidSoFar = 0;
       if (usePoints > 0) {
@@ -616,7 +625,10 @@ export default function Finances() {
       />
 
       <DataTable
-        data={filterByScope(invoices, scope, customDate, 'issued_at')}
+        data={filterByScope(invoices, scope, customDate, 'issued_at')
+          .slice()
+          .sort((a, b) => (statusPriority[a.status as PaymentStatus] ?? 99) - (statusPriority[b.status as PaymentStatus] ?? 99)
+            || new Date(b.issued_at).getTime() - new Date(a.issued_at).getTime())}
         columns={columns}
         searchPlaceholder="Поиск по номеру..."
         searchKey="invoice_number"

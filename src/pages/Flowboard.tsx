@@ -33,7 +33,7 @@ export default function Flowboard() {
   const [view, setView] = useState<'calendar' | 'kanban'>(() => {
     const st = (location.state as any) || {};
     if (st.view === 'kanban' || st.view === 'calendar') return st.view;
-    return 'calendar';
+    return 'kanban';
   });
 
   useEffect(() => {

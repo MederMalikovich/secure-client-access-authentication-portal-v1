@@ -44,7 +44,11 @@ export async function startQuickReceive(petId: string, clientId: string): Promis
     .single();
   if (aptErr) throw new Error(getUserFriendlyError(aptErr));
 
-  // 2. Создаём visit со статусом in_consultation
+  // 2. Получаем/создаём медкарту питомца
+  const { data: mrId, error: mrErr } = await supabase.rpc('ensure_pet_medical_record', { _pet_id: petId });
+  if (mrErr) throw new Error(getUserFriendlyError(mrErr));
+
+  // 3. Создаём visit со статусом in_consultation
   const { data: visit, error: visitErr } = await supabase
     .from('visits')
     .insert({
@@ -54,6 +58,7 @@ export async function startQuickReceive(petId: string, clientId: string): Promis
       visit_date: now,
       status: 'in_consultation',
       appointment_id: apt.id,
+      medical_record_id: mrId as string,
     })
     .select('id')
     .single();

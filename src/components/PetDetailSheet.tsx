@@ -518,6 +518,12 @@ export function PetDetailSheet({ pet, open, onClose, onEdit, onAddAppointment, i
           )}
         </div>
       </SheetContent>
+      <VisitDialog
+        open={!!quickVisitId}
+        visitId={quickVisitId}
+        onClose={() => setQuickVisitId(null)}
+        onSaved={() => pet?.id && fetchPetData(pet.id, pet.client_id)}
+      />
     </Sheet>
   );
 }

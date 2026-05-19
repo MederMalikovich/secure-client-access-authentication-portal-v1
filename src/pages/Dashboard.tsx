@@ -220,11 +220,8 @@ export default function Dashboard() {
             <Button variant="outline" size="sm" className="text-xs md:text-sm" onClick={() => navigate('/finances')}>
               <Receipt className="h-4 w-4 mr-1 md:mr-2" /><span className="hidden sm:inline">Счёт</span><span className="sm:hidden">+</span>
             </Button>
-            <Button variant="outline" size="sm" className="text-xs md:text-sm" onClick={() => navigate('/flowboard', { state: { openNew: true } })}>
+            <Button size="sm" className="text-xs md:text-sm" onClick={() => navigate('/flowboard', { state: { openNew: true } })}>
               <Stethoscope className="h-4 w-4 mr-1 md:mr-2" /><span className="hidden sm:inline">Новый визит</span><span className="sm:hidden">Визит</span>
-            </Button>
-            <Button size="sm" className="text-xs md:text-sm" onClick={() => navigate('/calendar')}>
-              <Calendar className="h-4 w-4 mr-1 md:mr-2" /><span className="hidden sm:inline">Новая запись</span><span className="sm:hidden">Запись</span>
             </Button>
           </div>
         }

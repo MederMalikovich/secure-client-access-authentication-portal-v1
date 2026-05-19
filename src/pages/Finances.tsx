@@ -625,7 +625,10 @@ export default function Finances() {
       />
 
       <DataTable
-        data={filterByScope(invoices, scope, customDate, 'issued_at')}
+        data={filterByScope(invoices, scope, customDate, 'issued_at')
+          .slice()
+          .sort((a, b) => (statusPriority[a.status as PaymentStatus] ?? 99) - (statusPriority[b.status as PaymentStatus] ?? 99)
+            || new Date(b.issued_at).getTime() - new Date(a.issued_at).getTime())}
         columns={columns}
         searchPlaceholder="Поиск по номеру..."
         searchKey="invoice_number"

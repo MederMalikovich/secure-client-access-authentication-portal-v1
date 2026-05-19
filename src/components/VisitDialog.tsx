@@ -134,7 +134,7 @@ export function VisitDialog({ open, onClose, visitId, initialPetId, initialAppoi
     };
     void run();
     return () => { cancelled = true; };
-  }, [open, form.visit_date, duration, visitId]);
+  }, [open, form.visit_date, duration, visitId, initialAppointmentId]);
 
   useEffect(() => {
     if (!open) return;

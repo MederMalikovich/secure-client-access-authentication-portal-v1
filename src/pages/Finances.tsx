@@ -174,8 +174,18 @@ export default function Finances() {
       setSubmitting(false); return;
     }
 
+    let invoiceNumber: string;
+    try {
+      const { data: num, error: numErr } = await supabase.rpc('generate_invoice_number');
+      if (numErr) throw numErr;
+      invoiceNumber = num as string;
+    } catch (e: any) {
+      toast({ variant: 'destructive', title: 'Ошибка', description: getUserFriendlyError(e) });
+      setSubmitting(false); return;
+    }
+
     const data = {
-      invoice_number: generateInvoiceNumber(),
+      invoice_number: invoiceNumber,
       client_id: formData.client_id,
       subtotal,
       discount,
@@ -188,6 +198,7 @@ export default function Finances() {
     try {
       const { data: created, error } = await supabase.from('invoices').insert(data).select().single();
       if (error) throw error;
+
 
       let paidSoFar = 0;
       if (usePoints > 0) {

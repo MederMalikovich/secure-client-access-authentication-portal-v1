@@ -19,6 +19,8 @@ import { supabase } from '@/integrations/supabase/client';
 import { speciesLabels, genderLabels, paymentStatusLabels, appointmentStatusLabels, PetSpecies, PetGender } from '@/lib/types';
 import { formatCurrency } from '@/lib/currency';
 import { useToast } from '@/hooks/use-toast';
+import { startQuickReceive } from '@/lib/quickReceive';
+import { VisitDialog } from '@/components/VisitDialog';
 
 interface PetDetailSheetProps {
   pet: any;
@@ -42,6 +44,7 @@ export function PetDetailSheet({ pet, open, onClose, onEdit, onAddAppointment, i
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
   const [photoUrl, setPhotoUrl] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [quickVisitId, setQuickVisitId] = useState<string | null>(null);
 
   useEffect(() => {
     if (open && pet?.id) {
@@ -220,10 +223,26 @@ export function PetDetailSheet({ pet, open, onClose, onEdit, onAddAppointment, i
         {/* Tabs */}
         <div className="p-4">
           {!isClient && onAddAppointment && (
-            <Button className="w-full mb-4" onClick={() => onAddAppointment(pet.client_id, pet.id)}>
-              <Plus className="h-4 w-4 mr-2" />
-              Записать на приём
-            </Button>
+            <div className="grid grid-cols-2 gap-2 mb-4">
+              <Button variant="outline" onClick={() => onAddAppointment(pet.client_id, pet.id)}>
+                <Plus className="h-4 w-4 mr-2" />
+                Записать на приём
+              </Button>
+              <Button
+                onClick={async () => {
+                  try {
+                    const visitId = await startQuickReceive(pet.id, pet.client_id);
+                    setQuickVisitId(visitId);
+                    toast({ title: 'Приём начат', description: 'Визит создан со статусом «На приёме»' });
+                  } catch (e: any) {
+                    toast({ variant: 'destructive', title: 'Ошибка', description: e.message });
+                  }
+                }}
+              >
+                <Stethoscope className="h-4 w-4 mr-2" />
+                Принять сейчас
+              </Button>
+            </div>
           )}
 
           <Tabs defaultValue="history">

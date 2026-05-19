@@ -86,11 +86,27 @@ export default function Flowboard() {
 
   const visible = filterByScope(visits, scope, customDate, 'visit_date');
 
+  const workload = useMemo(() => {
+    const active = visible.filter(v => v.status !== 'completed' && v.status !== 'cancelled');
+    const map = new Map<string, { name: string; count: number; minutes: number }>();
+    for (const v of active) {
+      if (!v.veterinarian_id) continue;
+      const name = v.veterinarian?.full_name || 'Врач';
+      const ex = map.get(v.veterinarian_id) || { name, count: 0, minutes: 0 };
+      ex.count++;
+      ex.minutes += 30;
+      map.set(v.veterinarian_id, ex);
+    }
+    const arr = Array.from(map.entries()).map(([id, d]) => ({ id, ...d }));
+    const max = Math.max(1, ...arr.map(a => a.minutes));
+    return arr.map(a => ({ ...a, loadPercent: Math.round((a.minutes / max) * 100) })).sort((a, b) => b.count - a.count);
+  }, [visible]);
+
   return (
     <div className="space-y-4">
       <PageHeader
         title="Доска приёма"
-        description="Календарь записей и канбан-поток клиники в одном разделе"
+        description="Канбан-поток клиники и календарь записей в одном разделе"
         actions={view === 'kanban' ? (
           <>
             <Button variant="outline" onClick={() => void load()} disabled={loading}><RefreshCw className={cn('h-4 w-4 mr-1', loading && 'animate-spin')} />Обновить</Button>
@@ -101,8 +117,8 @@ export default function Flowboard() {
 
       <Tabs value={view} onValueChange={(v) => setView(v as 'calendar' | 'kanban')} className="space-y-4">
         <TabsList className="grid w-full max-w-md grid-cols-2">
-          <TabsTrigger value="calendar" className="gap-2"><CalendarIcon className="h-4 w-4" />Календарь</TabsTrigger>
           <TabsTrigger value="kanban" className="gap-2"><Workflow className="h-4 w-4" />Канбан</TabsTrigger>
+          <TabsTrigger value="calendar" className="gap-2"><CalendarIcon className="h-4 w-4" />Календарь</TabsTrigger>
         </TabsList>
 
         <TabsContent value="calendar" className="mt-0">
@@ -116,7 +132,7 @@ export default function Flowboard() {
             steps={[
               'По умолчанию показаны визиты сегодняшнего дня. Используйте фильтры выше, чтобы посмотреть прошлые визиты.',
               'Перетащите карточку в нужную колонку, чтобы сменить статус приёма.',
-              'Когда визит готов к закрытию — переместите в «Завершён»: спишутся материалы и сформируется счёт.',
+              'Когда визит готов к закрытию — переместите в «Завершён»: спишутся материалы, сформируется счёт и запись в календаре станет «Завершено».',
             ]}
           />
 
@@ -125,6 +141,41 @@ export default function Flowboard() {
             customDate={customDate}
             onChange={(s, d) => { setScope(s); if (d) setCustomDate(d); }}
           />
+
+          {workload.length > 0 && (
+            <Card>
+              <CardHeader className="py-3 px-4">
+                <CardTitle className="text-sm font-medium flex items-center gap-2">
+                  <Users className="h-4 w-4" />
+                  Загруженность врачей за выбранный период
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="px-4 pb-3 pt-0">
+                <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                  {workload.map(vet => (
+                    <div key={vet.id} className="flex flex-col gap-1.5">
+                      <div className="flex items-center justify-between text-sm">
+                        <span className="truncate font-medium">{vet.name}</span>
+                        <span className="text-muted-foreground text-xs ml-2 whitespace-nowrap">
+                          {vet.count} зап. · {Math.floor(vet.minutes / 60)}ч {vet.minutes % 60}м
+                        </span>
+                      </div>
+                      <Progress
+                        value={vet.loadPercent}
+                        className={cn(
+                          'h-2',
+                          vet.loadPercent > 80 && '[&>div]:bg-red-500',
+                          vet.loadPercent > 50 && vet.loadPercent <= 80 && '[&>div]:bg-yellow-500',
+                          vet.loadPercent <= 50 && '[&>div]:bg-green-500'
+                        )}
+                      />
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-3">
             {COLUMNS.map(col => {

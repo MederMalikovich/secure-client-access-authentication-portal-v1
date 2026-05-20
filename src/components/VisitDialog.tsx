@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Input } from '@/components/ui/input';
@@ -53,6 +54,7 @@ interface MaterialLine { id?: string; inventory_item_id: string; description: st
 
 export function VisitDialog({ open, onClose, visitId, initialPetId, initialAppointmentId, onSaved }: VisitDialogProps) {
   const { toast } = useToast();
+  const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [pets, setPets] = useState<any[]>([]);
@@ -288,7 +290,7 @@ export function VisitDialog({ open, onClose, visitId, initialPetId, initialAppoi
     return { svc, mat, total: svc + mat };
   }, [visitServices, visitMaterials]);
 
-  const save = async (markCompleted = false) => {
+  const save = async (markCompleted = false, goToPayment = false) => {
     if (!form.pet_id) { toast({ title: 'Выберите питомца', variant: 'destructive' }); return; }
     if (form.veterinarian_id && busyVetIds.has(form.veterinarian_id)) {
       toast({ title: 'Врач занят', description: 'В выбранное время этот врач уже занят. Измените время или врача.', variant: 'destructive' });
@@ -382,6 +384,22 @@ export function VisitDialog({ open, onClose, visitId, initialPetId, initialAppoi
       });
       onSaved?.();
       onClose();
+
+      if (markCompleted && goToPayment && vid) {
+        // Найти счёт, созданный триггером по этому визиту, и открыть форму оплаты
+        const { data: inv } = await supabase
+          .from('invoices')
+          .select('id')
+          .eq('visit_id', vid)
+          .order('created_at', { ascending: false })
+          .limit(1)
+          .maybeSingle();
+        if (inv?.id) {
+          navigate('/finances', { state: { payInvoiceId: inv.id } });
+        } else {
+          toast({ title: 'Счёт не найден', description: 'Откройте раздел «Финансы» вручную.', variant: 'destructive' });
+        }
+      }
     } catch (e) {
       toast({ title: 'Ошибка', description: getUserFriendlyError(e), variant: 'destructive' });
     } finally { setSaving(false); }
@@ -600,12 +618,20 @@ export function VisitDialog({ open, onClose, visitId, initialPetId, initialAppoi
             <Save className="h-4 w-4 mr-1" />Сохранить
           </Button>
           <Button
-            onClick={() => save(true)}
+            onClick={() => save(true, false)}
             disabled={saving || loading || form.status === 'completed'}
             title={form.status === 'completed' ? 'Визит уже завершён' : undefined}
           >
             <CheckCircle2 className="h-4 w-4 mr-1" />
             {form.status === 'completed' ? 'Визит завершён' : 'Завершить визит'}
+          </Button>
+          <Button
+            onClick={() => save(true, true)}
+            disabled={saving || loading || form.status === 'completed'}
+            title={form.status === 'completed' ? 'Визит уже завершён' : 'Завершить и сразу открыть форму оплаты'}
+          >
+            <Receipt className="h-4 w-4 mr-1" />
+            Завершить визит и принять оплату
           </Button>
         </DialogFooter>
       </DialogContent>

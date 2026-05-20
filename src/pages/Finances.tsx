@@ -1,4 +1,5 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { getUserFriendlyError } from '@/lib/errorHandler';
 import { useAuth } from '@/contexts/AuthContext';
 import { getValidationError, invoiceSchema } from '@/lib/validationSchemas';
@@ -79,9 +80,25 @@ export default function Finances() {
   const [maxRedeemPercent, setMaxRedeemPercent] = useState<number>(30);
   const [certificatePreview, setCertificatePreview] = useState<{ id: string; amount: number } | null>(null);
 
+  const location = useLocation();
+  const navigate = useNavigate();
+  const handledPayRef = useRef<string | null>(null);
+
   useEffect(() => {
     fetchData();
   }, []);
+
+  useEffect(() => {
+    const targetId = (location.state as any)?.payInvoiceId as string | undefined;
+    if (!targetId || loading) return;
+    if (handledPayRef.current === targetId) return;
+    const inv = invoices.find((i) => i.id === targetId);
+    if (inv) {
+      handledPayRef.current = targetId;
+      openPaymentDialog(inv);
+      navigate(location.pathname, { replace: true, state: {} });
+    }
+  }, [location.state, loading, invoices]);
 
   const fetchData = async () => {
     try {

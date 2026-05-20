@@ -39,7 +39,7 @@ export function VisitTimeline({ petId, onOpenVisit }: Props) {
         .select('*, veterinarian:profiles(full_name), services:visit_services(*), materials:visit_materials(*), invoice:invoices(id, invoice_number, total, status)')
         .eq('pet_id', petId)
         .order('visit_date', { ascending: false }),
-      supabase.from('profiles').select('id, full_name').order('full_name'),
+      supabase.rpc('list_public_veterinarians'),
     ]);
     setVisits(visitRes.data || []);
     setVets(vetRes.data || []);

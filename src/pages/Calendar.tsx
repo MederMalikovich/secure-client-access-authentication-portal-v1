@@ -606,8 +606,8 @@ export default function Calendar() {
 
       {/* Calendar Grid */}
       <Card className="overflow-hidden">
-        <CardContent className="p-0">
-          <div className="grid grid-cols-8 border-b border-border">
+        <CardContent className="p-0 overflow-x-auto">
+          <div className="grid grid-cols-8 border-b border-border min-w-[720px]">
             <div className="p-2 text-center text-xs text-muted-foreground">
               <Clock className="h-4 w-4 mx-auto" />
             </div>

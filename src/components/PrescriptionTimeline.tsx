@@ -47,7 +47,7 @@ export function PrescriptionTimeline({ petId }: Props) {
         <Filter className="h-4 w-4 text-muted-foreground" />
         <Input placeholder="Поиск препарата..." value={search} onChange={(e) => setSearch(e.target.value)} className="max-w-xs h-9" />
         <Select value={filterStatus} onValueChange={setFilterStatus}>
-          <SelectTrigger className="w-[180px] h-9"><SelectValue /></SelectTrigger>
+          <SelectTrigger className="w-full sm:w-[180px] h-9"><SelectValue /></SelectTrigger>
           <SelectContent>
             <SelectItem value="all">Все статусы</SelectItem>
             <SelectItem value="active">Активно</SelectItem>

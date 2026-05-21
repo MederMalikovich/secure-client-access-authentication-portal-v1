@@ -558,7 +558,7 @@ export default function Services() {
 
       {/* Service Dialog */}
       <Dialog open={serviceDialogOpen} onOpenChange={setServiceDialogOpen}>
-        <DialogContent className="glass">
+        <DialogContent className="glass max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>
               {selectedService ? 'Редактировать услугу' : 'Новая услуга'}
@@ -639,7 +639,7 @@ export default function Services() {
 
       {/* Category Dialog */}
       <Dialog open={categoryDialogOpen} onOpenChange={setCategoryDialogOpen}>
-        <DialogContent className="glass">
+        <DialogContent className="glass max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>
               {selectedCategory ? 'Редактировать категорию' : 'Новая категория'}
@@ -689,7 +689,7 @@ export default function Services() {
 
       {/* Delete Dialog */}
       <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
-        <DialogContent className="glass">
+        <DialogContent className="glass max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>
               Удалить {deleteType === 'service' ? 'услугу' : 'категорию'}?

@@ -383,7 +383,7 @@ export default function Pets() {
 
       {/* Delete Confirmation Dialog */}
       <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
-        <DialogContent className="glass">
+        <DialogContent className="glass max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Удалить питомца?</DialogTitle>
             <DialogDescription>Это действие нельзя отменить. Все связанные медкарты и записи будут удалены.</DialogDescription>

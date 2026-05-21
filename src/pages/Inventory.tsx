@@ -513,7 +513,7 @@ export default function Inventory() {
 
       {/* Item Dialog */}
       <Dialog open={itemDialogOpen} onOpenChange={setItemDialogOpen}>
-        <DialogContent className="glass max-w-2xl">
+        <DialogContent className="glass max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>
               {selectedItem ? 'Редактировать товар' : 'Новый товар'}
@@ -633,7 +633,7 @@ export default function Inventory() {
 
       {/* Movement Dialog */}
       <Dialog open={movementDialogOpen} onOpenChange={setMovementDialogOpen}>
-        <DialogContent className="glass">
+        <DialogContent className="glass max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Движение товара</DialogTitle>
             <DialogDescription>
@@ -688,7 +688,7 @@ export default function Inventory() {
 
       {/* Category Dialog */}
       <Dialog open={categoryDialogOpen} onOpenChange={setCategoryDialogOpen}>
-        <DialogContent className="glass">
+        <DialogContent className="glass max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>
               {selectedCategory ? 'Редактировать категорию' : 'Новая категория'}
@@ -725,7 +725,7 @@ export default function Inventory() {
 
       {/* Delete Dialog */}
       <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
-        <DialogContent className="glass">
+        <DialogContent className="glass max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Удалить товар?</DialogTitle>
             <DialogDescription>Это действие нельзя отменить.</DialogDescription>

@@ -357,7 +357,7 @@ export default function Doctors() {
 
       {/* Edit Dialog */}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent className="glass">
+        <DialogContent className="glass max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>{selectedDoctor ? 'Редактировать врача' : 'Добавить врача'}</DialogTitle>
             <DialogDescription>

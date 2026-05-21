@@ -506,7 +506,7 @@ export default function Settings() {
 
       {/* Role Assignment Dialog */}
       <Dialog open={roleDialogOpen} onOpenChange={setRoleDialogOpen}>
-        <DialogContent className="glass">
+        <DialogContent className="glass max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Назначить роль</DialogTitle>
             <DialogDescription>
@@ -544,7 +544,7 @@ export default function Settings() {
 
       {/* Edit Profile Dialog */}
       <Dialog open={profileDialogOpen} onOpenChange={setProfileDialogOpen}>
-        <DialogContent className="glass">
+        <DialogContent className="glass max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Редактировать профиль</DialogTitle>
           </DialogHeader>
@@ -596,7 +596,7 @@ export default function Settings() {
       </Dialog>
 
       <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
-        <DialogContent className="glass">
+        <DialogContent className="glass max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Удалить пользователя?</DialogTitle>
             <DialogDescription>

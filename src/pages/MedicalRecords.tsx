@@ -964,7 +964,7 @@ export default function MedicalRecords() {
 
       {/* Delete Dialog */}
       <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
-        <DialogContent className="glass">
+        <DialogContent className="glass max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Удалить запись?</DialogTitle>
             <DialogDescription>

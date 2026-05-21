@@ -260,7 +260,7 @@ export default function Diseases() {
 
       {/* Add/Edit Dialog */}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent className="glass max-w-2xl">
+        <DialogContent className="glass max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>
               {selectedDisease ? 'Редактировать заболевание' : 'Новое заболевание'}
@@ -323,7 +323,7 @@ export default function Diseases() {
 
       {/* Delete Dialog */}
       <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
-        <DialogContent className="glass">
+        <DialogContent className="glass max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Удалить заболевание?</DialogTitle>
             <DialogDescription>

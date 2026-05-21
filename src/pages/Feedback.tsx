@@ -324,7 +324,7 @@ export default function FeedbackPage() {
 
       {/* Add Feedback Dialog */}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent className="glass">
+        <DialogContent className="glass max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Новый отзыв</DialogTitle>
             <DialogDescription>
@@ -388,7 +388,7 @@ export default function FeedbackPage() {
 
       {/* Response Dialog */}
       <Dialog open={responseDialogOpen} onOpenChange={setResponseDialogOpen}>
-        <DialogContent className="glass">
+        <DialogContent className="glass max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Ответ на отзыв</DialogTitle>
             <DialogDescription>

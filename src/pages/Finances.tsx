@@ -891,7 +891,7 @@ export default function Finances() {
 
       {/* Delete Invoice Dialog */}
       <Dialog open={!!deleteInvoice} onOpenChange={(o) => !o && setDeleteInvoice(null)}>
-        <DialogContent className="glass">
+        <DialogContent className="glass max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Удалить счёт {deleteInvoice?.invoice_number}?</DialogTitle>
           </DialogHeader>

@@ -69,14 +69,14 @@ export function VisitTimeline({ petId, onOpenVisit }: Props) {
         <Filter className="h-4 w-4 text-muted-foreground" />
         <Input placeholder="Поиск по диагнозу/жалобе..." value={search} onChange={(e) => setSearch(e.target.value)} className="max-w-xs h-9" />
         <Select value={filterStatus} onValueChange={setFilterStatus}>
-          <SelectTrigger className="w-[160px] h-9"><SelectValue /></SelectTrigger>
+          <SelectTrigger className="w-full sm:w-[160px] h-9"><SelectValue /></SelectTrigger>
           <SelectContent>
             <SelectItem value="all">Все статусы</SelectItem>
             {Object.entries(visitStatusLabels).map(([k, l]) => <SelectItem key={k} value={k}>{l}</SelectItem>)}
           </SelectContent>
         </Select>
         <Select value={filterVet} onValueChange={setFilterVet}>
-          <SelectTrigger className="w-[180px] h-9"><SelectValue /></SelectTrigger>
+          <SelectTrigger className="w-full sm:w-[180px] h-9"><SelectValue /></SelectTrigger>
           <SelectContent>
             <SelectItem value="all">Все врачи</SelectItem>
             {vets.map(v => <SelectItem key={v.id} value={v.id}>{v.full_name}</SelectItem>)}

@@ -149,9 +149,9 @@ export function DataTable<T extends { id: string }>({
 
       {/* Pagination */}
       {totalPages > 1 && (
-        <div className="flex items-center justify-between">
-          <p className="text-sm text-muted-foreground">
-            Показано {(page - 1) * itemsPerPage + 1}-
+        <div className="flex items-center justify-between gap-2">
+          <p className="text-xs sm:text-sm text-muted-foreground">
+            {(page - 1) * itemsPerPage + 1}-
             {Math.min(page * itemsPerPage, filteredData.length)} из{' '}
             {filteredData.length}
           </p>
@@ -159,19 +159,23 @@ export function DataTable<T extends { id: string }>({
             <Button
               variant="outline"
               size="icon"
+              className="h-10 w-10"
               onClick={() => setPage(page - 1)}
               disabled={page === 1}
+              aria-label="Назад"
             >
               <ChevronLeft className="h-4 w-4" />
             </Button>
-            <span className="text-sm">
+            <span className="text-sm tabular-nums">
               {page} / {totalPages}
             </span>
             <Button
               variant="outline"
               size="icon"
+              className="h-10 w-10"
               onClick={() => setPage(page + 1)}
               disabled={page === totalPages}
+              aria-label="Вперёд"
             >
               <ChevronRight className="h-4 w-4" />
             </Button>

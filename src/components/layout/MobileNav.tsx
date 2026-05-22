@@ -94,11 +94,12 @@ export function MobileNav() {
                       to={item.href}
                       onClick={() => setOpen(false)}
                       className={cn(
-                        'flex items-center gap-3 px-3 py-2.5 rounded-lg mb-1 transition-all',
+                        'flex items-center gap-3 px-3 py-3 min-h-[48px] rounded-lg mb-1 transition-all active:scale-[0.98]',
                         isActive
                           ? 'bg-sidebar-primary text-sidebar-primary-foreground'
                           : 'text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground'
                       )}
+                      data-nav
                     >
                       <item.icon className="h-5 w-5" />
                       <span className="font-medium">{item.label}</span>

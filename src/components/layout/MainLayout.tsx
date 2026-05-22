@@ -15,7 +15,7 @@ export function MainLayout({ children }: MainLayoutProps) {
   const isClient = hasRole('client');
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background overflow-x-hidden">
       <GlobalSearch />
       
       {/* Mobile navigation */}
@@ -28,9 +28,10 @@ export function MainLayout({ children }: MainLayoutProps) {
       
       <main
         className={cn(
-          'transition-all duration-300 ease-in-out min-h-screen',
+          'transition-all duration-300 ease-in-out min-h-screen w-full max-w-full',
           'pt-16 md:pt-0',
-          'md:ml-64'
+          'md:ml-64',
+          'pb-[env(safe-area-inset-bottom)]'
         )}
       >
         {/* Desktop notification bell */}
@@ -39,7 +40,7 @@ export function MainLayout({ children }: MainLayoutProps) {
             <NotificationBell />
           </div>
         )}
-        <div className="p-4 md:p-6 md:pt-2">
+        <div className="p-3 sm:p-4 md:p-6 md:pt-2 max-w-full overflow-x-hidden">
           {children}
         </div>
       </main>

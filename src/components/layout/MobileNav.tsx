@@ -52,17 +52,23 @@ export function MobileNav() {
           </div>
           <span className="font-bold text-sidebar-foreground truncate">VetCRM</span>
         </div>
-        <div className="flex items-center gap-1">
+        <div className="flex items-center gap-0.5 shrink-0">
           {!isClient && <NotificationBell />}
           <Button
             variant="ghost"
             size="icon"
-            className="text-sidebar-foreground"
+            className="text-sidebar-foreground h-11 w-11"
             onClick={() => document.dispatchEvent(new KeyboardEvent('keydown', { key: 'k', metaKey: true }))}
+            aria-label="Поиск"
           >
             <Search className="h-5 w-5" />
           </Button>
         <Sheet open={open} onOpenChange={setOpen}>
+          <SheetTrigger asChild>
+            <Button variant="ghost" size="icon" className="text-sidebar-foreground h-11 w-11" aria-label="Меню">
+              <Menu className="h-6 w-6" />
+            </Button>
+          </SheetTrigger>
           <SheetTrigger asChild>
             <Button variant="ghost" size="icon" className="text-sidebar-foreground">
               <Menu className="h-6 w-6" />

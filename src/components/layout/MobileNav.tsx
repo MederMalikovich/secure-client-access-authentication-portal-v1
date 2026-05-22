@@ -44,13 +44,13 @@ export function MobileNav() {
   const navItems = isClient ? clientNavItems : staffNavItems;
 
   return (
-    <div className="md:hidden fixed top-0 left-0 right-0 z-50 bg-sidebar border-b border-sidebar-border">
-      <div className="flex items-center justify-between p-4">
-        <div className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded-lg bg-primary/20 flex items-center justify-center">
+    <div className="md:hidden fixed top-0 left-0 right-0 z-50 bg-sidebar border-b border-sidebar-border pt-[env(safe-area-inset-top)]">
+      <div className="flex items-center justify-between px-3 py-2 gap-2">
+        <div className="flex items-center gap-2 min-w-0">
+          <div className="w-9 h-9 rounded-lg bg-primary/20 flex items-center justify-center shrink-0">
             <PawPrint className="w-5 h-5 text-primary" />
           </div>
-          <span className="font-bold text-sidebar-foreground">VetCRM</span>
+          <span className="font-bold text-sidebar-foreground truncate">VetCRM</span>
         </div>
         <div className="flex items-center gap-1">
           {!isClient && <NotificationBell />}

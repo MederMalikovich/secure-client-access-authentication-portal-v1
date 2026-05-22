@@ -65,8 +65,8 @@ export function DataTable<T extends { id: string }>({
   return (
     <div className="space-y-4">
       {/* Header */}
-      <div className="flex items-center justify-between gap-4">
-        <div className="relative flex-1 max-w-sm">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+        <div className="relative flex-1 sm:max-w-sm w-full">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
             placeholder={searchPlaceholder}
@@ -75,11 +75,11 @@ export function DataTable<T extends { id: string }>({
               setSearch(e.target.value);
               setPage(1);
             }}
-            className="pl-10 bg-muted/50"
+            className="pl-10 bg-muted/50 h-11 sm:h-10"
           />
         </div>
         {onAdd && (
-          <Button onClick={onAdd} className="gap-2">
+          <Button onClick={onAdd} className="gap-2 w-full sm:w-auto h-11 sm:h-10 shrink-0">
             <Plus className="h-4 w-4" />
             {addLabel}
           </Button>

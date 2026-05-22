@@ -69,11 +69,6 @@ export function MobileNav() {
               <Menu className="h-6 w-6" />
             </Button>
           </SheetTrigger>
-          <SheetTrigger asChild>
-            <Button variant="ghost" size="icon" className="text-sidebar-foreground">
-              <Menu className="h-6 w-6" />
-            </Button>
-          </SheetTrigger>
           <SheetContent side="left" className="w-64 p-0 bg-sidebar border-sidebar-border">
             <SheetTitle className="sr-only">Навигация</SheetTitle>
             <div className="flex flex-col h-full">

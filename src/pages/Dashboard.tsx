@@ -44,7 +44,7 @@ function PeriodSelector({ value, onChange, customFrom, customTo, onCustomFromCha
 }) {
   const keys = showYear ? ['1d', '7d', '30d', '365d'] : ['1d', '7d', '30d'];
   return (
-    <div className="flex flex-wrap gap-1 items-center">
+    <div className="flex min-w-0 flex-wrap gap-1 items-center">
       {(keys as Exclude<PeriodPreset, 'custom'>[]).map(k => (
         <Button key={k} variant={value === k ? 'default' : 'outline'} size="sm" onClick={() => onChange(k)}>
           {presetLabels[k]}
@@ -54,10 +54,10 @@ function PeriodSelector({ value, onChange, customFrom, customTo, onCustomFromCha
         С—По
       </Button>
       {value === 'custom' && (
-        <div className="flex gap-1 items-center ml-1">
-          <Input type="date" className="h-8 w-auto text-xs" value={customFrom} onChange={e => onCustomFromChange(e.target.value)} />
+        <div className="flex min-w-0 flex-wrap gap-1 items-center ml-1">
+          <Input type="date" className="h-8 w-[8.5rem] text-xs" value={customFrom} onChange={e => onCustomFromChange(e.target.value)} />
           <span className="text-muted-foreground text-xs">—</span>
-          <Input type="date" className="h-8 w-auto text-xs" value={customTo} onChange={e => onCustomToChange(e.target.value)} />
+          <Input type="date" className="h-8 w-[8.5rem] text-xs" value={customTo} onChange={e => onCustomToChange(e.target.value)} />
         </div>
       )}
     </div>
@@ -228,7 +228,7 @@ export default function Dashboard() {
       />
 
       {/* Stats */}
-      <div className="grid gap-3 md:gap-4 grid-cols-2 lg:grid-cols-4">
+      <div className="grid min-w-0 grid-cols-2 gap-3 md:gap-4 lg:grid-cols-4">
         <StatCard title="Клиенты" value={stats.totalClients} icon={<Users className="h-4 w-4 md:h-5 md:w-5" />} description="Всего в базе" />
         <StatCard title="Питомцы" value={stats.totalPets} icon={<PawPrint className="h-4 w-4 md:h-5 md:w-5" />} description="Всего в базе" />
         <StatCard title="Приёмы сегодня" value={stats.todayAppointments} icon={<Calendar className="h-4 w-4 md:h-5 md:w-5" />} description={format(new Date(), 'd MMMM', { locale: ru })} />
@@ -263,11 +263,11 @@ export default function Dashboard() {
       )}
 
       {/* Revenue & Today's Appointments */}
-      <div className="grid gap-4 md:gap-6 lg:grid-cols-3">
-        <Card className="lg:col-span-2 glass">
+      <div className="grid min-w-0 gap-4 md:gap-6 lg:grid-cols-3">
+        <Card className="glass min-w-0 lg:col-span-2">
           <CardHeader>
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-              <CardTitle className="flex items-center gap-2">
+            <div className="flex min-w-0 flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+              <CardTitle className="flex min-w-0 items-center gap-2">
                 <TrendingUp className="h-5 w-5 text-primary" />
                 Выручка
               </CardTitle>
@@ -304,7 +304,7 @@ export default function Dashboard() {
         </Card>
 
         {/* Today's Appointments */}
-        <Card className="glass">
+        <Card className="glass min-w-0">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Clock className="h-5 w-5 text-primary" />
@@ -335,10 +335,10 @@ export default function Dashboard() {
       </div>
 
       {/* Appointments Chart */}
-      <Card className="glass">
+      <Card className="glass min-w-0">
         <CardHeader>
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-            <CardTitle className="flex items-center gap-2">
+          <div className="flex min-w-0 flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+            <CardTitle className="flex min-w-0 items-center gap-2">
               <Calendar className="h-5 w-5 text-primary" />
               Приёмы
             </CardTitle>

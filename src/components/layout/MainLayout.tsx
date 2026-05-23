@@ -28,9 +28,9 @@ export function MainLayout({ children }: MainLayoutProps) {
       
       <main
         className={cn(
-          'transition-all duration-300 ease-in-out min-h-screen w-full max-w-full',
+          'transition-all duration-300 ease-in-out min-h-screen min-w-0 max-w-full',
           'pt-16 md:pt-0',
-          'md:ml-64',
+          'md:ml-64 md:w-[calc(100%-16rem)] md:max-w-[calc(100vw-16rem)]',
           'pb-[env(safe-area-inset-bottom)]'
         )}
       >
@@ -40,7 +40,7 @@ export function MainLayout({ children }: MainLayoutProps) {
             <NotificationBell />
           </div>
         )}
-        <div className="p-3 sm:p-4 md:p-6 md:pt-2 max-w-full overflow-x-hidden">
+        <div className="min-w-0 max-w-full overflow-x-hidden p-3 sm:p-4 md:p-6 md:pt-2">
           {children}
         </div>
       </main>

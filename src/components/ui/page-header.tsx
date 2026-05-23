@@ -49,14 +49,14 @@ export function PageHeader({
           </BreadcrumbList>
         </Breadcrumb>
       )}
-      <div className="flex items-start justify-between gap-4">
-        <div>
+      <div className="flex min-w-0 flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+        <div className="min-w-0">
           <h1 className="text-3xl font-bold gradient-text">{title}</h1>
           {description && (
             <p className="mt-1 text-muted-foreground">{description}</p>
           )}
         </div>
-        {actions && <div className="flex items-center gap-2">{actions}</div>}
+        {actions && <div className="flex min-w-0 max-w-full flex-wrap items-center gap-2 lg:justify-end">{actions}</div>}
       </div>
     </div>
   );

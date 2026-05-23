@@ -158,6 +158,20 @@
     textarea {
       font-size: 16px !important;
     }
+    /* iOS Safari: inertial scroll inside dialogs/sheets/scroll areas */
+    [data-radix-scroll-area-viewport],
+    [role="dialog"],
+    [data-radix-dialog-content],
+    .overflow-y-auto,
+    .overflow-x-auto {
+      -webkit-overflow-scrolling: touch;
+    }
+  }
+
+  /* iOS Safari: use dynamic viewport height where supported (avoids URL-bar jump) */
+  @supports (height: 100dvh) {
+    .min-h-screen { min-height: 100dvh; }
+    .h-screen { height: 100dvh; }
   }
 }
 

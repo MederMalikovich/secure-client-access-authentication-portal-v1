@@ -935,43 +935,103 @@ export default function MedicalRecords() {
                       <span className="font-medium">{detailRecord.temperature}°C</span>
                     </div>
                   )}
-                </div>
               </div>
+
+              {/* Patient alerts banner — аллергии/вакцинация всегда на виду */}
+              {(detailRecord.allergy_notes || detailRecord.vaccination_status) && (
+                <div className="mx-6 mt-4 space-y-2">
+                  {detailRecord.allergy_notes && (
+                    <div className="flex items-start gap-2 rounded-lg border border-destructive/40 bg-destructive/10 p-3">
+                      <span className="text-lg leading-none">⚠️</span>
+                      <div className="flex-1 text-sm">
+                        <span className="font-semibold text-destructive">Аллергии / противопоказания: </span>
+                        <span>{detailRecord.allergy_notes}</span>
+                      </div>
+                    </div>
+                  )}
+                  {detailRecord.vaccination_status && (
+                    <div className="flex items-start gap-2 rounded-lg border border-primary/30 bg-primary/5 p-3 text-sm">
+                      <span className="text-lg leading-none">🛡️</span>
+                      <div className="flex-1">
+                        <span className="font-semibold">Вакцинация: </span>
+                        <span>{detailRecord.vaccination_status}</span>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
 
               <Tabs defaultValue="card" className="p-6">
                 <TabsList className="grid w-full grid-cols-3">
-                  <TabsTrigger value="card"><ClipboardList className="mr-2 h-4 w-4" />Осмотр</TabsTrigger>
+                  <TabsTrigger value="card"><ClipboardList className="mr-2 h-4 w-4" />SOAP</TabsTrigger>
                   <TabsTrigger value="prescriptions"><Pill className="mr-2 h-4 w-4" />Назначения</TabsTrigger>
                   <TabsTrigger value="files"><FlaskConical className="mr-2 h-4 w-4" />Исследования</TabsTrigger>
                 </TabsList>
 
                 <TabsContent value="card" className="mt-5 space-y-5">
-                  {[
-                    { label: 'Жалобы', value: detailRecord.chief_complaint, icon: '💬' },
-                    { label: 'Анамнез', value: detailRecord.anamnesis, icon: '📌' },
-                    { label: 'Вакцинация', value: detailRecord.vaccination_status, icon: '🛡️' },
-                    { label: 'Аллергии / ограничения', value: detailRecord.allergy_notes, icon: '⚠️' },
-                    { label: 'Осмотр', value: detailRecord.examination_notes, icon: '🔍' },
-                    { label: 'Клинические показатели', value: detailRecord.clinical_findings, icon: '📈' },
-                    { label: 'Диагноз', value: detailRecord.diagnosis, icon: '🩺' },
-                    { label: 'Лечение', value: detailRecord.treatment, icon: '💊' },
-                    { label: 'Назначения', value: detailRecord.prescriptions, icon: '📋' },
-                    { label: 'Анализы', value: detailRecord.lab_results, icon: '🧪' },
-                    { label: 'План наблюдения', value: detailRecord.follow_up_plan, icon: '🔁' },
-                    { label: 'Рекомендации владельцу', value: detailRecord.owner_recommendations, icon: '🏠' },
-                    { label: 'Материалы', value: detailRecord.materials_used, icon: '🧰' },
-                    { label: 'Комментарии врача', value: detailRecord.doctor_notes, icon: '📝' },
-                    { label: 'Следующий контроль', value: detailRecord.next_visit_date ? format(new Date(detailRecord.next_visit_date), 'd MMMM yyyy, HH:mm', { locale: ru }) : '', icon: '📅' },
-                  ].filter(s => s.value).map((section) => (
-                    <div key={section.label} className="group">
-                      <div className="mb-1.5 flex items-center gap-2">
-                        <span className="text-base">{section.icon}</span>
-                        <h4 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">{section.label}</h4>
-                      </div>
-                      <p className="whitespace-pre-wrap pl-7 text-sm leading-relaxed">{section.value}</p>
+                  {([
+                    {
+                      key: 'S',
+                      title: 'Subjective · Со слов владельца',
+                      items: [
+                        { label: 'Жалобы', value: detailRecord.chief_complaint },
+                        { label: 'Анамнез', value: detailRecord.anamnesis },
+                      ],
+                    },
+                    {
+                      key: 'O',
+                      title: 'Objective · Осмотр и измерения',
+                      items: [
+                        { label: 'Данные осмотра', value: detailRecord.examination_notes },
+                        { label: 'Клинические показатели', value: detailRecord.clinical_findings },
+                        { label: 'Результаты анализов', value: detailRecord.lab_results },
+                      ],
+                    },
+                    {
+                      key: 'A',
+                      title: 'Assessment · Диагноз',
+                      items: [
+                        { label: 'Диагноз', value: detailRecord.diagnosis },
+                      ],
+                    },
+                    {
+                      key: 'P',
+                      title: 'Plan · Лечение и рекомендации',
+                      items: [
+                        { label: 'Лечение', value: detailRecord.treatment },
+                        { label: 'Назначения', value: detailRecord.prescriptions },
+                        { label: 'Материалы', value: detailRecord.materials_used },
+                        { label: 'План наблюдения', value: detailRecord.follow_up_plan },
+                        { label: 'Рекомендации владельцу', value: detailRecord.owner_recommendations },
+                        { label: 'Следующий контроль', value: detailRecord.next_visit_date ? format(new Date(detailRecord.next_visit_date), 'd MMMM yyyy, HH:mm', { locale: ru }) : '' },
+                        { label: 'Комментарии врача', value: detailRecord.doctor_notes },
+                      ],
+                    },
+                  ] as const)
+                    .map(group => ({ ...group, items: group.items.filter(i => i.value) }))
+                    .filter(group => group.items.length > 0)
+                    .map(group => (
+                      <section key={group.key} className="rounded-lg border border-border p-4">
+                        <h3 className="mb-3 flex items-baseline gap-2 text-sm font-semibold">
+                          <span className="rounded bg-primary px-2 py-0.5 text-xs font-bold text-primary-foreground">{group.key}</span>
+                          {group.title}
+                        </h3>
+                        <div className="space-y-3">
+                          {group.items.map(item => (
+                            <div key={item.label}>
+                              <h4 className="mb-1 text-xs font-semibold uppercase tracking-wider text-muted-foreground">{item.label}</h4>
+                              <p className="whitespace-pre-wrap text-sm leading-relaxed">{item.value}</p>
+                            </div>
+                          ))}
+                        </div>
+                      </section>
+                    ))}
+                  {!detailRecord.chief_complaint && !detailRecord.anamnesis && !detailRecord.examination_notes && !detailRecord.diagnosis && !detailRecord.treatment && (
+                    <div className="rounded-lg border border-dashed border-border p-8 text-center text-sm text-muted-foreground">
+                      Запись пустая — нажмите «Редактировать», чтобы заполнить.
                     </div>
-                  ))}
-                </TabsContent>
+                  )}
+
 
                 <TabsContent value="prescriptions" className="mt-5 space-y-3">
                   {((detailRecord.prescriptions_list as any[]) || []).length === 0 ? (

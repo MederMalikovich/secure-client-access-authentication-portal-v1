@@ -898,3 +898,33 @@ function InvoicesView() {
     </div>
   );
 }
+
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import CashRegister from './CashRegister';
+
+export default function Finances() {
+  return (
+    <div>
+      <PageHeader
+        title="Финансы"
+        description="Счета, оплаты и кассовые смены"
+        breadcrumbs={[
+          { label: 'Дашборд', href: '/dashboard' },
+          { label: 'Финансы' },
+        ]}
+      />
+      <Tabs defaultValue="invoices" className="space-y-4">
+        <TabsList>
+          <TabsTrigger value="invoices">Счета и оплаты</TabsTrigger>
+          <TabsTrigger value="cash">Касса</TabsTrigger>
+        </TabsList>
+        <TabsContent value="invoices" className="mt-4">
+          <InvoicesView />
+        </TabsContent>
+        <TabsContent value="cash" className="mt-4">
+          <CashRegister embedded />
+        </TabsContent>
+      </Tabs>
+    </div>
+  );
+}

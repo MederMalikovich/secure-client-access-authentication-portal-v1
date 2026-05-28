@@ -18,7 +18,7 @@ import { useToast } from '@/hooks/use-toast';
 import { getUserFriendlyError } from '@/lib/errorHandler';
 import { formatCurrency } from '@/lib/currency';
 import { format } from 'date-fns';
-import { Plus, Trash2, History, Sparkles, FileText, Stethoscope, ClipboardList, Package, Receipt, Save, CheckCircle2 } from 'lucide-react';
+import { Plus, Trash2, History, Sparkles, FileText, Stethoscope, ClipboardList, Package, Receipt, Save, CheckCircle2, AlertTriangle, Syringe, Activity, Thermometer, Weight, Heart, Wind } from 'lucide-react';
 
 export type VisitStatus = 'waiting' | 'in_consultation' | 'procedures' | 'hospital' | 'completed' | 'cancelled';
 

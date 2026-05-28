@@ -39,7 +39,7 @@ import { format } from 'date-fns';
 import { ru } from 'date-fns/locale';
 import { DateScopeSelector, DateScope, filterByScope } from '@/components/DateScopeSelector';
 
-export default function Finances() {
+function InvoicesView() {
   const { toast } = useToast();
   const { hasAnyRole } = useAuth();
   const canManage = hasAnyRole(['admin', 'accountant']);
@@ -593,15 +593,6 @@ export default function Finances() {
 
   return (
     <div>
-      <PageHeader
-        title="Финансы"
-        description="Управление счетами и платежами"
-        breadcrumbs={[
-          { label: 'Дашборд', href: '/dashboard' },
-          { label: 'Финансы' },
-        ]}
-      />
-
       {/* Stats */}
       <div className="grid gap-4 md:grid-cols-3 mb-6">
         <StatCard
@@ -904,6 +895,36 @@ export default function Finances() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+    </div>
+  );
+}
+
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import CashRegister from './CashRegister';
+
+export default function Finances() {
+  return (
+    <div>
+      <PageHeader
+        title="Финансы"
+        description="Счета, оплаты и кассовые смены"
+        breadcrumbs={[
+          { label: 'Дашборд', href: '/dashboard' },
+          { label: 'Финансы' },
+        ]}
+      />
+      <Tabs defaultValue="invoices" className="space-y-4">
+        <TabsList>
+          <TabsTrigger value="invoices">Счета и оплаты</TabsTrigger>
+          <TabsTrigger value="cash">Касса</TabsTrigger>
+        </TabsList>
+        <TabsContent value="invoices" className="mt-4">
+          <InvoicesView />
+        </TabsContent>
+        <TabsContent value="cash" className="mt-4">
+          <CashRegister embedded />
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }

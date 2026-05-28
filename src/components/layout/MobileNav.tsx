@@ -19,8 +19,6 @@ const staffNavItems = [
   { icon: Heart, label: 'Заболевания', href: '/diseases' },
   { icon: UserCheck, label: 'Врачи', href: '/doctors' },
   { icon: DollarSign, label: 'Финансы', href: '/finances' },
-  { icon: Banknote, label: 'Касса', href: '/cash-register' },
-  { icon: ScrollText, label: 'Журнал медкарт', href: '/medical-audit' },
   { icon: Package, label: 'Склад', href: '/inventory' },
   { icon: ShoppingCart, label: 'Магазин', href: '/shop' },
   { icon: Gift, label: 'Лояльность', href: '/loyalty' },

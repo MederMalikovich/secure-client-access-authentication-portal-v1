@@ -464,10 +464,18 @@ export default function MedicalRecords() {
           { label: 'Медкарты' },
         ]}
         actions={!isClient && (
-          <Button onClick={() => { setVisitDialogId(null); setVisitDialogOpen(true); }}>
-            <Stethoscope className="h-4 w-4 mr-1" />
-            Новый визит
-          </Button>
+          <div className="flex gap-2">
+            {hasRole('admin') && (
+              <Button variant="outline" onClick={() => navigate('/medical-audit')}>
+                <ClipboardList className="h-4 w-4 mr-1" />
+                Журнал изменений
+              </Button>
+            )}
+            <Button onClick={() => { setVisitDialogId(null); setVisitDialogOpen(true); }}>
+              <Stethoscope className="h-4 w-4 mr-1" />
+              Новый визит
+            </Button>
+          </div>
         )}
       />
 

@@ -18,7 +18,7 @@ import { useToast } from '@/hooks/use-toast';
 import { getUserFriendlyError } from '@/lib/errorHandler';
 import { formatCurrency } from '@/lib/currency';
 import { format } from 'date-fns';
-import { Plus, Trash2, History, Sparkles, FileText, Stethoscope, ClipboardList, Package, Receipt, Save, CheckCircle2 } from 'lucide-react';
+import { Plus, Trash2, History, Sparkles, FileText, Stethoscope, ClipboardList, Package, Receipt, Save, CheckCircle2, AlertTriangle, Syringe, Activity, Thermometer, Weight, Heart, Wind } from 'lucide-react';
 
 export type VisitStatus = 'waiting' | 'in_consultation' | 'procedures' | 'hospital' | 'completed' | 'cancelled';
 
@@ -147,7 +147,7 @@ export function VisitDialog({ open, onClose, visitId, initialPetId, initialAppoi
 
   const loadRefs = async () => {
     const [petsRes, vetsRes, servicesRes, invRes, tplRes] = await Promise.all([
-      supabase.from('pets').select('id, name, species, client_id, clients:clients(full_name)').order('name'),
+      supabase.from('pets').select('id, name, species, client_id, allergy_notes, vaccination_status, clients:clients(full_name)').order('name'),
       supabase.rpc('list_public_veterinarians'),
       supabase.from('services').select('id, name, price').eq('is_active', true).order('name'),
       supabase.from('inventory_items').select('id, name, sale_price, quantity, unit').eq('is_active', true).order('name'),
@@ -505,10 +505,45 @@ export function VisitDialog({ open, onClose, visitId, initialPetId, initialAppoi
 
           <Separator className="my-4" />
 
+          {/* Patient safety alerts — всегда на виду */}
+          {(() => {
+            const pet = pets.find(p => p.id === form.pet_id);
+            if (!pet) return null;
+            const hasAllergy = !!pet.allergy_notes?.trim();
+            const hasVacc = !!pet.vaccination_status?.trim();
+            if (!hasAllergy && !hasVacc) return null;
+            return (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-2 mb-4">
+                {hasAllergy && (
+                  <div className="flex items-start gap-2 rounded-md border border-destructive/40 bg-destructive/10 p-3 text-sm">
+                    <AlertTriangle className="h-4 w-4 mt-0.5 text-destructive shrink-0" />
+                    <div><div className="font-semibold text-destructive">Аллергии / противопоказания</div><div className="text-foreground/90">{pet.allergy_notes}</div></div>
+                  </div>
+                )}
+                {hasVacc && (
+                  <div className="flex items-start gap-2 rounded-md border border-blue-500/40 bg-blue-500/10 p-3 text-sm">
+                    <Syringe className="h-4 w-4 mt-0.5 text-blue-400 shrink-0" />
+                    <div><div className="font-semibold text-blue-400">Вакцинация</div><div className="text-foreground/90">{pet.vaccination_status}</div></div>
+                  </div>
+                )}
+              </div>
+            );
+          })()}
+
+          {/* Vitals strip — всегда на виду */}
+          <Card className="p-3 mb-4 bg-muted/30">
+            <div className="flex items-center gap-2 mb-2 text-xs uppercase tracking-wide text-muted-foreground"><Activity className="h-3.5 w-3.5" />Витальные показатели</div>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+              <div><Label className="text-xs flex items-center gap-1"><Weight className="h-3 w-3" />Вес (кг)</Label><Input type="number" step="0.1" value={form.weight} onChange={(e) => setForm(f => ({ ...f, weight: e.target.value }))} /></div>
+              <div><Label className="text-xs flex items-center gap-1"><Thermometer className="h-3 w-3" />Температура (°C)</Label><Input type="number" step="0.1" value={form.temperature} onChange={(e) => setForm(f => ({ ...f, temperature: e.target.value }))} /></div>
+              <div><Label className="text-xs flex items-center gap-1"><Heart className="h-3 w-3" />Пульс (уд/мин)</Label><Input type="number" value={form.pulse} onChange={(e) => setForm(f => ({ ...f, pulse: e.target.value }))} /></div>
+              <div><Label className="text-xs flex items-center gap-1"><Wind className="h-3 w-3" />ЧДД (вд/мин)</Label><Input type="number" value={form.respiratory_rate} onChange={(e) => setForm(f => ({ ...f, respiratory_rate: e.target.value }))} /></div>
+            </div>
+          </Card>
+
           <Tabs value={activeTab} onValueChange={setActiveTab}>
             <TabsList className="flex flex-wrap h-auto">
               <TabsTrigger value="soap"><FileText className="h-4 w-4 mr-1" />SOAP</TabsTrigger>
-              <TabsTrigger value="vitals"><ClipboardList className="h-4 w-4 mr-1" />Витальные</TabsTrigger>
               <TabsTrigger value="services"><Stethoscope className="h-4 w-4 mr-1" />Услуги</TabsTrigger>
               <TabsTrigger value="materials"><Package className="h-4 w-4 mr-1" />Материалы</TabsTrigger>
               <TabsTrigger value="invoice"><Receipt className="h-4 w-4 mr-1" />Счёт</TabsTrigger>
@@ -516,39 +551,47 @@ export function VisitDialog({ open, onClose, visitId, initialPetId, initialAppoi
 
             <TabsContent value="soap" className="space-y-3 pt-3">
               <div>
-                <Label>Жалобы клиента (приоритет)</Label>
-                <Input value={form.chief_complaint} onChange={(e) => setForm(f => ({ ...f, chief_complaint: e.target.value }))} placeholder="Кратко: «Кашель 3 дня»" />
+                <Label>Жалоба-причина визита (одной строкой)</Label>
+                <Input value={form.chief_complaint} onChange={(e) => setForm(f => ({ ...f, chief_complaint: e.target.value }))} placeholder='Напр.: «Кашель 3 дня», «Хромота правая задняя»' />
+              </div>
+              <div className="rounded-lg border-l-4 border-blue-500 bg-blue-500/5 p-3">
+                <Label className="flex items-center gap-2 text-blue-400 font-semibold">
+                  <span className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-blue-500/20 text-xs">S</span>
+                  Subjective — со слов владельца
+                </Label>
+                <p className="text-xs text-muted-foreground mb-2 ml-8">Жалобы, длительность, что давали, изменения поведения/аппетита.</p>
+                <Textarea rows={3} value={form.subjective} onChange={(e) => setForm(f => ({ ...f, subjective: e.target.value }))} placeholder="История от владельца..." />
+              </div>
+              <div className="rounded-lg border-l-4 border-emerald-500 bg-emerald-500/5 p-3">
+                <Label className="flex items-center gap-2 text-emerald-400 font-semibold">
+                  <span className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-emerald-500/20 text-xs">O</span>
+                  Objective — объективный осмотр
+                </Label>
+                <p className="text-xs text-muted-foreground mb-2 ml-8">Витальные ↑, пальпация, аускультация, СОЖ, лимфоузлы, лабораторные данные.</p>
+                <Textarea rows={3} value={form.objective} onChange={(e) => setForm(f => ({ ...f, objective: e.target.value }))} placeholder="Объективные находки..." />
+              </div>
+              <div className="rounded-lg border-l-4 border-amber-500 bg-amber-500/5 p-3">
+                <Label className="flex items-center gap-2 text-amber-400 font-semibold">
+                  <span className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-amber-500/20 text-xs">A</span>
+                  Assessment — диагноз / дифф. диагноз
+                </Label>
+                <p className="text-xs text-muted-foreground mb-2 ml-8">Основной DX, дифференциальные, обоснование.</p>
+                <Textarea rows={2} value={form.assessment} onChange={(e) => setForm(f => ({ ...f, assessment: e.target.value }))} placeholder="Диагноз..." />
+              </div>
+              <div className="rounded-lg border-l-4 border-purple-500 bg-purple-500/5 p-3">
+                <Label className="flex items-center gap-2 text-purple-400 font-semibold">
+                  <span className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-purple-500/20 text-xs">P</span>
+                  Plan — лечение и рекомендации
+                </Label>
+                <p className="text-xs text-muted-foreground mb-2 ml-8">Назначения, процедуры, контроль, рекомендации владельцу, дата повторного визита.</p>
+                <Textarea rows={3} value={form.plan} onChange={(e) => setForm(f => ({ ...f, plan: e.target.value }))} placeholder="План лечения..." />
               </div>
               <div>
-                <Label>S — Subjective (жалобы, анамнез)</Label>
-                <Textarea rows={3} value={form.subjective} onChange={(e) => setForm(f => ({ ...f, subjective: e.target.value }))} placeholder="Что рассказал владелец, история..." />
-              </div>
-              <div>
-                <Label>O — Objective (осмотр, наблюдения)</Label>
-                <Textarea rows={3} value={form.objective} onChange={(e) => setForm(f => ({ ...f, objective: e.target.value }))} placeholder="Объективные находки, пальпация, аускультация..." />
-              </div>
-              <div>
-                <Label>A — Assessment (диагноз)</Label>
-                <Textarea rows={2} value={form.assessment} onChange={(e) => setForm(f => ({ ...f, assessment: e.target.value }))} placeholder="Диагноз / дифф. диагноз" />
-              </div>
-              <div>
-                <Label>P — Plan (лечение, рекомендации)</Label>
-                <Textarea rows={3} value={form.plan} onChange={(e) => setForm(f => ({ ...f, plan: e.target.value }))} placeholder="Препараты, процедуры, рекомендации владельцу" />
-              </div>
-              <div>
-                <Label>Заметки врача</Label>
+                <Label className="text-xs text-muted-foreground">Внутренние заметки врача (не видны клиенту)</Label>
                 <Textarea rows={2} value={form.notes} onChange={(e) => setForm(f => ({ ...f, notes: e.target.value }))} />
               </div>
             </TabsContent>
 
-            <TabsContent value="vitals" className="pt-3">
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                <div><Label>Вес (кг)</Label><Input type="number" step="0.1" value={form.weight} onChange={(e) => setForm(f => ({ ...f, weight: e.target.value }))} /></div>
-                <div><Label>Температура (°C)</Label><Input type="number" step="0.1" value={form.temperature} onChange={(e) => setForm(f => ({ ...f, temperature: e.target.value }))} /></div>
-                <div><Label>Пульс (уд/мин)</Label><Input type="number" value={form.pulse} onChange={(e) => setForm(f => ({ ...f, pulse: e.target.value }))} /></div>
-                <div><Label>Дыхание (вд/мин)</Label><Input type="number" value={form.respiratory_rate} onChange={(e) => setForm(f => ({ ...f, respiratory_rate: e.target.value }))} /></div>
-              </div>
-            </TabsContent>
 
             <TabsContent value="services" className="pt-3 space-y-2">
               {visitServices.map((s, i) => (

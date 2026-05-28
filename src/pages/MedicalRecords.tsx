@@ -935,6 +935,7 @@ export default function MedicalRecords() {
                       <span className="font-medium">{detailRecord.temperature}°C</span>
                     </div>
                   )}
+                </div>
               </div>
 
               {/* Patient alerts banner — аллергии/вакцинация всегда на виду */}

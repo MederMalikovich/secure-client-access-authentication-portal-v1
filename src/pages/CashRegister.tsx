@@ -200,7 +200,7 @@ export default function CashRegister() {
     { key: 'closed_at', header: 'Закрыта', cell: (s) => s.closed_at ? format(new Date(s.closed_at), 'dd.MM.yyyy HH:mm', { locale: ru }) : '—' },
     { key: 'total_sales', header: 'Продажи', cell: (s) => formatCurrency(Number(s.total_sales || 0)) },
     { key: 'difference', header: 'Расхождение', cell: (s) => s.difference === null ? '—' : (
-      <span className={Number(s.difference) === 0 ? '' : Number(s.difference) < 0 ? 'text-destructive' : 'text-warning'}>
+      <span className={Number(s.difference) === 0 ? '' : Number(s.difference) < 0 ? 'text-destructive' : 'text-yellow-500'}>
         {formatCurrency(Number(s.difference))}
       </span>
     )},
@@ -325,7 +325,7 @@ export default function CashRegister() {
             {closeForm.closing_cash !== '' && (() => {
               const diff = Number(closeForm.closing_cash) - ((openShift?.opening_cash || 0) + expected.cash);
               return (
-                <div className={`text-sm font-semibold ${diff === 0 ? 'text-muted-foreground' : diff < 0 ? 'text-destructive' : 'text-warning'}`}>
+                <div className={`text-sm font-semibold ${diff === 0 ? 'text-muted-foreground' : diff < 0 ? 'text-destructive' : 'text-yellow-500'}`}>
                   Расхождение: {formatCurrency(diff)}
                 </div>
               );

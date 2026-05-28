@@ -583,193 +583,308 @@ export default function MedicalRecords() {
         emptyMessage="Нет записей"
       />}
 
-      {/* Add/Edit Dialog */}
+      {/* Add/Edit Dialog — SOAP-структурированная форма */}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent className="glass max-w-4xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>
-              {selectedRecord ? 'Редактировать запись' : 'Новая запись в медкарту'}
+        <DialogContent className="glass max-w-5xl max-h-[92vh] overflow-y-auto p-0">
+          <DialogHeader className="sticky top-0 z-10 border-b border-border bg-background/95 px-6 py-4 backdrop-blur">
+            <DialogTitle className="flex items-center gap-2">
+              <Stethoscope className="h-5 w-5 text-primary" />
+              {selectedRecord ? 'Редактировать визит' : 'Новый визит'}
             </DialogTitle>
+            <p className="text-xs text-muted-foreground">
+              Стандарт SOAP: Subjective → Objective → Assessment → Plan
+            </p>
           </DialogHeader>
-          <div className="grid gap-4 py-4 md:grid-cols-2">
-            <div className="grid gap-2">
-              <Label>Питомец *</Label>
-              <Select
-                value={formData.pet_id}
-                onValueChange={(v) => setFormData({ ...formData, pet_id: v })}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Выберите питомца" />
-                </SelectTrigger>
-                <SelectContent>
-                  <div className="p-2">
-                    <Input
-                      placeholder="Поиск по кличке..."
-                      value={petSearch}
-                      onChange={(e) => setPetSearch(e.target.value)}
-                      className="mb-2"
-                    />
-                  </div>
-                  {(petSearch
-                    ? pets.filter(p => p.name.toLowerCase().includes(petSearch.toLowerCase()))
-                    : pets
-                  ).map((pet) => (
-                    <SelectItem key={pet.id} value={pet.id}>
-                      {pet.name} ({(pet as any).client?.full_name})
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="grid gap-2">
-              <Label>Ветеринар</Label>
-              <Select
-                value={formData.veterinarian_id}
-                onValueChange={(v) => setFormData({ ...formData, veterinarian_id: v })}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Выберите врача" />
-                </SelectTrigger>
-                <SelectContent>
-                  {vets.map((vet) => (
-                    <SelectItem key={vet.id} value={vet.id}>
-                      {vet.full_name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="grid gap-2">
-              <Label>Дата и время *</Label>
-              <Input
-                type="datetime-local"
-                value={formData.visit_date}
-                onChange={(e) => setFormData({ ...formData, visit_date: e.target.value })}
-              />
-            </div>
-            <div className="grid gap-2">
-              <Label>Вес (кг)</Label>
-              <Input
-                type="number"
-                step="0.1"
-                value={formData.weight_at_visit}
-                onChange={(e) => setFormData({ ...formData, weight_at_visit: e.target.value })}
-                placeholder="5.5"
-              />
-            </div>
-            <div className="grid gap-2">
-              <Label>Температура (°C)</Label>
-              <Input
-                type="number"
-                step="0.1"
-                value={formData.temperature}
-                onChange={(e) => setFormData({ ...formData, temperature: e.target.value })}
-                placeholder="38.5"
-              />
-            </div>
-            <div className="grid gap-2">
-              <Label>Жалобы</Label>
-              <Input
-                value={formData.chief_complaint}
-                onChange={(e) => setFormData({ ...formData, chief_complaint: e.target.value })}
-                placeholder="Основные жалобы владельца"
-              />
-            </div>
-            <div className="grid gap-2">
-              <Label>Анамнез</Label>
-              <Textarea value={formData.anamnesis} onChange={(e) => setFormData({ ...formData, anamnesis: e.target.value })} placeholder="Когда началось, питание, активность, перенесённые болезни..." />
-            </div>
-            <div className="grid gap-2">
-              <Label>Вакцинация</Label>
-              <Input value={formData.vaccination_status} onChange={(e) => setFormData({ ...formData, vaccination_status: e.target.value })} placeholder="Статус вакцинации" />
-            </div>
-            <div className="grid gap-2">
-              <Label>Аллергии / ограничения</Label>
-              <Input value={formData.allergy_notes} onChange={(e) => setFormData({ ...formData, allergy_notes: e.target.value })} placeholder="Аллергии, противопоказания" />
-            </div>
-            <div className="grid gap-2 md:col-span-2">
-              <Label>Осмотр</Label>
-              <Textarea
-                value={formData.examination_notes}
-                onChange={(e) => setFormData({ ...formData, examination_notes: e.target.value })}
-                placeholder="Результаты осмотра..."
-              />
-            </div>
-            <div className="grid gap-2 md:col-span-2">
-              <Label>Клинические показатели</Label>
-              <Textarea value={formData.clinical_findings} onChange={(e) => setFormData({ ...formData, clinical_findings: e.target.value })} placeholder="Пульс, дыхание, слизистые, кожа, ЖКТ, неврология..." />
-            </div>
-            <div className="grid gap-2 md:col-span-2">
-              <Label>Диагноз</Label>
-              <Textarea
-                value={formData.diagnosis}
-                onChange={(e) => setFormData({ ...formData, diagnosis: e.target.value })}
-                placeholder="Диагноз..."
-              />
-            </div>
-            <div className="grid gap-2 md:col-span-2">
-              <Label>Лечение</Label>
-              <Textarea
-                value={formData.treatment}
-                onChange={(e) => setFormData({ ...formData, treatment: e.target.value })}
-                placeholder="Назначенное лечение..."
-              />
-            </div>
-            <div className="grid gap-2">
-              <Label>Назначения / Рецепты</Label>
-              <Textarea
-                value={formData.prescriptions}
-                onChange={(e) => setFormData({ ...formData, prescriptions: e.target.value })}
-                placeholder="Препараты, дозировки..."
-              />
-            </div>
-            <div className="grid gap-2">
-              <Label>Результаты анализов</Label>
-              <Textarea
-                value={formData.lab_results}
-                onChange={(e) => setFormData({ ...formData, lab_results: e.target.value })}
-                placeholder="Результаты лабораторных исследований..."
-              />
-            </div>
-            <div className="grid gap-2">
-              <Label>План наблюдения</Label>
-              <Textarea value={formData.follow_up_plan} onChange={(e) => setFormData({ ...formData, follow_up_plan: e.target.value })} placeholder="Контроль, повторные анализы, динамика..." />
-            </div>
-            <div className="grid gap-2">
-              <Label>Рекомендации владельцу</Label>
-              <Textarea value={formData.owner_recommendations} onChange={(e) => setFormData({ ...formData, owner_recommendations: e.target.value })} placeholder="Уход дома, кормление, ограничения..." />
-            </div>
-            <div className="grid gap-2">
-              <Label>Следующий контроль</Label>
-              <Input type="datetime-local" value={formData.next_visit_date} onChange={(e) => setFormData({ ...formData, next_visit_date: e.target.value })} />
-            </div>
-            <div className="grid gap-2">
-              <Label>Использованные материалы</Label>
-              <Textarea
-                value={formData.materials_used}
-                onChange={(e) => setFormData({ ...formData, materials_used: e.target.value })}
-                placeholder="Препараты, расходники..."
-              />
-            </div>
-            <div className="grid gap-2">
-              <Label>Комментарии врача</Label>
-              <Textarea
-                value={formData.doctor_notes}
-                onChange={(e) => setFormData({ ...formData, doctor_notes: e.target.value })}
-                placeholder="Дополнительные заметки..."
-              />
-            </div>
+
+          <div className="space-y-6 p-6">
+            {/* Блок 1: Пациент и визит */}
+            <section className="rounded-lg border border-border bg-muted/30 p-4">
+              <h3 className="mb-3 text-sm font-semibold uppercase tracking-wider text-muted-foreground">
+                Пациент и визит
+              </h3>
+              <div className="grid gap-4 md:grid-cols-3">
+                <div className="grid gap-2 md:col-span-2">
+                  <Label>Питомец *</Label>
+                  <Select
+                    value={formData.pet_id}
+                    onValueChange={(v) => setFormData({ ...formData, pet_id: v })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Выберите питомца" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <div className="p-2">
+                        <Input
+                          placeholder="Поиск по кличке..."
+                          value={petSearch}
+                          onChange={(e) => setPetSearch(e.target.value)}
+                          className="mb-2"
+                        />
+                      </div>
+                      {(petSearch
+                        ? pets.filter(p => p.name.toLowerCase().includes(petSearch.toLowerCase()))
+                        : pets
+                      ).map((pet) => (
+                        <SelectItem key={pet.id} value={pet.id}>
+                          {pet.name} ({(pet as any).client?.full_name})
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="grid gap-2">
+                  <Label>Дата и время *</Label>
+                  <Input
+                    type="datetime-local"
+                    value={formData.visit_date}
+                    onChange={(e) => setFormData({ ...formData, visit_date: e.target.value })}
+                  />
+                </div>
+                <div className="grid gap-2 md:col-span-3">
+                  <Label>Ветеринар</Label>
+                  <Select
+                    value={formData.veterinarian_id}
+                    onValueChange={(v) => setFormData({ ...formData, veterinarian_id: v })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Выберите врача" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {vets.map((vet) => (
+                        <SelectItem key={vet.id} value={vet.id}>
+                          {vet.full_name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+            </section>
+
+            {/* Блок 2: Vital Signs — отдельно, всегда на виду */}
+            <section className="rounded-lg border border-primary/20 bg-primary/5 p-4">
+              <h3 className="mb-3 flex items-center gap-2 text-sm font-semibold uppercase tracking-wider text-primary">
+                <Thermometer className="h-4 w-4" />
+                Витальные показатели
+              </h3>
+              <div className="grid gap-3 md:grid-cols-2">
+                <div className="grid gap-2">
+                  <Label className="text-xs">Вес (кг)</Label>
+                  <Input
+                    type="number"
+                    step="0.1"
+                    value={formData.weight_at_visit}
+                    onChange={(e) => setFormData({ ...formData, weight_at_visit: e.target.value })}
+                    placeholder="5.5"
+                  />
+                </div>
+                <div className="grid gap-2">
+                  <Label className="text-xs">Температура (°C)</Label>
+                  <Input
+                    type="number"
+                    step="0.1"
+                    value={formData.temperature}
+                    onChange={(e) => setFormData({ ...formData, temperature: e.target.value })}
+                    placeholder="38.5"
+                  />
+                </div>
+              </div>
+            </section>
+
+            {/* Блок 3: Предупреждения о пациенте — аллергии/вакцинация, выделено */}
+            <section className="rounded-lg border border-destructive/30 bg-destructive/5 p-4">
+              <h3 className="mb-3 text-sm font-semibold uppercase tracking-wider text-destructive">
+                ⚠️ Предупреждения о пациенте
+              </h3>
+              <div className="grid gap-4 md:grid-cols-2">
+                <div className="grid gap-2">
+                  <Label>Аллергии / непереносимости</Label>
+                  <Input
+                    value={formData.allergy_notes}
+                    onChange={(e) => setFormData({ ...formData, allergy_notes: e.target.value })}
+                    placeholder="Препараты, продукты, противопоказания"
+                  />
+                </div>
+                <div className="grid gap-2">
+                  <Label>Статус вакцинации</Label>
+                  <Input
+                    value={formData.vaccination_status}
+                    onChange={(e) => setFormData({ ...formData, vaccination_status: e.target.value })}
+                    placeholder="Актуально / просрочено / какие именно"
+                  />
+                </div>
+              </div>
+            </section>
+
+            {/* S — Subjective */}
+            <section className="rounded-lg border border-border p-4">
+              <h3 className="mb-1 flex items-baseline gap-2 text-base font-semibold">
+                <span className="rounded bg-primary px-2 py-0.5 text-xs font-bold text-primary-foreground">S</span>
+                Subjective · Со слов владельца
+              </h3>
+              <p className="mb-3 text-xs text-muted-foreground">Что владелец рассказал — жалобы, история, поведение.</p>
+              <div className="space-y-3">
+                <div className="grid gap-2">
+                  <Label>Основные жалобы</Label>
+                  <Input
+                    value={formData.chief_complaint}
+                    onChange={(e) => setFormData({ ...formData, chief_complaint: e.target.value })}
+                    placeholder="Основная причина обращения"
+                  />
+                </div>
+                <div className="grid gap-2">
+                  <Label>Анамнез</Label>
+                  <Textarea
+                    rows={3}
+                    value={formData.anamnesis}
+                    onChange={(e) => setFormData({ ...formData, anamnesis: e.target.value })}
+                    placeholder="Когда началось, длительность, питание, активность, перенесённые болезни..."
+                  />
+                </div>
+              </div>
+            </section>
+
+            {/* O — Objective */}
+            <section className="rounded-lg border border-border p-4">
+              <h3 className="mb-1 flex items-baseline gap-2 text-base font-semibold">
+                <span className="rounded bg-primary px-2 py-0.5 text-xs font-bold text-primary-foreground">O</span>
+                Objective · Объективный осмотр
+              </h3>
+              <p className="mb-3 text-xs text-muted-foreground">Что выявил врач — физикальный осмотр и измерения.</p>
+              <div className="space-y-3">
+                <div className="grid gap-2">
+                  <Label>Данные осмотра</Label>
+                  <Textarea
+                    rows={3}
+                    value={formData.examination_notes}
+                    onChange={(e) => setFormData({ ...formData, examination_notes: e.target.value })}
+                    placeholder="Общий вид, упитанность, шерсть, слизистые..."
+                  />
+                </div>
+                <div className="grid gap-2">
+                  <Label>Клинические показатели по системам</Label>
+                  <Textarea
+                    rows={3}
+                    value={formData.clinical_findings}
+                    onChange={(e) => setFormData({ ...formData, clinical_findings: e.target.value })}
+                    placeholder="ССС, дыхание, ЖКТ, нервная система, кожа, опорно-двигательный аппарат..."
+                  />
+                </div>
+                <div className="grid gap-2">
+                  <Label>Результаты анализов и исследований</Label>
+                  <Textarea
+                    rows={3}
+                    value={formData.lab_results}
+                    onChange={(e) => setFormData({ ...formData, lab_results: e.target.value })}
+                    placeholder="ОАК, биохимия, УЗИ, рентген... PDF можно прикрепить после сохранения."
+                  />
+                </div>
+              </div>
+            </section>
+
+            {/* A — Assessment */}
+            <section className="rounded-lg border border-border p-4">
+              <h3 className="mb-1 flex items-baseline gap-2 text-base font-semibold">
+                <span className="rounded bg-primary px-2 py-0.5 text-xs font-bold text-primary-foreground">A</span>
+                Assessment · Диагноз и оценка
+              </h3>
+              <p className="mb-3 text-xs text-muted-foreground">Клиническое заключение и дифференциальный диагноз.</p>
+              <div className="grid gap-2">
+                <Label>Диагноз</Label>
+                <Textarea
+                  rows={3}
+                  value={formData.diagnosis}
+                  onChange={(e) => setFormData({ ...formData, diagnosis: e.target.value })}
+                  placeholder="Основной диагноз, сопутствующие, дифференциальные диагнозы..."
+                />
+              </div>
+            </section>
+
+            {/* P — Plan */}
+            <section className="rounded-lg border border-border p-4">
+              <h3 className="mb-1 flex items-baseline gap-2 text-base font-semibold">
+                <span className="rounded bg-primary px-2 py-0.5 text-xs font-bold text-primary-foreground">P</span>
+                Plan · План лечения и наблюдения
+              </h3>
+              <p className="mb-3 text-xs text-muted-foreground">Что делаем: лечение, назначения, рекомендации, контроль.</p>
+              <div className="grid gap-3 md:grid-cols-2">
+                <div className="grid gap-2 md:col-span-2">
+                  <Label>Лечение / манипуляции</Label>
+                  <Textarea
+                    rows={3}
+                    value={formData.treatment}
+                    onChange={(e) => setFormData({ ...formData, treatment: e.target.value })}
+                    placeholder="Проведённые процедуры, инъекции, операции..."
+                  />
+                </div>
+                <div className="grid gap-2">
+                  <Label>Назначения / Рецепты</Label>
+                  <Textarea
+                    rows={3}
+                    value={formData.prescriptions}
+                    onChange={(e) => setFormData({ ...formData, prescriptions: e.target.value })}
+                    placeholder="Препараты, дозировки, кратность..."
+                  />
+                </div>
+                <div className="grid gap-2">
+                  <Label>Использованные материалы</Label>
+                  <Textarea
+                    rows={3}
+                    value={formData.materials_used}
+                    onChange={(e) => setFormData({ ...formData, materials_used: e.target.value })}
+                    placeholder="Препараты, расходники для счёта..."
+                  />
+                </div>
+                <div className="grid gap-2">
+                  <Label>План наблюдения</Label>
+                  <Textarea
+                    rows={2}
+                    value={formData.follow_up_plan}
+                    onChange={(e) => setFormData({ ...formData, follow_up_plan: e.target.value })}
+                    placeholder="Контроль, повторные анализы..."
+                  />
+                </div>
+                <div className="grid gap-2">
+                  <Label>Рекомендации владельцу</Label>
+                  <Textarea
+                    rows={2}
+                    value={formData.owner_recommendations}
+                    onChange={(e) => setFormData({ ...formData, owner_recommendations: e.target.value })}
+                    placeholder="Уход дома, кормление, ограничения..."
+                  />
+                </div>
+                <div className="grid gap-2">
+                  <Label>Дата следующего контроля</Label>
+                  <Input
+                    type="datetime-local"
+                    value={formData.next_visit_date}
+                    onChange={(e) => setFormData({ ...formData, next_visit_date: e.target.value })}
+                  />
+                </div>
+                <div className="grid gap-2">
+                  <Label>Внутренние комментарии врача</Label>
+                  <Textarea
+                    rows={2}
+                    value={formData.doctor_notes}
+                    onChange={(e) => setFormData({ ...formData, doctor_notes: e.target.value })}
+                    placeholder="Заметки для коллег, не показываются клиенту..."
+                  />
+                </div>
+              </div>
+            </section>
           </div>
-          <DialogFooter>
+
+          <DialogFooter className="sticky bottom-0 border-t border-border bg-background/95 px-6 py-4 backdrop-blur">
             <Button variant="outline" onClick={() => setDialogOpen(false)}>
               Отмена
             </Button>
             <Button onClick={handleSubmit}>
-              {selectedRecord ? 'Сохранить' : 'Создать'}
+              {selectedRecord ? 'Сохранить изменения' : 'Создать визит'}
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
 
       {/* Detail Dialog */}
       <Dialog open={detailDialogOpen} onOpenChange={setDetailDialogOpen}>
@@ -820,43 +935,104 @@ export default function MedicalRecords() {
                       <span className="font-medium">{detailRecord.temperature}°C</span>
                     </div>
                   )}
-                </div>
               </div>
+
+              {/* Patient alerts banner — аллергии/вакцинация всегда на виду */}
+              {(detailRecord.allergy_notes || detailRecord.vaccination_status) && (
+                <div className="mx-6 mt-4 space-y-2">
+                  {detailRecord.allergy_notes && (
+                    <div className="flex items-start gap-2 rounded-lg border border-destructive/40 bg-destructive/10 p-3">
+                      <span className="text-lg leading-none">⚠️</span>
+                      <div className="flex-1 text-sm">
+                        <span className="font-semibold text-destructive">Аллергии / противопоказания: </span>
+                        <span>{detailRecord.allergy_notes}</span>
+                      </div>
+                    </div>
+                  )}
+                  {detailRecord.vaccination_status && (
+                    <div className="flex items-start gap-2 rounded-lg border border-primary/30 bg-primary/5 p-3 text-sm">
+                      <span className="text-lg leading-none">🛡️</span>
+                      <div className="flex-1">
+                        <span className="font-semibold">Вакцинация: </span>
+                        <span>{detailRecord.vaccination_status}</span>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
 
               <Tabs defaultValue="card" className="p-6">
                 <TabsList className="grid w-full grid-cols-3">
-                  <TabsTrigger value="card"><ClipboardList className="mr-2 h-4 w-4" />Осмотр</TabsTrigger>
+                  <TabsTrigger value="card"><ClipboardList className="mr-2 h-4 w-4" />SOAP</TabsTrigger>
                   <TabsTrigger value="prescriptions"><Pill className="mr-2 h-4 w-4" />Назначения</TabsTrigger>
                   <TabsTrigger value="files"><FlaskConical className="mr-2 h-4 w-4" />Исследования</TabsTrigger>
                 </TabsList>
 
                 <TabsContent value="card" className="mt-5 space-y-5">
-                  {[
-                    { label: 'Жалобы', value: detailRecord.chief_complaint, icon: '💬' },
-                    { label: 'Анамнез', value: detailRecord.anamnesis, icon: '📌' },
-                    { label: 'Вакцинация', value: detailRecord.vaccination_status, icon: '🛡️' },
-                    { label: 'Аллергии / ограничения', value: detailRecord.allergy_notes, icon: '⚠️' },
-                    { label: 'Осмотр', value: detailRecord.examination_notes, icon: '🔍' },
-                    { label: 'Клинические показатели', value: detailRecord.clinical_findings, icon: '📈' },
-                    { label: 'Диагноз', value: detailRecord.diagnosis, icon: '🩺' },
-                    { label: 'Лечение', value: detailRecord.treatment, icon: '💊' },
-                    { label: 'Назначения', value: detailRecord.prescriptions, icon: '📋' },
-                    { label: 'Анализы', value: detailRecord.lab_results, icon: '🧪' },
-                    { label: 'План наблюдения', value: detailRecord.follow_up_plan, icon: '🔁' },
-                    { label: 'Рекомендации владельцу', value: detailRecord.owner_recommendations, icon: '🏠' },
-                    { label: 'Материалы', value: detailRecord.materials_used, icon: '🧰' },
-                    { label: 'Комментарии врача', value: detailRecord.doctor_notes, icon: '📝' },
-                    { label: 'Следующий контроль', value: detailRecord.next_visit_date ? format(new Date(detailRecord.next_visit_date), 'd MMMM yyyy, HH:mm', { locale: ru }) : '', icon: '📅' },
-                  ].filter(s => s.value).map((section) => (
-                    <div key={section.label} className="group">
-                      <div className="mb-1.5 flex items-center gap-2">
-                        <span className="text-base">{section.icon}</span>
-                        <h4 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">{section.label}</h4>
-                      </div>
-                      <p className="whitespace-pre-wrap pl-7 text-sm leading-relaxed">{section.value}</p>
+                  {([
+                    {
+                      key: 'S',
+                      title: 'Subjective · Со слов владельца',
+                      items: [
+                        { label: 'Жалобы', value: detailRecord.chief_complaint },
+                        { label: 'Анамнез', value: detailRecord.anamnesis },
+                      ],
+                    },
+                    {
+                      key: 'O',
+                      title: 'Objective · Осмотр и измерения',
+                      items: [
+                        { label: 'Данные осмотра', value: detailRecord.examination_notes },
+                        { label: 'Клинические показатели', value: detailRecord.clinical_findings },
+                        { label: 'Результаты анализов', value: detailRecord.lab_results },
+                      ],
+                    },
+                    {
+                      key: 'A',
+                      title: 'Assessment · Диагноз',
+                      items: [
+                        { label: 'Диагноз', value: detailRecord.diagnosis },
+                      ],
+                    },
+                    {
+                      key: 'P',
+                      title: 'Plan · Лечение и рекомендации',
+                      items: [
+                        { label: 'Лечение', value: detailRecord.treatment },
+                        { label: 'Назначения', value: detailRecord.prescriptions },
+                        { label: 'Материалы', value: detailRecord.materials_used },
+                        { label: 'План наблюдения', value: detailRecord.follow_up_plan },
+                        { label: 'Рекомендации владельцу', value: detailRecord.owner_recommendations },
+                        { label: 'Следующий контроль', value: detailRecord.next_visit_date ? format(new Date(detailRecord.next_visit_date), 'd MMMM yyyy, HH:mm', { locale: ru }) : '' },
+                        { label: 'Комментарии врача', value: detailRecord.doctor_notes },
+                      ],
+                    },
+                  ] as const)
+                    .map(group => ({ ...group, items: group.items.filter(i => i.value) }))
+                    .filter(group => group.items.length > 0)
+                    .map(group => (
+                      <section key={group.key} className="rounded-lg border border-border p-4">
+                        <h3 className="mb-3 flex items-baseline gap-2 text-sm font-semibold">
+                          <span className="rounded bg-primary px-2 py-0.5 text-xs font-bold text-primary-foreground">{group.key}</span>
+                          {group.title}
+                        </h3>
+                        <div className="space-y-3">
+                          {group.items.map(item => (
+                            <div key={item.label}>
+                              <h4 className="mb-1 text-xs font-semibold uppercase tracking-wider text-muted-foreground">{item.label}</h4>
+                              <p className="whitespace-pre-wrap text-sm leading-relaxed">{item.value}</p>
+                            </div>
+                          ))}
+                        </div>
+                      </section>
+                    ))}
+                  {!detailRecord.chief_complaint && !detailRecord.anamnesis && !detailRecord.examination_notes && !detailRecord.diagnosis && !detailRecord.treatment && (
+                    <div className="rounded-lg border border-dashed border-border p-8 text-center text-sm text-muted-foreground">
+                      Запись пустая — нажмите «Редактировать», чтобы заполнить.
                     </div>
-                  ))}
+                  )}
                 </TabsContent>
+
 
                 <TabsContent value="prescriptions" className="mt-5 space-y-3">
                   {((detailRecord.prescriptions_list as any[]) || []).length === 0 ? (

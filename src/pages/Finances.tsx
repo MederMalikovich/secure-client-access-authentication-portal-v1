@@ -39,7 +39,7 @@ import { format } from 'date-fns';
 import { ru } from 'date-fns/locale';
 import { DateScopeSelector, DateScope, filterByScope } from '@/components/DateScopeSelector';
 
-export default function Finances() {
+function InvoicesView() {
   const { toast } = useToast();
   const { hasAnyRole } = useAuth();
   const canManage = hasAnyRole(['admin', 'accountant']);
@@ -593,15 +593,6 @@ export default function Finances() {
 
   return (
     <div>
-      <PageHeader
-        title="Финансы"
-        description="Управление счетами и платежами"
-        breadcrumbs={[
-          { label: 'Дашборд', href: '/dashboard' },
-          { label: 'Финансы' },
-        ]}
-      />
-
       {/* Stats */}
       <div className="grid gap-4 md:grid-cols-3 mb-6">
         <StatCard

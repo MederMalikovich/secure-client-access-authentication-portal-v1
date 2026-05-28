@@ -85,6 +85,66 @@ export type Database = {
           },
         ]
       }
+      cash_shifts: {
+        Row: {
+          card_sales: number | null
+          cash_sales: number | null
+          closed_at: string | null
+          closed_by: string | null
+          closing_cash: number | null
+          created_at: string
+          difference: number | null
+          expected_cash: number | null
+          id: string
+          notes: string | null
+          opened_at: string
+          opened_by: string
+          opening_cash: number
+          other_sales: number | null
+          status: string
+          total_sales: number | null
+          updated_at: string
+        }
+        Insert: {
+          card_sales?: number | null
+          cash_sales?: number | null
+          closed_at?: string | null
+          closed_by?: string | null
+          closing_cash?: number | null
+          created_at?: string
+          difference?: number | null
+          expected_cash?: number | null
+          id?: string
+          notes?: string | null
+          opened_at?: string
+          opened_by: string
+          opening_cash?: number
+          other_sales?: number | null
+          status?: string
+          total_sales?: number | null
+          updated_at?: string
+        }
+        Update: {
+          card_sales?: number | null
+          cash_sales?: number | null
+          closed_at?: string | null
+          closed_by?: string | null
+          closing_cash?: number | null
+          created_at?: string
+          difference?: number | null
+          expected_cash?: number | null
+          id?: string
+          notes?: string | null
+          opened_at?: string
+          opened_by?: string
+          opening_cash?: number
+          other_sales?: number | null
+          status?: string
+          total_sales?: number | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       client_notification_preferences: {
         Row: {
           client_id: string
@@ -914,6 +974,45 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      medical_record_audit: {
+        Row: {
+          action: string
+          changed_fields: string[] | null
+          created_at: string
+          id: string
+          medical_record_id: string
+          new_data: Json | null
+          old_data: Json | null
+          pet_id: string | null
+          user_email: string | null
+          user_id: string | null
+        }
+        Insert: {
+          action: string
+          changed_fields?: string[] | null
+          created_at?: string
+          id?: string
+          medical_record_id: string
+          new_data?: Json | null
+          old_data?: Json | null
+          pet_id?: string | null
+          user_email?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          action?: string
+          changed_fields?: string[] | null
+          created_at?: string
+          id?: string
+          medical_record_id?: string
+          new_data?: Json | null
+          old_data?: Json | null
+          pet_id?: string | null
+          user_email?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
       }
       medical_record_diagnoses: {
         Row: {

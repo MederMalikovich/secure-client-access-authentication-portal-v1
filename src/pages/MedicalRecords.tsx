@@ -1031,6 +1031,7 @@ export default function MedicalRecords() {
                       Запись пустая — нажмите «Редактировать», чтобы заполнить.
                     </div>
                   )}
+                </TabsContent>
 
 
                 <TabsContent value="prescriptions" className="mt-5 space-y-3">

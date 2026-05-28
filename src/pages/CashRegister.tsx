@@ -34,7 +34,7 @@ interface CashShift {
   notes: string | null;
 }
 
-export default function CashRegister() {
+export default function CashRegister({ embedded = false }: { embedded?: boolean } = {}) {
   const { user, hasAnyRole } = useAuth();
   const { toast } = useToast();
   const canOpen = hasAnyRole(['admin', 'manager', 'accountant', 'registrar']);
@@ -216,26 +216,26 @@ export default function CashRegister() {
 
   return (
     <div className="space-y-6">
-      <PageHeader
-        title="Кассовая смена"
-        description="Открытие и закрытие кассы с актом сверки"
-        breadcrumbs={[{ label: 'Финансы', href: '/finances' }, { label: 'Касса' }]}
-        actions={
-          openShift ? (
-            canClose && (
+      {!embedded && (
+        <PageHeader
+          title="Кассовая смена"
+          description="Открытие и закрытие кассы с актом сверки"
+          breadcrumbs={[{ label: 'Финансы', href: '/finances' }, { label: 'Касса' }]}
+        />
+      )}
+      <div className="flex justify-end">
+        {openShift
+          ? canClose && (
               <Button onClick={prepareClose} variant="destructive" className="gap-2">
                 <Lock className="h-4 w-4" /> Закрыть смену
               </Button>
             )
-          ) : (
-            canOpen && (
+          : canOpen && (
               <Button onClick={() => setOpenDialogOpen(true)} className="gap-2">
                 <LockOpen className="h-4 w-4" /> Открыть смену
               </Button>
-            )
-          )
-        }
-      />
+            )}
+      </div>
 
       <Card className="glass">
         <CardHeader>

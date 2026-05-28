@@ -196,18 +196,18 @@ export default function CashRegister() {
   };
 
   const columns: Column<CashShift>[] = [
-    { key: 'opened_at', header: 'Открыта', render: (s) => format(new Date(s.opened_at), 'dd.MM.yyyy HH:mm', { locale: ru }) },
-    { key: 'closed_at', header: 'Закрыта', render: (s) => s.closed_at ? format(new Date(s.closed_at), 'dd.MM.yyyy HH:mm', { locale: ru }) : '—' },
-    { key: 'total_sales', header: 'Продажи', render: (s) => formatCurrency(Number(s.total_sales || 0)) },
-    { key: 'difference', header: 'Расхождение', render: (s) => s.difference === null ? '—' : (
+    { key: 'opened_at', header: 'Открыта', cell: (s) => format(new Date(s.opened_at), 'dd.MM.yyyy HH:mm', { locale: ru }) },
+    { key: 'closed_at', header: 'Закрыта', cell: (s) => s.closed_at ? format(new Date(s.closed_at), 'dd.MM.yyyy HH:mm', { locale: ru }) : '—' },
+    { key: 'total_sales', header: 'Продажи', cell: (s) => formatCurrency(Number(s.total_sales || 0)) },
+    { key: 'difference', header: 'Расхождение', cell: (s) => s.difference === null ? '—' : (
       <span className={Number(s.difference) === 0 ? '' : Number(s.difference) < 0 ? 'text-destructive' : 'text-warning'}>
         {formatCurrency(Number(s.difference))}
       </span>
     )},
-    { key: 'status', header: 'Статус', render: (s) => s.status === 'open'
+    { key: 'status', header: 'Статус', cell: (s) => s.status === 'open'
         ? <Badge className="bg-green-500/20 text-green-500">Открыта</Badge>
         : <Badge variant="secondary">Закрыта</Badge> },
-    { key: 'actions', header: '', render: (s) => s.status === 'closed' ? (
+    { key: 'actions', header: '', cell: (s) => s.status === 'closed' ? (
       <Button size="sm" variant="ghost" onClick={() => printAct(s)} className="gap-1">
         <FileText className="h-4 w-4" />Акт
       </Button>
@@ -272,7 +272,7 @@ export default function CashRegister() {
           <CardTitle>История смен</CardTitle>
         </CardHeader>
         <CardContent>
-          <DataTable data={shifts} columns={columns} loading={loading} emptyMessage="Смен пока нет" />
+          <DataTable data={shifts} columns={columns} isLoading={loading} emptyMessage="Смен пока нет" />
         </CardContent>
       </Card>
 

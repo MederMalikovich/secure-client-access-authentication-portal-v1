@@ -60,14 +60,14 @@ export default function MedicalAudit() {
   });
 
   const columns: Column<AuditEntry>[] = [
-    { key: 'created_at', header: 'Дата', render: (e) => format(new Date(e.created_at), 'dd.MM.yyyy HH:mm:ss', { locale: ru }) },
-    { key: 'user_email', header: 'Пользователь', render: (e) => e.user_email || '—' },
-    { key: 'pet', header: 'Питомец', render: (e) => e.pet?.name || '—' },
-    { key: 'action', header: 'Действие', render: (e) => {
+    { key: 'created_at', header: 'Дата', cell: (e) => format(new Date(e.created_at), 'dd.MM.yyyy HH:mm:ss', { locale: ru }) },
+    { key: 'user_email', header: 'Пользователь', cell: (e) => e.user_email || '—' },
+    { key: 'pet', header: 'Питомец', cell: (e) => e.pet?.name || '—' },
+    { key: 'action', header: 'Действие', cell: (e) => {
       const a = actionLabels[e.action] || { label: e.action, cls: '' };
       return <Badge className={a.cls}>{a.label}</Badge>;
     }},
-    { key: 'changed_fields', header: 'Изменённые поля', render: (e) =>
+    { key: 'changed_fields', header: 'Изменённые поля', cell: (e) =>
       e.changed_fields?.length ? (
         <div className="flex flex-wrap gap-1">
           {e.changed_fields.slice(0, 3).map((f) => <Badge key={f} variant="outline" className="text-xs">{f}</Badge>)}
@@ -105,7 +105,7 @@ export default function MedicalAudit() {
           <DataTable
             data={filtered}
             columns={columns}
-            loading={loading}
+            isLoading={loading}
             emptyMessage="Записей нет"
             onRowClick={(e) => setSelected(e)}
           />

@@ -223,7 +223,6 @@ export default function Loyalty() {
                   <div>
                     <Label>Порог входа (₸)</Label>
                     <Input type="number" value={0} disabled />
-                    <p className="text-xs text-muted-foreground mt-1">Назначается всем новым клиентам</p>
                   <div>
                     <Label>% начисления</Label>
                     <Input type="number" min={0} max={100} value={settings?.silver_percent ?? 3} onChange={(e) => setSettings({ ...settings, silver_percent: e.target.value })} disabled={!canManage} />

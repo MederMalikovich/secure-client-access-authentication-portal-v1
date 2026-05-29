@@ -374,7 +374,7 @@ export default function Settings() {
         </TabsContent>
 
         <TabsContent value="appearance">
-          <div className="grid gap-4 md:grid-cols-2">
+          <div className="grid gap-4">
             <Card className="glass">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
@@ -409,8 +409,10 @@ export default function Settings() {
                 </p>
               </CardContent>
             </Card>
+            <ThemeCustomizer />
           </div>
         </TabsContent>
+
 
         <TabsContent value="notifications">
           <NotificationChannelsTab />

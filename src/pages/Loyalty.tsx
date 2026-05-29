@@ -72,8 +72,6 @@ export default function Loyalty() {
     try {
       const { error } = await supabase.from('loyalty_settings').update({
         is_enabled: settings.is_enabled,
-        accrual_percent: Number(settings.accrual_percent),
-        max_redeem_percent: Number(settings.max_redeem_percent),
         referrer_bonus: Number(settings.referrer_bonus),
         referee_bonus: Number(settings.referee_bonus),
         gold_threshold: Number(settings.gold_threshold || 0),
@@ -81,7 +79,11 @@ export default function Loyalty() {
         silver_percent: Number(settings.silver_percent || 0),
         gold_percent: Number(settings.gold_percent || 0),
         vip_percent: Number(settings.vip_percent || 0),
+        silver_max_redeem: Number(settings.silver_max_redeem || 0),
+        gold_max_redeem: Number(settings.gold_max_redeem || 0),
+        vip_max_redeem: Number(settings.vip_max_redeem || 0),
       }).eq('id', settings.id);
+
       if (error) throw error;
       toast({ title: 'Настройки сохранены' });
       load();

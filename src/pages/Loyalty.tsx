@@ -205,11 +205,10 @@ export default function Loyalty() {
                 <Switch checked={!!settings?.is_enabled} onCheckedChange={(v) => setSettings({ ...settings, is_enabled: v })} disabled={!canManage} />
               </div>
               <div className="grid sm:grid-cols-2 gap-3">
-                <div><Label>Макс. % списания от чека</Label><Input type="number" min={0} max={100} value={settings?.max_redeem_percent ?? 0} onChange={(e) => setSettings({ ...settings, max_redeem_percent: e.target.value })} disabled={!canManage} /></div>
-                <div><Label>Базовый % начисления</Label><Input type="number" min={0} max={100} value={settings?.accrual_percent ?? 0} onChange={(e) => setSettings({ ...settings, accrual_percent: e.target.value })} disabled={!canManage} /><p className="text-xs text-muted-foreground mt-1">Используется, если клиент ещё не достиг ни одного уровня</p></div>
                 <div><Label>Бонус пригласившему (₸)</Label><Input type="number" min={0} value={settings?.referrer_bonus ?? 0} onChange={(e) => setSettings({ ...settings, referrer_bonus: e.target.value })} disabled={!canManage} /></div>
                 <div><Label>Бонус приглашённому (₸)</Label><Input type="number" min={0} value={settings?.referee_bonus ?? 0} onChange={(e) => setSettings({ ...settings, referee_bonus: e.target.value })} disabled={!canManage} /></div>
               </div>
+
             </CardContent>
           </Card>
 

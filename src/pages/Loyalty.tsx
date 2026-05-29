@@ -193,37 +193,79 @@ export default function Loyalty() {
         </TabsList>
 
         {/* Settings */}
+        {/* Settings */}
         <TabsContent value="settings" className="space-y-4">
           <Card>
-            <CardHeader><CardTitle>Параметры программы</CardTitle></CardHeader>
+            <CardHeader><CardTitle>Основные параметры</CardTitle></CardHeader>
             <CardContent className="space-y-4">
               <div className="flex items-center justify-between">
                 <div><Label>Программа активна</Label><p className="text-xs text-muted-foreground">Начислять бонусы за каждую оплату</p></div>
                 <Switch checked={!!settings?.is_enabled} onCheckedChange={(v) => setSettings({ ...settings, is_enabled: v })} disabled={!canManage} />
               </div>
               <div className="grid sm:grid-cols-2 gap-3">
-                <div><Label>Процент начисления (%)</Label><Input type="number" min={0} max={100} value={settings?.accrual_percent ?? 0} onChange={(e) => setSettings({ ...settings, accrual_percent: e.target.value })} disabled={!canManage} /></div>
                 <div><Label>Макс. % списания от чека</Label><Input type="number" min={0} max={100} value={settings?.max_redeem_percent ?? 0} onChange={(e) => setSettings({ ...settings, max_redeem_percent: e.target.value })} disabled={!canManage} /></div>
+                <div><Label>Базовый % начисления</Label><Input type="number" min={0} max={100} value={settings?.accrual_percent ?? 0} onChange={(e) => setSettings({ ...settings, accrual_percent: e.target.value })} disabled={!canManage} /><p className="text-xs text-muted-foreground mt-1">Используется, если клиент ещё не достиг ни одного уровня</p></div>
                 <div><Label>Бонус пригласившему (₸)</Label><Input type="number" min={0} value={settings?.referrer_bonus ?? 0} onChange={(e) => setSettings({ ...settings, referrer_bonus: e.target.value })} disabled={!canManage} /></div>
                 <div><Label>Бонус приглашённому (₸)</Label><Input type="number" min={0} value={settings?.referee_bonus ?? 0} onChange={(e) => setSettings({ ...settings, referee_bonus: e.target.value })} disabled={!canManage} /></div>
               </div>
-
-              <div className="border-t pt-4">
-                <h4 className="font-semibold mb-3 flex items-center gap-2"><Gift className="h-4 w-4 text-primary" />Уровни клиентов</h4>
-                <p className="text-xs text-muted-foreground mb-3">Уровень определяется по сумме оплат за последние 12 месяцев. Процент начисления зависит от уровня.</p>
-                <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                  <div><Label>Silver — % начисления</Label><Input type="number" min={0} max={100} value={settings?.silver_percent ?? 3} onChange={(e) => setSettings({ ...settings, silver_percent: e.target.value })} disabled={!canManage} /></div>
-                  <div><Label>Gold — порог (₸)</Label><Input type="number" min={0} value={settings?.gold_threshold ?? 50000} onChange={(e) => setSettings({ ...settings, gold_threshold: e.target.value })} disabled={!canManage} /></div>
-                  <div><Label>Gold — % начисления</Label><Input type="number" min={0} max={100} value={settings?.gold_percent ?? 5} onChange={(e) => setSettings({ ...settings, gold_percent: e.target.value })} disabled={!canManage} /></div>
-                  <div><Label>VIP — порог (₸)</Label><Input type="number" min={0} value={settings?.vip_threshold ?? 200000} onChange={(e) => setSettings({ ...settings, vip_threshold: e.target.value })} disabled={!canManage} /></div>
-                  <div><Label>VIP — % начисления</Label><Input type="number" min={0} max={100} value={settings?.vip_percent ?? 10} onChange={(e) => setSettings({ ...settings, vip_percent: e.target.value })} disabled={!canManage} /></div>
-                </div>
-              </div>
-
-              {canManage && <Button onClick={saveSettings} className="gradient-primary">Сохранить настройки</Button>}
             </CardContent>
           </Card>
+
+          <div>
+            <h3 className="font-semibold mb-2 flex items-center gap-2"><Gift className="h-4 w-4 text-primary" />Уровни клиентов</h3>
+            <p className="text-xs text-muted-foreground mb-3">Уровень определяется по сумме оплат за последние 12 месяцев. Для каждого уровня — свой процент начисления.</p>
+            <div className="grid gap-3 md:grid-cols-3">
+              {/* Silver */}
+              <Card className="border-l-4 border-l-slate-400">
+                <CardHeader className="pb-2"><CardTitle className="text-base flex items-center gap-2"><Badge variant="secondary">Silver</Badge>Базовый уровень</CardTitle></CardHeader>
+                <CardContent className="space-y-3">
+                  <div>
+                    <Label>Порог входа (₸)</Label>
+                    <Input type="number" value={0} disabled />
+                    <p className="text-xs text-muted-foreground mt-1">Назначается всем новым клиентам</p>
+                  </div>
+                  <div>
+                    <Label>% начисления</Label>
+                    <Input type="number" min={0} max={100} value={settings?.silver_percent ?? 3} onChange={(e) => setSettings({ ...settings, silver_percent: e.target.value })} disabled={!canManage} />
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Gold */}
+              <Card className="border-l-4 border-l-yellow-500">
+                <CardHeader className="pb-2"><CardTitle className="text-base flex items-center gap-2"><Badge className="bg-yellow-500 hover:bg-yellow-500 text-white">Gold</Badge>Средний уровень</CardTitle></CardHeader>
+                <CardContent className="space-y-3">
+                  <div>
+                    <Label>Порог входа (₸)</Label>
+                    <Input type="number" min={0} value={settings?.gold_threshold ?? 50000} onChange={(e) => setSettings({ ...settings, gold_threshold: e.target.value })} disabled={!canManage} />
+                  </div>
+                  <div>
+                    <Label>% начисления</Label>
+                    <Input type="number" min={0} max={100} value={settings?.gold_percent ?? 5} onChange={(e) => setSettings({ ...settings, gold_percent: e.target.value })} disabled={!canManage} />
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* VIP */}
+              <Card className="border-l-4 border-l-primary">
+                <CardHeader className="pb-2"><CardTitle className="text-base flex items-center gap-2"><Badge className="gradient-primary text-white">VIP</Badge>Высший уровень</CardTitle></CardHeader>
+                <CardContent className="space-y-3">
+                  <div>
+                    <Label>Порог входа (₸)</Label>
+                    <Input type="number" min={0} value={settings?.vip_threshold ?? 200000} onChange={(e) => setSettings({ ...settings, vip_threshold: e.target.value })} disabled={!canManage} />
+                  </div>
+                  <div>
+                    <Label>% начисления</Label>
+                    <Input type="number" min={0} max={100} value={settings?.vip_percent ?? 10} onChange={(e) => setSettings({ ...settings, vip_percent: e.target.value })} disabled={!canManage} />
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          </div>
+
+          {canManage && <Button onClick={saveSettings} className="gradient-primary">Сохранить настройки</Button>}
         </TabsContent>
+
 
         {/* Transactions grouped by client */}
         <TabsContent value="transactions" className="space-y-3">

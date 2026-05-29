@@ -40,6 +40,8 @@ import { useTheme } from '@/contexts/ThemeContext';
 import { NotificationChannelsTab } from '@/components/settings/NotificationChannelsTab';
 import { WorkingHoursTab } from '@/components/settings/WorkingHoursTab';
 import { BackupTab } from '@/components/settings/BackupTab';
+import { ThemeCustomizer } from '@/components/settings/ThemeCustomizer';
+
 import { format } from 'date-fns';
 import { ru } from 'date-fns/locale';
 

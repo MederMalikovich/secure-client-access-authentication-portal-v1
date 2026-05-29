@@ -264,10 +264,15 @@ export default function Loyalty() {
                   <div>
                     <Label>Порог входа (₸)</Label>
                     <Input type="number" min={0} value={settings?.vip_threshold ?? 200000} onChange={(e) => setSettings({ ...settings, vip_threshold: e.target.value })} disabled={!canManage} />
-                  </div>
                   <div>
                     <Label>% начисления</Label>
                     <Input type="number" min={0} max={100} value={settings?.vip_percent ?? 10} onChange={(e) => setSettings({ ...settings, vip_percent: e.target.value })} disabled={!canManage} />
+                  </div>
+                  <div>
+                    <Label>Макс. % списания от чека</Label>
+                    <Input type="number" min={0} max={100} value={settings?.vip_max_redeem ?? 70} onChange={(e) => setSettings({ ...settings, vip_max_redeem: e.target.value })} disabled={!canManage} />
+                  </div>
+
                   </div>
                 </CardContent>
               </Card>

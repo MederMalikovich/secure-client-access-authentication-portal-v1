@@ -249,6 +249,11 @@ export default function Loyalty() {
                     <Label>% начисления</Label>
                     <Input type="number" min={0} max={100} value={settings?.gold_percent ?? 5} onChange={(e) => setSettings({ ...settings, gold_percent: e.target.value })} disabled={!canManage} />
                   </div>
+                  <div>
+                    <Label>Макс. % списания от чека</Label>
+                    <Input type="number" min={0} max={100} value={settings?.gold_max_redeem ?? 50} onChange={(e) => setSettings({ ...settings, gold_max_redeem: e.target.value })} disabled={!canManage} />
+                  </div>
+
                 </CardContent>
               </Card>
 

@@ -72,8 +72,6 @@ export default function Loyalty() {
     try {
       const { error } = await supabase.from('loyalty_settings').update({
         is_enabled: settings.is_enabled,
-        accrual_percent: Number(settings.accrual_percent),
-        max_redeem_percent: Number(settings.max_redeem_percent),
         referrer_bonus: Number(settings.referrer_bonus),
         referee_bonus: Number(settings.referee_bonus),
         gold_threshold: Number(settings.gold_threshold || 0),
@@ -81,7 +79,11 @@ export default function Loyalty() {
         silver_percent: Number(settings.silver_percent || 0),
         gold_percent: Number(settings.gold_percent || 0),
         vip_percent: Number(settings.vip_percent || 0),
+        silver_max_redeem: Number(settings.silver_max_redeem || 0),
+        gold_max_redeem: Number(settings.gold_max_redeem || 0),
+        vip_max_redeem: Number(settings.vip_max_redeem || 0),
       }).eq('id', settings.id);
+
       if (error) throw error;
       toast({ title: 'Настройки сохранены' });
       load();
@@ -203,11 +205,10 @@ export default function Loyalty() {
                 <Switch checked={!!settings?.is_enabled} onCheckedChange={(v) => setSettings({ ...settings, is_enabled: v })} disabled={!canManage} />
               </div>
               <div className="grid sm:grid-cols-2 gap-3">
-                <div><Label>Макс. % списания от чека</Label><Input type="number" min={0} max={100} value={settings?.max_redeem_percent ?? 0} onChange={(e) => setSettings({ ...settings, max_redeem_percent: e.target.value })} disabled={!canManage} /></div>
-                <div><Label>Базовый % начисления</Label><Input type="number" min={0} max={100} value={settings?.accrual_percent ?? 0} onChange={(e) => setSettings({ ...settings, accrual_percent: e.target.value })} disabled={!canManage} /><p className="text-xs text-muted-foreground mt-1">Используется, если клиент ещё не достиг ни одного уровня</p></div>
                 <div><Label>Бонус пригласившему (₸)</Label><Input type="number" min={0} value={settings?.referrer_bonus ?? 0} onChange={(e) => setSettings({ ...settings, referrer_bonus: e.target.value })} disabled={!canManage} /></div>
                 <div><Label>Бонус приглашённому (₸)</Label><Input type="number" min={0} value={settings?.referee_bonus ?? 0} onChange={(e) => setSettings({ ...settings, referee_bonus: e.target.value })} disabled={!canManage} /></div>
               </div>
+
             </CardContent>
           </Card>
 
@@ -223,10 +224,15 @@ export default function Loyalty() {
                     <Label>Порог входа (₸)</Label>
                     <Input type="number" value={0} disabled />
                     <p className="text-xs text-muted-foreground mt-1">Назначается всем новым клиентам</p>
-                  </div>
                   <div>
                     <Label>% начисления</Label>
                     <Input type="number" min={0} max={100} value={settings?.silver_percent ?? 3} onChange={(e) => setSettings({ ...settings, silver_percent: e.target.value })} disabled={!canManage} />
+                  </div>
+                  <div>
+                    <Label>Макс. % списания от чека</Label>
+                    <Input type="number" min={0} max={100} value={settings?.silver_max_redeem ?? 30} onChange={(e) => setSettings({ ...settings, silver_max_redeem: e.target.value })} disabled={!canManage} />
+                  </div>
+
                   </div>
                 </CardContent>
               </Card>
@@ -243,6 +249,11 @@ export default function Loyalty() {
                     <Label>% начисления</Label>
                     <Input type="number" min={0} max={100} value={settings?.gold_percent ?? 5} onChange={(e) => setSettings({ ...settings, gold_percent: e.target.value })} disabled={!canManage} />
                   </div>
+                  <div>
+                    <Label>Макс. % списания от чека</Label>
+                    <Input type="number" min={0} max={100} value={settings?.gold_max_redeem ?? 50} onChange={(e) => setSettings({ ...settings, gold_max_redeem: e.target.value })} disabled={!canManage} />
+                  </div>
+
                 </CardContent>
               </Card>
 
@@ -253,10 +264,15 @@ export default function Loyalty() {
                   <div>
                     <Label>Порог входа (₸)</Label>
                     <Input type="number" min={0} value={settings?.vip_threshold ?? 200000} onChange={(e) => setSettings({ ...settings, vip_threshold: e.target.value })} disabled={!canManage} />
-                  </div>
                   <div>
                     <Label>% начисления</Label>
                     <Input type="number" min={0} max={100} value={settings?.vip_percent ?? 10} onChange={(e) => setSettings({ ...settings, vip_percent: e.target.value })} disabled={!canManage} />
+                  </div>
+                  <div>
+                    <Label>Макс. % списания от чека</Label>
+                    <Input type="number" min={0} max={100} value={settings?.vip_max_redeem ?? 70} onChange={(e) => setSettings({ ...settings, vip_max_redeem: e.target.value })} disabled={!canManage} />
+                  </div>
+
                   </div>
                 </CardContent>
               </Card>

@@ -863,6 +863,7 @@ export type Database = {
         Row: {
           accrual_percent: number
           created_at: string
+          gold_max_redeem: number
           gold_percent: number
           gold_threshold: number
           id: string
@@ -871,14 +872,17 @@ export type Database = {
           points_expire_days: number | null
           referee_bonus: number
           referrer_bonus: number
+          silver_max_redeem: number
           silver_percent: number
           updated_at: string
+          vip_max_redeem: number
           vip_percent: number
           vip_threshold: number
         }
         Insert: {
           accrual_percent?: number
           created_at?: string
+          gold_max_redeem?: number
           gold_percent?: number
           gold_threshold?: number
           id?: string
@@ -887,14 +891,17 @@ export type Database = {
           points_expire_days?: number | null
           referee_bonus?: number
           referrer_bonus?: number
+          silver_max_redeem?: number
           silver_percent?: number
           updated_at?: string
+          vip_max_redeem?: number
           vip_percent?: number
           vip_threshold?: number
         }
         Update: {
           accrual_percent?: number
           created_at?: string
+          gold_max_redeem?: number
           gold_percent?: number
           gold_threshold?: number
           id?: string
@@ -903,8 +910,10 @@ export type Database = {
           points_expire_days?: number | null
           referee_bonus?: number
           referrer_bonus?: number
+          silver_max_redeem?: number
           silver_percent?: number
           updated_at?: string
+          vip_max_redeem?: number
           vip_percent?: number
           vip_threshold?: number
         }

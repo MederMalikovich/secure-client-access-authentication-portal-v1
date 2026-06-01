@@ -147,7 +147,7 @@ export function VisitDialog({ open, onClose, visitId, initialPetId, initialAppoi
 
   const loadRefs = async () => {
     const [petsRes, vetsRes, servicesRes, invRes, tplRes] = await Promise.all([
-      supabase.from('pets').select('id, name, species, client_id, allergy_notes, vaccination_status, clients:clients(full_name)').order('name'),
+      supabase.from('pets').select('id, name, species, client_id, clients:clients(full_name), medical_records(allergy_notes, vaccination_status)').order('name'),
       supabase.rpc('list_public_veterinarians'),
       supabase.from('services').select('id, name, price').eq('is_active', true).order('name'),
       supabase.from('inventory_items').select('id, name, sale_price, quantity, unit').eq('is_active', true).order('name'),
@@ -509,21 +509,24 @@ export function VisitDialog({ open, onClose, visitId, initialPetId, initialAppoi
           {(() => {
             const pet = pets.find(p => p.id === form.pet_id);
             if (!pet) return null;
-            const hasAllergy = !!pet.allergy_notes?.trim();
-            const hasVacc = !!pet.vaccination_status?.trim();
+            const mr = Array.isArray(pet.medical_records) ? pet.medical_records[0] : pet.medical_records;
+            const allergy = mr?.allergy_notes || '';
+            const vacc = mr?.vaccination_status || '';
+            const hasAllergy = !!allergy.trim();
+            const hasVacc = !!vacc.trim();
             if (!hasAllergy && !hasVacc) return null;
             return (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-2 mb-4">
                 {hasAllergy && (
                   <div className="flex items-start gap-2 rounded-md border border-destructive/40 bg-destructive/10 p-3 text-sm">
                     <AlertTriangle className="h-4 w-4 mt-0.5 text-destructive shrink-0" />
-                    <div><div className="font-semibold text-destructive">Аллергии / противопоказания</div><div className="text-foreground/90">{pet.allergy_notes}</div></div>
+                    <div><div className="font-semibold text-destructive">Аллергии / противопоказания</div><div className="text-foreground/90">{allergy}</div></div>
                   </div>
                 )}
                 {hasVacc && (
                   <div className="flex items-start gap-2 rounded-md border border-blue-500/40 bg-blue-500/10 p-3 text-sm">
                     <Syringe className="h-4 w-4 mt-0.5 text-blue-400 shrink-0" />
-                    <div><div className="font-semibold text-blue-400">Вакцинация</div><div className="text-foreground/90">{pet.vaccination_status}</div></div>
+                    <div><div className="font-semibold text-blue-400">Вакцинация</div><div className="text-foreground/90">{vacc}</div></div>
                   </div>
                 )}
               </div>

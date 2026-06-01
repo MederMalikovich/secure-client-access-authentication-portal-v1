@@ -509,8 +509,11 @@ export function VisitDialog({ open, onClose, visitId, initialPetId, initialAppoi
           {(() => {
             const pet = pets.find(p => p.id === form.pet_id);
             if (!pet) return null;
-            const hasAllergy = !!pet.allergy_notes?.trim();
-            const hasVacc = !!pet.vaccination_status?.trim();
+            const mr = Array.isArray(pet.medical_records) ? pet.medical_records[0] : pet.medical_records;
+            const allergy = mr?.allergy_notes || '';
+            const vacc = mr?.vaccination_status || '';
+            const hasAllergy = !!allergy.trim();
+            const hasVacc = !!vacc.trim();
             if (!hasAllergy && !hasVacc) return null;
             return (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-2 mb-4">

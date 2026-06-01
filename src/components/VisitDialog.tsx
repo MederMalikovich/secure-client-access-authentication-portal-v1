@@ -298,11 +298,28 @@ export function VisitDialog({ open, onClose, visitId, initialPetId, initialAppoi
     }
     setSaving(true);
     try {
+      // Если завершаем визит — должна быть хотя бы одна услуга или материал к оплате,
+      // иначе триггер не создаст счёт.
+      if (markCompleted) {
+        const hasServices = visitServices.some(s => (s.quantity || 0) * (s.unit_price || 0) > 0);
+        const hasBillableMats = visitMaterials.some(m => m.charged_to_client && (m.quantity || 0) * (m.unit_price || 0) > 0);
+        if (!hasServices && !hasBillableMats) {
+          toast({
+            title: 'Нечего выставлять в счёт',
+            description: 'Добавьте хотя бы одну услугу или материал к оплате перед завершением визита.',
+            variant: 'destructive',
+          });
+          setSaving(false);
+          return;
+        }
+      }
+
       // Сначала сохраняем визит БЕЗ перевода в "completed",
       // чтобы триггер авто-завершения не сработал до синхронизации услуг/материалов.
       const baseStatus: VisitStatus = markCompleted
         ? (form.status === 'completed' ? 'in_consultation' : form.status)
         : form.status;
+
       const payload: any = {
         pet_id: form.pet_id,
         client_id: form.client_id,

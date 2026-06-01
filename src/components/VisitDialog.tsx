@@ -520,13 +520,13 @@ export function VisitDialog({ open, onClose, visitId, initialPetId, initialAppoi
                 {hasAllergy && (
                   <div className="flex items-start gap-2 rounded-md border border-destructive/40 bg-destructive/10 p-3 text-sm">
                     <AlertTriangle className="h-4 w-4 mt-0.5 text-destructive shrink-0" />
-                    <div><div className="font-semibold text-destructive">Аллергии / противопоказания</div><div className="text-foreground/90">{pet.allergy_notes}</div></div>
+                    <div><div className="font-semibold text-destructive">Аллергии / противопоказания</div><div className="text-foreground/90">{allergy}</div></div>
                   </div>
                 )}
                 {hasVacc && (
                   <div className="flex items-start gap-2 rounded-md border border-blue-500/40 bg-blue-500/10 p-3 text-sm">
                     <Syringe className="h-4 w-4 mt-0.5 text-blue-400 shrink-0" />
-                    <div><div className="font-semibold text-blue-400">Вакцинация</div><div className="text-foreground/90">{pet.vaccination_status}</div></div>
+                    <div><div className="font-semibold text-blue-400">Вакцинация</div><div className="text-foreground/90">{vacc}</div></div>
                   </div>
                 )}
               </div>

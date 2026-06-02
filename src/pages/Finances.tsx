@@ -38,6 +38,7 @@ import { Invoice, PaymentStatus, paymentStatusLabels, Client } from '@/lib/types
 import { format } from 'date-fns';
 import { ru } from 'date-fns/locale';
 import { DateScopeSelector, DateScope, filterByScope } from '@/components/DateScopeSelector';
+import { InvoiceDetailsDialog } from '@/components/InvoiceDetailsDialog';
 
 function InvoicesView() {
   const { toast } = useToast();

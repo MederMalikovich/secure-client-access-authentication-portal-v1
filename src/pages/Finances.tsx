@@ -52,6 +52,7 @@ function InvoicesView() {
   const [selectedInvoice, setSelectedInvoice] = useState<Invoice | null>(null);
   const [editInvoice, setEditInvoice] = useState<any | null>(null);
   const [deleteInvoice, setDeleteInvoice] = useState<any | null>(null);
+  const [viewInvoiceId, setViewInvoiceId] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [scope, setScope] = useState<DateScope>('today');
   const [customDate, setCustomDate] = useState(format(new Date(), 'yyyy-MM-dd'));

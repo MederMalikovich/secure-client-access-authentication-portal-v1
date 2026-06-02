@@ -99,7 +99,7 @@ export function VisitDialog({ open, onClose, visitId, initialPetId, initialAppoi
       const dayEnd = new Date(dayStart.getTime() + 24 * 60 * 60 * 1000);
       const [aptRes, visRes] = await Promise.all([
         supabase.from('appointments')
-          .select('id, veterinarian_id, scheduled_at, duration_minutes, status')
+          .select('id, veterinarian_id, scheduled_at, duration_minutes, status, pet_id')
           .gte('scheduled_at', dayStart.toISOString())
           .lt('scheduled_at', dayEnd.toISOString())
           .not('veterinarian_id', 'is', null),
@@ -113,11 +113,15 @@ export function VisitDialog({ open, onClose, visitId, initialPetId, initialAppoi
       // Determine linked appointment_id of the currently-edited visit so we don't count its own slot
       const currentVisit = visitId ? (visRes.data || []).find((v: any) => v.id === visitId) : null;
       const selfAppointmentId = currentVisit?.appointment_id || initialAppointmentId || null;
+      const selfPetId = form.pet_id || null;
+      const selfStartMs = start.getTime();
       const busy = new Set<string>();
       for (const a of aptRes.data || []) {
         if (a.status === 'cancelled' || a.status === 'no_show' || a.status === 'completed') continue;
         if (selfAppointmentId && a.id === selfAppointmentId) continue;
         const aS = new Date(a.scheduled_at);
+        // Fallback: treat appointment as "self" if it shares pet & start time with the visit being edited
+        if (visitId && selfPetId && a.pet_id === selfPetId && Math.abs(aS.getTime() - selfStartMs) < 60000) continue;
         const aE = new Date(aS.getTime() + (a.duration_minutes ?? 30) * 60000);
         if (aS < end && aE > start && a.veterinarian_id) busy.add(a.veterinarian_id);
       }

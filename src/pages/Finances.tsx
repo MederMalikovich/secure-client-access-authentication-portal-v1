@@ -904,6 +904,12 @@ function InvoicesView() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+      {/* Invoice details viewer */}
+      <InvoiceDetailsDialog
+        invoiceId={viewInvoiceId}
+        open={!!viewInvoiceId}
+        onClose={() => setViewInvoiceId(null)}
+      />
     </div>
   );
 }

@@ -140,7 +140,7 @@ export function VisitDialog({ open, onClose, visitId, initialPetId, initialAppoi
     };
     void run();
     return () => { cancelled = true; };
-  }, [open, form.visit_date, duration, visitId, initialAppointmentId]);
+  }, [open, form.visit_date, duration, visitId, initialAppointmentId, form.pet_id]);
 
   useEffect(() => {
     if (!open) return;

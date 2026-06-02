@@ -567,29 +567,36 @@ function InvoicesView() {
     {
       key: 'actions',
       header: '',
-      cell: (invoice) => canManage ? (
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="icon">
-              <MoreVertical className="h-4 w-4" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuItem onClick={() => openPaymentDialog(invoice)}>
-              <CreditCard className="h-4 w-4 mr-2" />
-              Принять оплату
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => openEditDialog(invoice)}>
-              <Pencil className="h-4 w-4 mr-2" />
-              Редактировать
-            </DropdownMenuItem>
-            <DropdownMenuItem className="text-destructive" onClick={() => setDeleteInvoice(invoice)}>
-              <Trash2 className="h-4 w-4 mr-2" />
-              Удалить
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-      ) : null,
+      cell: (invoice) => (
+        <div className="flex items-center justify-end gap-1">
+          <Button variant="ghost" size="icon" onClick={() => setViewInvoiceId(invoice.id)} title="Просмотр">
+            <Eye className="h-4 w-4" />
+          </Button>
+          {canManage && (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="icon">
+                  <MoreVertical className="h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem onClick={() => openPaymentDialog(invoice)}>
+                  <CreditCard className="h-4 w-4 mr-2" />
+                  Принять оплату
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => openEditDialog(invoice)}>
+                  <Pencil className="h-4 w-4 mr-2" />
+                  Редактировать
+                </DropdownMenuItem>
+                <DropdownMenuItem className="text-destructive" onClick={() => setDeleteInvoice(invoice)}>
+                  <Trash2 className="h-4 w-4 mr-2" />
+                  Удалить
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          )}
+        </div>
+      ),
     },
   ];
 

@@ -391,6 +391,45 @@ export type Database = {
           },
         ]
       }
+      finance_audit: {
+        Row: {
+          action: string
+          changed_fields: string[] | null
+          created_at: string
+          entity_id: string
+          entity_type: string
+          id: string
+          new_data: Json | null
+          old_data: Json | null
+          user_email: string | null
+          user_id: string | null
+        }
+        Insert: {
+          action: string
+          changed_fields?: string[] | null
+          created_at?: string
+          entity_id: string
+          entity_type: string
+          id?: string
+          new_data?: Json | null
+          old_data?: Json | null
+          user_email?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          action?: string
+          changed_fields?: string[] | null
+          created_at?: string
+          entity_id?: string
+          entity_type?: string
+          id?: string
+          new_data?: Json | null
+          old_data?: Json | null
+          user_email?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       gift_certificates: {
         Row: {
           amount: number
@@ -780,6 +819,7 @@ export type Database = {
           discount: number | null
           due_at: string | null
           id: string
+          idempotency_key: string | null
           invoice_number: string
           issued_at: string
           medical_record_id: string | null
@@ -798,6 +838,7 @@ export type Database = {
           discount?: number | null
           due_at?: string | null
           id?: string
+          idempotency_key?: string | null
           invoice_number: string
           issued_at?: string
           medical_record_id?: string | null
@@ -816,6 +857,7 @@ export type Database = {
           discount?: number | null
           due_at?: string | null
           id?: string
+          idempotency_key?: string | null
           invoice_number?: string
           issued_at?: string
           medical_record_id?: string | null
@@ -1378,6 +1420,7 @@ export type Database = {
           created_at: string
           created_by: string | null
           id: string
+          idempotency_key: string | null
           invoice_id: string
           notes: string | null
           paid_at: string
@@ -1389,6 +1432,7 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           id?: string
+          idempotency_key?: string | null
           invoice_id: string
           notes?: string | null
           paid_at?: string
@@ -1400,6 +1444,7 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           id?: string
+          idempotency_key?: string | null
           invoice_id?: string
           notes?: string | null
           paid_at?: string
@@ -2145,6 +2190,10 @@ export type Database = {
         Args: { _visit_id: string }
         Returns: string
       }
+      discharge_hospitalization_and_get_invoice: {
+        Args: { _hosp_id: string }
+        Returns: string
+      }
       ensure_pet_medical_record: { Args: { _pet_id: string }; Returns: string }
       generate_invoice_number: { Args: never; Returns: string }
       get_user_roles: {
@@ -2173,6 +2222,10 @@ export type Database = {
         }[]
       }
       recalc_client_tier: { Args: { _client_id: string }; Returns: undefined }
+      void_invoice: {
+        Args: { _invoice_id: string; _reason?: string }
+        Returns: boolean
+      }
     }
     Enums: {
       app_role:

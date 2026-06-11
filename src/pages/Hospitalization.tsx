@@ -125,22 +125,22 @@ export default function Hospitalization() {
   const dischargeHosp = async (h: any) => {
     if (!confirm(`Выписать ${h.pets?.name}?`)) return;
     try {
-      const { error } = await supabase
-        .from('hospitalizations')
-        .update({ status: 'discharged', discharge_at: new Date().toISOString() })
-        .eq('id', h.id);
+      const { data: invoiceId, error } = await supabase.rpc('discharge_hospitalization_and_get_invoice', { _hosp_id: h.id });
       if (error) throw error;
-      // Поиск автосчёта (создаётся триггером auto_invoice_on_discharge)
-      const { data: inv } = await supabase
-        .from('invoices')
-        .select('invoice_number, total')
-        .like('notes', `HOSP:${h.id}%`)
-        .maybeSingle();
-      if (inv) {
-        toast({
-          title: 'Питомец выписан',
-          description: `Счёт ${inv.invoice_number} на ${formatCurrency(Number(inv.total))} создан автоматически`,
-        });
+      if (invoiceId) {
+        const { data: inv } = await supabase
+          .from('invoices')
+          .select('invoice_number, total')
+          .eq('id', invoiceId as string)
+          .maybeSingle();
+        if (inv) {
+          toast({
+            title: 'Питомец выписан',
+            description: `Счёт ${inv.invoice_number} на ${formatCurrency(Number(inv.total))} создан автоматически`,
+          });
+        } else {
+          toast({ title: 'Питомец выписан' });
+        }
       } else {
         toast({ title: 'Питомец выписан' });
       }

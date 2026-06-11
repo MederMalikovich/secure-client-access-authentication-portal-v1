@@ -392,11 +392,13 @@ export function VisitDialog({ open, onClose, visitId, initialPetId, initialAppoi
         if (error) throw error;
       }
 
-      // Теперь, когда услуги и материалы сохранены, переводим визит в completed —
-      // триггер спишет материалы и сформирует счёт по актуальным данным.
+      // Атомарно переводим визит в completed и сразу получаем ID созданного счёта —
+      // исключает гонку между триггером создания счёта и последующим SELECT.
+      let createdInvoiceId: string | null = null;
       if (markCompleted) {
-        const { error } = await supabase.from('visits').update({ status: 'completed' }).eq('id', vid!);
+        const { data: invId, error } = await supabase.rpc('complete_visit_and_get_invoice', { _visit_id: vid! });
         if (error) throw error;
+        createdInvoiceId = (invId as string) || null;
       }
 
       toast({
@@ -407,16 +409,8 @@ export function VisitDialog({ open, onClose, visitId, initialPetId, initialAppoi
       onClose();
 
       if (markCompleted && goToPayment && vid) {
-        // Найти счёт, созданный триггером по этому визиту, и открыть форму оплаты
-        const { data: inv } = await supabase
-          .from('invoices')
-          .select('id')
-          .eq('visit_id', vid)
-          .order('created_at', { ascending: false })
-          .limit(1)
-          .maybeSingle();
-        if (inv?.id) {
-          navigate('/finances', { state: { payInvoiceId: inv.id } });
+        if (createdInvoiceId) {
+          navigate('/finances', { state: { payInvoiceId: createdInvoiceId } });
         } else {
           toast({ title: 'Счёт не найден', description: 'Откройте раздел «Финансы» вручную.', variant: 'destructive' });
         }

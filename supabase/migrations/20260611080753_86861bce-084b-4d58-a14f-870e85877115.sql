@@ -1,0 +1,1 @@
+REVOKE EXECUTE ON FUNCTION public.complete_visit_and_get_invoice(uuid) FROM PUBLIC, anon;

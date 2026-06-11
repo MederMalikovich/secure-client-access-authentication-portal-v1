@@ -1878,6 +1878,7 @@ export type Database = {
           id: string
           inventory_item_id: string
           quantity: number
+          shortage: boolean
           total: number
           unit_price: number
           visit_id: string
@@ -1890,6 +1891,7 @@ export type Database = {
           id?: string
           inventory_item_id: string
           quantity?: number
+          shortage?: boolean
           total?: number
           unit_price?: number
           visit_id: string
@@ -1902,6 +1904,7 @@ export type Database = {
           id?: string
           inventory_item_id?: string
           quantity?: number
+          shortage?: boolean
           total?: number
           unit_price?: number
           visit_id?: string
@@ -2138,6 +2141,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      complete_visit_and_get_invoice: {
+        Args: { _visit_id: string }
+        Returns: string
+      }
       ensure_pet_medical_record: { Args: { _pet_id: string }; Returns: string }
       generate_invoice_number: { Args: never; Returns: string }
       get_user_roles: {

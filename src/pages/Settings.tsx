@@ -41,6 +41,7 @@ import { NotificationChannelsTab } from '@/components/settings/NotificationChann
 import { WorkingHoursTab } from '@/components/settings/WorkingHoursTab';
 import { BackupTab } from '@/components/settings/BackupTab';
 import { ThemeCustomizer } from '@/components/settings/ThemeCustomizer';
+import { BrandingTab } from '@/components/settings/BrandingTab';
 
 import { format } from 'date-fns';
 import { ru } from 'date-fns/locale';
@@ -357,6 +358,7 @@ export default function Settings() {
       <Tabs defaultValue="appearance" className="space-y-4">
         <TabsList className="flex-wrap h-auto">
           <TabsTrigger value="appearance">Оформление</TabsTrigger>
+          {isAdmin && <TabsTrigger value="branding">Бренд</TabsTrigger>}
           <TabsTrigger value="schedule">График работы</TabsTrigger>
           <TabsTrigger value="notifications">Уведомления</TabsTrigger>
           <TabsTrigger value="users">Пользователи</TabsTrigger>
@@ -364,6 +366,12 @@ export default function Settings() {
           <TabsTrigger value="visit-templates">Шаблоны визитов</TabsTrigger>
           {isAdmin && <TabsTrigger value="backup">Бэкап</TabsTrigger>}
         </TabsList>
+
+        {isAdmin && (
+          <TabsContent value="branding">
+            <BrandingTab />
+          </TabsContent>
+        )}
 
         {isAdmin && (
           <TabsContent value="backup">

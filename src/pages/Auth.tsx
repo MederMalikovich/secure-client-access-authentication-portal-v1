@@ -11,6 +11,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
+import { useBrand } from '@/contexts/BrandContext';
 
 const loginSchema = z.object({
   email: z.string().email('Некорректный email'),
@@ -38,6 +39,7 @@ type SignupForm = z.infer<typeof signupSchema>;
 
 export default function Auth() {
   const [isLoading, setIsLoading] = useState(false);
+  const { brandName, logoUrl } = useBrand();
   const navigate = useNavigate();
   const { toast } = useToast();
   const { signIn, signUp } = useAuth();
@@ -118,11 +120,15 @@ export default function Auth() {
       
       <Card className="w-full max-w-md glass animate-fade-in relative z-10">
         <CardHeader className="text-center space-y-4">
-          <div className="mx-auto w-16 h-16 rounded-2xl gradient-primary flex items-center justify-center glow">
-            <Heart className="h-8 w-8 text-primary-foreground" />
+          <div className="mx-auto w-16 h-16 rounded-2xl gradient-primary flex items-center justify-center glow overflow-hidden">
+            {logoUrl ? (
+              <img src={logoUrl} alt={brandName} className="w-full h-full object-cover" />
+            ) : (
+              <Heart className="h-8 w-8 text-primary-foreground" />
+            )}
           </div>
           <div>
-            <CardTitle className="text-2xl gradient-text">VetCRM</CardTitle>
+            <CardTitle className="text-2xl gradient-text">{brandName}</CardTitle>
             <CardDescription>CRM система для ветеринарных клиник</CardDescription>
           </div>
         </CardHeader>

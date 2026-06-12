@@ -5,6 +5,7 @@ import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTrigger, SheetTitle } from '@/components/ui/sheet';
 import { useAuth } from '@/contexts/AuthContext';
+import { useBrand } from '@/contexts/BrandContext';
 import { NotificationBell } from '@/components/NotificationBell';
 
 const staffNavItems = [
@@ -40,6 +41,7 @@ export function MobileNav() {
   const location = useLocation();
   const [open, setOpen] = useState(false);
   const { hasRole, signOut, profile } = useAuth();
+  const { brandName, logoUrl } = useBrand();
   const isClient = hasRole('client');
   const navItems = isClient ? clientNavItems : staffNavItems;
 
@@ -47,10 +49,14 @@ export function MobileNav() {
     <div className="md:hidden fixed top-0 left-0 right-0 z-50 bg-sidebar border-b border-sidebar-border pt-[env(safe-area-inset-top)]">
       <div className="flex items-center justify-between px-3 py-2 gap-2">
         <div className="flex items-center gap-2 min-w-0">
-          <div className="w-9 h-9 rounded-lg bg-primary/20 flex items-center justify-center shrink-0">
-            <PawPrint className="w-5 h-5 text-primary" />
+          <div className="w-9 h-9 rounded-lg bg-primary/20 flex items-center justify-center shrink-0 overflow-hidden">
+            {logoUrl ? (
+              <img src={logoUrl} alt={brandName} className="w-full h-full object-cover" />
+            ) : (
+              <PawPrint className="w-5 h-5 text-primary" />
+            )}
           </div>
-          <span className="font-bold text-sidebar-foreground truncate">VetCRM</span>
+          <span className="font-bold text-sidebar-foreground truncate">{brandName}</span>
         </div>
         <div className="flex items-center gap-0.5 shrink-0">
           {!isClient && <NotificationBell />}
@@ -74,11 +80,15 @@ export function MobileNav() {
             <div className="flex flex-col h-full">
               <div className="p-4 border-b border-sidebar-border">
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-primary/20 flex items-center justify-center">
-                    <PawPrint className="w-6 h-6 text-primary" />
+                  <div className="w-10 h-10 rounded-xl bg-primary/20 flex items-center justify-center overflow-hidden shrink-0">
+                    {logoUrl ? (
+                      <img src={logoUrl} alt={brandName} className="w-full h-full object-cover" />
+                    ) : (
+                      <PawPrint className="w-6 h-6 text-primary" />
+                    )}
                   </div>
-                  <div>
-                    <h1 className="font-bold text-lg text-sidebar-foreground">VetCRM</h1>
+                  <div className="min-w-0">
+                    <h1 className="font-bold text-lg text-sidebar-foreground truncate">{brandName}</h1>
                     <p className="text-xs text-sidebar-foreground/60">
                       {isClient ? 'Мой кабинет' : 'Ветеринарная клиника'}
                     </p>

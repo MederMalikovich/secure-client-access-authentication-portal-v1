@@ -5,6 +5,7 @@ import { NavLink } from '@/components/NavLink';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/contexts/AuthContext';
+import { useBrand } from '@/contexts/BrandContext';
 
 interface NavItem {
   title: string;
@@ -51,6 +52,7 @@ export function AppSidebar() {
   const [collapsed, setCollapsed] = useState(false);
   const location = useLocation();
   const { hasRole, profile, signOut } = useAuth();
+  const { brandName, logoUrl } = useBrand();
   const isClient = hasRole('client');
 
   const renderNavItems = (items: NavItem[], label: string) => {
@@ -89,11 +91,15 @@ export function AppSidebar() {
     )}>
       <div className="flex items-center justify-between p-4 border-b border-sidebar-border">
         {!collapsed && (
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-lg gradient-primary flex items-center justify-center">
-              <Heart className="h-5 w-5 text-primary-foreground" />
+          <div className="flex items-center gap-2 min-w-0">
+            <div className="w-8 h-8 rounded-lg gradient-primary flex items-center justify-center overflow-hidden shrink-0">
+              {logoUrl ? (
+                <img src={logoUrl} alt={brandName} className="w-full h-full object-cover" />
+              ) : (
+                <Heart className="h-5 w-5 text-primary-foreground" />
+              )}
             </div>
-            <span className="font-bold text-lg gradient-text">VetCRM</span>
+            <span className="font-bold text-lg gradient-text truncate">{brandName}</span>
           </div>
         )}
         <Button variant="ghost" size="icon" onClick={() => setCollapsed(!collapsed)} className="h-8 w-8 text-muted-foreground hover:text-foreground">

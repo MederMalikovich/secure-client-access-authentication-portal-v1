@@ -597,6 +597,69 @@ export default function Reports() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Owner-focused reports */}
+      <div className="grid gap-6 lg:grid-cols-2 mt-6">
+        {/* Top Clients by Revenue */}
+        <Card className="glass">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Award className="h-5 w-5 text-primary" />
+              Топ-5 клиентов по выручке
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {topClients.length === 0 ? (
+              <p className="text-sm text-muted-foreground py-12 text-center">Нет оплаченных счетов за период</p>
+            ) : (
+              <ResponsiveContainer width="100%" height={300}>
+                <BarChart data={topClients} layout="vertical">
+                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                  <XAxis type="number" stroke="hsl(var(--muted-foreground))" fontSize={12} tickFormatter={(v) => formatCurrency(v)} />
+                  <YAxis type="category" dataKey="name" stroke="hsl(var(--muted-foreground))" fontSize={12} width={140} />
+                  <Tooltip
+                    contentStyle={{ backgroundColor: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: '8px' }}
+                    formatter={(v: number) => [formatCurrency(v), 'Выручка']}
+                  />
+                  <Bar dataKey="total" fill="hsl(var(--primary))" radius={[0, 4, 4, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Revenue by Doctor */}
+        <Card className="glass">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Stethoscope className="h-5 w-5 text-secondary" />
+              Выручка по врачам
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {doctorRevenue.length === 0 ? (
+              <p className="text-sm text-muted-foreground py-12 text-center">Нет данных по врачам за период</p>
+            ) : (
+              <div className="space-y-2">
+                {doctorRevenue.map((d, i) => (
+                  <div key={i} className="flex items-center justify-between p-3 rounded-lg bg-card/40 border border-border/40">
+                    <div className="flex items-center gap-3 min-w-0">
+                      <div className="h-8 w-8 rounded-full bg-secondary/15 text-secondary flex items-center justify-center text-xs font-semibold shrink-0">
+                        {i + 1}
+                      </div>
+                      <div className="min-w-0">
+                        <p className="text-sm font-medium truncate">{d.name}</p>
+                        <p className="text-xs text-muted-foreground">{d.visits} визит(ов)</p>
+                      </div>
+                    </div>
+                    <p className="text-sm font-semibold text-primary shrink-0">{formatCurrency(d.total)}</p>
+                  </div>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 }

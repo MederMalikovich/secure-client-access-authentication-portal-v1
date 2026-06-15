@@ -516,7 +516,7 @@ export function VisitDialog({ open, onClose, visitId, initialPetId, initialAppoi
                 </div>
                 <div>
                   <Label>Статус</Label>
-                  <Select value={form.status} onValueChange={(v: VisitStatus) => setForm(f => ({ ...f, status: v }))}>
+                  <Select value={form.status} onValueChange={(v: VisitStatus) => setForm(f => ({ ...f, status: v }))} disabled={isCompleted}>
                     <SelectTrigger><SelectValue /></SelectTrigger>
                     <SelectContent>
                       {Object.entries(visitStatusLabels).map(([k, l]) => <SelectItem key={k} value={k}>{l}</SelectItem>)}

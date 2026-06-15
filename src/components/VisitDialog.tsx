@@ -85,6 +85,7 @@ export function VisitDialog({ open, onClose, visitId, initialPetId, initialAppoi
   const [visitServices, setVisitServices] = useState<ServiceLine[]>([]);
   const [visitMaterials, setVisitMaterials] = useState<MaterialLine[]>([]);
   const [activeTab, setActiveTab] = useState('soap');
+  const [detailsOpen, setDetailsOpen] = useState(false);
   const [duration, setDuration] = useState<number>(30);
   const [busyVetIds, setBusyVetIds] = useState<Set<string>>(new Set());
 

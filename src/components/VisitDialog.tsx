@@ -81,7 +81,9 @@ export function VisitDialog({ open, onClose, visitId, initialPetId, initialAppoi
     respiratory_rate: '',
     notes: '',
     next_visit_date: '',
+    completed_at: null as string | null,
   });
+  const isCompleted = form.status === 'completed' || !!form.completed_at;
   const [visitServices, setVisitServices] = useState<ServiceLine[]>([]);
   const [visitMaterials, setVisitMaterials] = useState<MaterialLine[]>([]);
   const [activeTab, setActiveTab] = useState('soap');
@@ -184,6 +186,7 @@ export function VisitDialog({ open, onClose, visitId, initialPetId, initialAppoi
       respiratory_rate: '',
       notes: '',
       next_visit_date: '',
+      completed_at: null,
     });
     setVisitServices([]);
     setVisitMaterials([]);
@@ -212,6 +215,7 @@ export function VisitDialog({ open, onClose, visitId, initialPetId, initialAppoi
         respiratory_rate: data.respiratory_rate?.toString() || '',
         notes: data.notes || '',
         next_visit_date: data.next_visit_date ? format(new Date(data.next_visit_date), "yyyy-MM-dd'T'HH:mm") : '',
+        completed_at: data.completed_at || null,
       });
       const [svcRes, matRes] = await Promise.all([
         supabase.from('visit_services').select('*').eq('visit_id', id),
@@ -300,6 +304,10 @@ export function VisitDialog({ open, onClose, visitId, initialPetId, initialAppoi
     if (!form.pet_id) { toast({ title: 'Выберите питомца', variant: 'destructive' }); return; }
     if (form.veterinarian_id && busyVetIds.has(form.veterinarian_id)) {
       toast({ title: 'Врач занят', description: 'В выбранное время этот врач уже занят. Измените время или врача.', variant: 'destructive' });
+      return;
+    }
+    if (markCompleted && isCompleted) {
+      toast({ title: 'Визит уже завершён', description: 'Повторное завершение невозможно.', variant: 'destructive' });
       return;
     }
     setSaving(true);
@@ -512,7 +520,7 @@ export function VisitDialog({ open, onClose, visitId, initialPetId, initialAppoi
                 </div>
                 <div>
                   <Label>Статус</Label>
-                  <Select value={form.status} onValueChange={(v: VisitStatus) => setForm(f => ({ ...f, status: v }))}>
+                  <Select value={form.status} onValueChange={(v: VisitStatus) => setForm(f => ({ ...f, status: v }))} disabled={isCompleted}>
                     <SelectTrigger><SelectValue /></SelectTrigger>
                     <SelectContent>
                       {Object.entries(visitStatusLabels).map(([k, l]) => <SelectItem key={k} value={k}>{l}</SelectItem>)}
@@ -706,20 +714,22 @@ export function VisitDialog({ open, onClose, visitId, initialPetId, initialAppoi
           </Button>
           <Button
             onClick={() => save(true, false)}
-            disabled={saving || loading || form.status === 'completed'}
-            title={form.status === 'completed' ? 'Визит уже завершён' : undefined}
+            disabled={saving || loading || isCompleted}
+            title={isCompleted ? 'Визит уже завершён' : undefined}
           >
             <CheckCircle2 className="h-4 w-4 mr-1" />
-            {form.status === 'completed' ? 'Визит завершён' : 'Завершить визит'}
+            {isCompleted ? 'Визит завершён' : 'Завершить визит'}
           </Button>
-          <Button
-            onClick={() => save(true, true)}
-            disabled={saving || loading || form.status === 'completed'}
-            title={form.status === 'completed' ? 'Визит уже завершён' : 'Завершить и сразу открыть форму оплаты'}
-          >
-            <Receipt className="h-4 w-4 mr-1" />
-            Завершить визит и принять оплату
-          </Button>
+          {!isCompleted && (
+            <Button
+              onClick={() => save(true, true)}
+              disabled={saving || loading}
+              title="Завершить и сразу открыть форму оплаты"
+            >
+              <Receipt className="h-4 w-4 mr-1" />
+              Завершить визит и принять оплату
+            </Button>
+          )}
         </DialogFooter>
       </DialogContent>
     </Dialog>

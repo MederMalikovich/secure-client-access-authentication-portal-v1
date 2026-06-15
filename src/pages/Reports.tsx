@@ -90,25 +90,38 @@ export default function Reports() {
         avgCheck,
       });
 
-      // Generate revenue chart data from real invoices
-      const revenueByDay: Record<string, { revenue: number; appointments: number }> = {};
-      let currentDate = new Date(dateFrom);
-      const endDate = new Date(dateTo);
-      while (currentDate <= endDate) {
-        const key = format(currentDate, 'yyyy-MM-dd');
-        revenueByDay[key] = { revenue: 0, appointments: 0 };
-        currentDate.setDate(currentDate.getDate() + 1);
+      // Decide aggregation bucket: day / week / month based on range length
+      const rangeDays = Math.max(1, differenceInDays(new Date(dateTo), new Date(dateFrom)) + 1);
+      type Bucket = 'day' | 'week' | 'month';
+      const bucket: Bucket = rangeDays <= 31 ? 'day' : rangeDays <= 120 ? 'week' : 'month';
+      const bucketKey = (d: Date): string => {
+        if (bucket === 'day') return format(d, 'yyyy-MM-dd');
+        if (bucket === 'week') return format(startOfWeek(d, { weekStartsOn: 1 }), 'yyyy-MM-dd');
+        return format(sOM(d), 'yyyy-MM');
+      };
+      const bucketLabel = (key: string): string => {
+        if (bucket === 'month') {
+          const [y, m] = key.split('-');
+          return format(new Date(Number(y), Number(m) - 1, 1), 'LLL yyyy', { locale: ru });
+        }
+        return format(new Date(key), bucket === 'week' ? "d MMM" : 'd MMM', { locale: ru });
+      };
+
+      const buckets: Record<string, { revenue: number; appointments: number }> = {};
+      const cursor = new Date(dateFrom);
+      const endD = new Date(dateTo);
+      while (cursor <= endD) {
+        const k = bucketKey(cursor);
+        if (!buckets[k]) buckets[k] = { revenue: 0, appointments: 0 };
+        cursor.setDate(cursor.getDate() + 1);
       }
 
-      // Fill revenue per day
       invoices?.forEach((inv) => {
-        const day = format(new Date(inv.issued_at), 'yyyy-MM-dd');
-        if (revenueByDay[day]) {
-          revenueByDay[day].revenue += Number(inv.total);
-        }
+        const k = bucketKey(new Date(inv.issued_at));
+        if (buckets[k]) buckets[k].revenue += Number(inv.total);
       });
 
-      // Fill appointments per day
+      // Fill appointments per bucket
       const { data: appointmentsList } = await supabase
         .from('appointments')
         .select('scheduled_at')
@@ -116,18 +129,18 @@ export default function Reports() {
         .lte('scheduled_at', dateTo + 'T23:59:59');
 
       appointmentsList?.forEach((apt) => {
-        const day = format(new Date(apt.scheduled_at), 'yyyy-MM-dd');
-        if (revenueByDay[day]) {
-          revenueByDay[day].appointments += 1;
-        }
+        const k = bucketKey(new Date(apt.scheduled_at));
+        if (buckets[k]) buckets[k].appointments += 1;
       });
 
-      const chartData = Object.entries(revenueByDay).map(([date, vals]) => ({
-        date: format(new Date(date), 'd MMM', { locale: ru }),
-        revenue: vals.revenue,
-        appointments: vals.appointments,
-      }));
-      setRevenueData(chartData.length > 31 ? chartData.slice(0, 31) : chartData);
+      const chartData = Object.entries(buckets)
+        .sort(([a], [b]) => a.localeCompare(b))
+        .map(([key, vals]) => ({
+          date: bucketLabel(key),
+          revenue: vals.revenue,
+          appointments: vals.appointments,
+        }));
+      setRevenueData(chartData);
 
       // Fetch real services usage from visit_services (filter by visit_date)
       const { data: visitServices } = await supabase

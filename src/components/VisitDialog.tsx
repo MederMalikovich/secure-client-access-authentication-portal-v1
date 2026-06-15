@@ -63,6 +63,7 @@ export function VisitDialog({ open, onClose, visitId, initialPetId, initialAppoi
   const [services, setServices] = useState<any[]>([]);
   const [inventory, setInventory] = useState<any[]>([]);
   const [templates, setTemplates] = useState<any[]>([]);
+  const [diseases, setDiseases] = useState<any[]>([]);
 
   const [form, setForm] = useState({
     pet_id: '',
@@ -154,18 +155,20 @@ export function VisitDialog({ open, onClose, visitId, initialPetId, initialAppoi
   }, [open, visitId]);
 
   const loadRefs = async () => {
-    const [petsRes, vetsRes, servicesRes, invRes, tplRes] = await Promise.all([
+    const [petsRes, vetsRes, servicesRes, invRes, tplRes, disRes] = await Promise.all([
       supabase.from('pets').select('id, name, species, client_id, clients:clients(full_name), medical_records(allergy_notes, vaccination_status)').order('name'),
       supabase.rpc('list_public_veterinarians'),
       supabase.from('services').select('id, name, price').eq('is_active', true).order('name'),
       supabase.from('inventory_items').select('id, name, sale_price, quantity, unit').eq('is_active', true).order('name'),
       supabase.from('visit_templates').select('*').eq('is_active', true).order('name'),
+      supabase.from('diseases').select('id, name').eq('is_active', true).order('name'),
     ]);
     setPets(petsRes.data || []);
     setVets((vetsRes.data as any[]) || []);
     setServices(servicesRes.data || []);
     setInventory(invRes.data || []);
     setTemplates(tplRes.data || []);
+    setDiseases(disRes.data || []);
   };
 
   const resetForm = () => {
@@ -628,10 +631,35 @@ export function VisitDialog({ open, onClose, visitId, initialPetId, initialAppoi
                   Assessment — диагноз / дифф. диагноз
                 </Label>
                 <p className="text-xs text-muted-foreground mb-2 ml-8">Основной DX, дифференциальные, обоснование.</p>
-                <Textarea rows={2} value={form.assessment} onChange={(e) => setForm(f => ({ ...f, assessment: e.target.value }))} placeholder="Диагноз..." />
-              </div>
-              <div className="rounded-lg border-l-4 border-purple-500 bg-purple-500/5 p-3">
-                <Label className="flex items-center gap-2 text-purple-400 font-semibold">
+                <div className="ml-8 mb-2">
+                  <Select
+                    value=""
+                    onValueChange={(val) => {
+                      const d = diseases.find((x) => x.id === val);
+                      if (!d) return;
+                      setForm((f) => ({
+                        ...f,
+                        assessment: f.assessment
+                          ? (f.assessment.trimEnd().endsWith(',') ? f.assessment + ' ' + d.name : f.assessment + (f.assessment.endsWith('\n') ? '' : '\n') + d.name)
+                          : d.name,
+                      }));
+                    }}
+                  >
+                    <SelectTrigger className="h-8 text-xs">
+                      <SelectValue placeholder="Выбрать заболевание из справочника…" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {diseases.length === 0 ? (
+                        <div className="px-2 py-1.5 text-xs text-muted-foreground">Нет записей в справочнике</div>
+                      ) : (
+                        diseases.map((d) => (
+                          <SelectItem key={d.id} value={d.id}>{d.name}</SelectItem>
+                        ))
+                      )}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <Textarea rows={2} value={form.assessment} onChange={(e) => setForm(f => ({ ...f, assessment: e.target.value }))} placeholder="Диагноз... (можно выбрать из списка выше или ввести вручную)" />
                   <span className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-purple-500/20 text-xs">P</span>
                   Plan — лечение и рекомендации
                 </Label>

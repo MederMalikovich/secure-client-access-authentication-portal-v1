@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { format, subDays, startOfMonth, endOfMonth, differenceInDays, startOfWeek, startOfMonth as sOM } from 'date-fns';
 import { ru } from 'date-fns/locale';
-import { BarChart3, TrendingUp, Users, PawPrint, Calendar, DollarSign, Download, Stethoscope, Award } from 'lucide-react';
+import { BarChart3, TrendingUp, Users, PawPrint, Calendar, DollarSign, Download, Stethoscope, Award, Package, Activity } from 'lucide-react';
 import { PageHeader } from '@/components/ui/page-header';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -42,6 +42,8 @@ export default function Reports() {
   const [appointmentsByStatus, setAppointmentsByStatus] = useState<any[]>([]);
   const [topClients, setTopClients] = useState<any[]>([]);
   const [doctorRevenue, setDoctorRevenue] = useState<any[]>([]);
+  const [topProducts, setTopProducts] = useState<any[]>([]);
+  const [topDiseases, setTopDiseases] = useState<any[]>([]);
 
   useEffect(() => {
     fetchReportData();
@@ -264,6 +266,55 @@ export default function Reports() {
             visits: d.visits,
           }))
       );
+
+      // Top products (shop sales in period)
+      const { data: saleItems } = await supabase
+        .from('shop_sale_items')
+        .select('quantity, total, item_id, item:inventory_items(name), sale:shop_sales!inner(created_at)')
+        .gte('sale.created_at', dateFrom)
+        .lte('sale.created_at', dateTo + 'T23:59:59');
+      const prodTotals: Record<string, { name: string; qty: number; revenue: number }> = {};
+      (saleItems || []).forEach((it: any) => {
+        const id = it.item_id || 'unknown';
+        const name = it.item?.name || 'Товар';
+        if (!prodTotals[id]) prodTotals[id] = { name, qty: 0, revenue: 0 };
+        prodTotals[id].qty += Number(it.quantity) || 0;
+        prodTotals[id].revenue += Number(it.total) || 0;
+      });
+      setTopProducts(
+        Object.values(prodTotals)
+          .sort((a, b) => b.qty - a.qty)
+          .slice(0, 5)
+          .map(p => ({
+            name: p.name.length > 22 ? p.name.substring(0, 22) + '…' : p.name,
+            qty: p.qty,
+            revenue: Math.round(p.revenue),
+          }))
+      );
+
+      // Top diseases (diagnoses linked to medical_records in period)
+      const { data: diagRows } = await supabase
+        .from('medical_record_diagnoses')
+        .select('disease_id, custom_diagnosis, disease:diseases(name), created_at')
+        .gte('created_at', dateFrom)
+        .lte('created_at', dateTo + 'T23:59:59');
+      const diseaseCounts: Record<string, number> = {};
+      (diagRows || []).forEach((d: any) => {
+        const name = d.disease?.name || (d.custom_diagnosis ? d.custom_diagnosis : null);
+        if (!name) return;
+        const key = name.trim();
+        if (!key) return;
+        diseaseCounts[key] = (diseaseCounts[key] || 0) + 1;
+      });
+      setTopDiseases(
+        Object.entries(diseaseCounts)
+          .sort((a, b) => b[1] - a[1])
+          .slice(0, 8)
+          .map(([name, count]) => ({
+            name: name.length > 28 ? name.substring(0, 28) + '…' : name,
+            count,
+          }))
+      );
     } catch (error) {
     } finally {
       setLoading(false);
@@ -376,6 +427,15 @@ export default function Reports() {
                 }}
               >
                 Этот месяц
+              </Button>
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setDateFrom('2000-01-01');
+                  setDateTo(format(new Date(), 'yyyy-MM-dd'));
+                }}
+              >
+                Всё время
               </Button>
             </div>
           </div>
@@ -656,6 +716,67 @@ export default function Reports() {
                   </div>
                 ))}
               </div>
+            )}
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Additional reports: products & diseases */}
+      <div className="grid gap-6 lg:grid-cols-2 mt-6">
+        <Card className="glass">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Package className="h-5 w-5 text-primary" />
+              Популярные товары
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {topProducts.length === 0 ? (
+              <p className="text-sm text-muted-foreground py-12 text-center">Нет продаж за период</p>
+            ) : (
+              <div className="space-y-2">
+                {topProducts.map((p, i) => (
+                  <div key={i} className="flex items-center justify-between p-3 rounded-lg bg-card/40 border border-border/40">
+                    <div className="flex items-center gap-3 min-w-0">
+                      <div className="h-8 w-8 rounded-full bg-primary/15 text-primary flex items-center justify-center text-xs font-semibold shrink-0">
+                        {i + 1}
+                      </div>
+                      <div className="min-w-0">
+                        <p className="text-sm font-medium truncate">{p.name}</p>
+                        <p className="text-xs text-muted-foreground">{p.qty} шт.</p>
+                      </div>
+                    </div>
+                    <p className="text-sm font-semibold text-primary shrink-0">{formatCurrency(p.revenue)}</p>
+                  </div>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        <Card className="glass">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Activity className="h-5 w-5 text-secondary" />
+              Распространённые заболевания
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {topDiseases.length === 0 ? (
+              <p className="text-sm text-muted-foreground py-12 text-center">Нет поставленных диагнозов за период</p>
+            ) : (
+              <ResponsiveContainer width="100%" height={300}>
+                <BarChart data={topDiseases} layout="vertical">
+                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                  <XAxis type="number" stroke="hsl(var(--muted-foreground))" fontSize={12} allowDecimals={false} />
+                  <YAxis type="category" dataKey="name" stroke="hsl(var(--muted-foreground))" fontSize={12} width={160} />
+                  <Tooltip
+                    contentStyle={{ backgroundColor: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: '8px' }}
+                    formatter={(v: number) => [v, 'Случаев']}
+                  />
+                  <Bar dataKey="count" fill="hsl(var(--secondary))" radius={[0, 4, 4, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
             )}
           </CardContent>
         </Card>

@@ -18,7 +18,8 @@ import { useToast } from '@/hooks/use-toast';
 import { getUserFriendlyError } from '@/lib/errorHandler';
 import { formatCurrency } from '@/lib/currency';
 import { format } from 'date-fns';
-import { Plus, Trash2, History, Sparkles, FileText, Stethoscope, ClipboardList, Package, Receipt, Save, CheckCircle2, AlertTriangle, Syringe, Activity, Thermometer, Weight, Heart, Wind } from 'lucide-react';
+import { Plus, Trash2, History, Sparkles, FileText, Stethoscope, ClipboardList, Package, Receipt, Save, CheckCircle2, AlertTriangle, Syringe, Activity, Thermometer, Weight, Heart, Wind, ChevronDown, ChevronUp } from 'lucide-react';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 
 export type VisitStatus = 'waiting' | 'in_consultation' | 'procedures' | 'hospital' | 'completed' | 'cancelled';
 
@@ -84,6 +85,7 @@ export function VisitDialog({ open, onClose, visitId, initialPetId, initialAppoi
   const [visitServices, setVisitServices] = useState<ServiceLine[]>([]);
   const [visitMaterials, setVisitMaterials] = useState<MaterialLine[]>([]);
   const [activeTab, setActiveTab] = useState('soap');
+  const [detailsOpen, setDetailsOpen] = useState(false);
   const [duration, setDuration] = useState<number>(30);
   const [busyVetIds, setBusyVetIds] = useState<Set<string>>(new Set());
 
@@ -434,138 +436,162 @@ export function VisitDialog({ open, onClose, visitId, initialPetId, initialAppoi
         </DialogHeader>
 
         <div className="flex-1 min-h-0 overflow-y-auto px-6 py-4">
-          <ProcessHint
-            storageKey="visit-dialog-flow"
-            title="Как заполнить визит"
-            steps={[
-              'Выберите питомца и врача (либо «Загрузить из прошлого» / выберите шаблон).',
-              'Заполните SOAP: жалобы → осмотр → диагноз → план.',
-              'Добавьте услуги и материалы — они попадут в счёт автоматически.',
-              'Нажмите «Завершить визит» — спишутся материалы и сформируется счёт.',
-            ]}
-            footer="Все данные сохраняются в timeline медкарты, ничего не удаляется."
-          />
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mt-4">
-            <div className="md:col-span-2">
-              <Label>Питомец *</Label>
-              <PetSearchSelect pets={pets} value={form.pet_id} onChange={onPetChange} />
+          <Collapsible open={detailsOpen} onOpenChange={setDetailsOpen}>
+            <div className="flex items-center justify-between gap-2 mb-2">
+              <div className="text-xs text-muted-foreground truncate">
+                {(() => {
+                  const pet = pets.find(p => p.id === form.pet_id);
+                  const vet = vets.find(v => v.id === form.veterinarian_id);
+                  const parts: string[] = [];
+                  if (pet) parts.push(pet.name);
+                  if (vet) parts.push(`врач: ${vet.full_name}`);
+                  if (form.weight) parts.push(`${form.weight} кг`);
+                  if (form.temperature) parts.push(`${form.temperature}°C`);
+                  return parts.length ? parts.join(' • ') : 'Заполните детали визита';
+                })()}
+              </div>
+              <CollapsibleTrigger asChild>
+                <Button type="button" variant="ghost" size="sm" className="h-7 px-2 text-xs gap-1 shrink-0">
+                  {detailsOpen ? <><ChevronUp className="h-3.5 w-3.5" />Свернуть детали</> : <><ChevronDown className="h-3.5 w-3.5" />Детали визита</>}
+                </Button>
+              </CollapsibleTrigger>
             </div>
-            <div>
-              <Label>Врач</Label>
-              <Select value={form.veterinarian_id} onValueChange={(v) => setForm(f => ({ ...f, veterinarian_id: v }))}>
-                <SelectTrigger><SelectValue placeholder="—" /></SelectTrigger>
-                <SelectContent>
-                  {(() => {
-                    const free = vets.filter(v => !busyVetIds.has(v.id));
-                    const busy = vets.filter(v => busyVetIds.has(v.id));
-                    return (
-                      <>
-                        {free.length > 0 && (
+            <CollapsibleContent>
+              <ProcessHint
+                storageKey="visit-dialog-flow"
+                title="Как заполнить визит"
+                steps={[
+                  'Выберите питомца и врача (либо «Загрузить из прошлого» / выберите шаблон).',
+                  'Заполните SOAP: жалобы → осмотр → диагноз → план.',
+                  'Добавьте услуги и материалы — они попадут в счёт автоматически.',
+                  'Нажмите «Завершить визит» — спишутся материалы и сформируется счёт.',
+                ]}
+                footer="Все данные сохраняются в timeline медкарты, ничего не удаляется."
+              />
+
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mt-4">
+                <div className="md:col-span-2">
+                  <Label>Питомец *</Label>
+                  <PetSearchSelect pets={pets} value={form.pet_id} onChange={onPetChange} />
+                </div>
+                <div>
+                  <Label>Врач</Label>
+                  <Select value={form.veterinarian_id} onValueChange={(v) => setForm(f => ({ ...f, veterinarian_id: v }))}>
+                    <SelectTrigger><SelectValue placeholder="—" /></SelectTrigger>
+                    <SelectContent>
+                      {(() => {
+                        const free = vets.filter(v => !busyVetIds.has(v.id));
+                        const busy = vets.filter(v => busyVetIds.has(v.id));
+                        return (
                           <>
-                            <div className="px-2 py-1 text-xs text-muted-foreground">Свободны</div>
-                            {free.map(v => <SelectItem key={v.id} value={v.id}>{v.full_name}</SelectItem>)}
+                            {free.length > 0 && (
+                              <>
+                                <div className="px-2 py-1 text-xs text-muted-foreground">Свободны</div>
+                                {free.map(v => <SelectItem key={v.id} value={v.id}>{v.full_name}</SelectItem>)}
+                              </>
+                            )}
+                            {busy.length > 0 && (
+                              <>
+                                <div className="px-2 py-1 text-xs text-muted-foreground mt-1">Заняты</div>
+                                {busy.map(v => <SelectItem key={v.id} value={v.id} disabled>{v.full_name} — занят</SelectItem>)}
+                              </>
+                            )}
                           </>
-                        )}
-                        {busy.length > 0 && (
-                          <>
-                            <div className="px-2 py-1 text-xs text-muted-foreground mt-1">Заняты</div>
-                            {busy.map(v => <SelectItem key={v.id} value={v.id} disabled>{v.full_name} — занят</SelectItem>)}
-                          </>
-                        )}
-                      </>
-                    );
-                  })()}
-                </SelectContent>
-              </Select>
-            </div>
-            <div>
-              <Label>Дата и время</Label>
-              <Input type="datetime-local" value={form.visit_date} onChange={(e) => setForm(f => ({ ...f, visit_date: e.target.value }))} />
-            </div>
-            <div>
-              <Label>Длительность (мин)</Label>
-              <Input type="number" min={5} step={5} value={duration} onChange={(e) => setDuration(parseInt(e.target.value) || 30)} />
-            </div>
-            <div>
-              <Label>Статус</Label>
-              <Select value={form.status} onValueChange={(v: VisitStatus) => setForm(f => ({ ...f, status: v }))}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  {Object.entries(visitStatusLabels).map(([k, l]) => <SelectItem key={k} value={k}>{l}</SelectItem>)}
-                </SelectContent>
-              </Select>
-            </div>
-            <div>
-              <Label>Следующий визит</Label>
-              <Input type="datetime-local" value={form.next_visit_date} onChange={(e) => setForm(f => ({ ...f, next_visit_date: e.target.value }))} />
-            </div>
-          </div>
+                        );
+                      })()}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label>Дата и время</Label>
+                  <Input type="datetime-local" value={form.visit_date} onChange={(e) => setForm(f => ({ ...f, visit_date: e.target.value }))} />
+                </div>
+                <div>
+                  <Label>Длительность (мин)</Label>
+                  <Input type="number" min={5} step={5} value={duration} onChange={(e) => setDuration(parseInt(e.target.value) || 30)} />
+                </div>
+                <div>
+                  <Label>Статус</Label>
+                  <Select value={form.status} onValueChange={(v: VisitStatus) => setForm(f => ({ ...f, status: v }))}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      {Object.entries(visitStatusLabels).map(([k, l]) => <SelectItem key={k} value={k}>{l}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label>Следующий визит</Label>
+                  <Input type="datetime-local" value={form.next_visit_date} onChange={(e) => setForm(f => ({ ...f, next_visit_date: e.target.value }))} />
+                </div>
+              </div>
 
-          <div className="flex flex-wrap gap-2 mt-4">
-            <Button type="button" variant="outline" size="sm" onClick={loadFromLastVisit}>
-              <History className="h-4 w-4 mr-1" /> Загрузить из прошлого
-            </Button>
-            {templates.length > 0 && (
-              <Select onValueChange={applyTemplate}>
-                <SelectTrigger className="w-auto h-9 gap-2">
-                  <Sparkles className="h-4 w-4" /><SelectValue placeholder="Применить шаблон" />
-                </SelectTrigger>
-                <SelectContent>
-                  {templates.map(t => <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>)}
-                </SelectContent>
-              </Select>
-            )}
-          </div>
-
-          <Separator className="my-4" />
-
-          {/* Patient safety alerts — всегда на виду */}
-          {(() => {
-            const pet = pets.find(p => p.id === form.pet_id);
-            if (!pet) return null;
-            const mr = Array.isArray(pet.medical_records) ? pet.medical_records[0] : pet.medical_records;
-            const allergy = mr?.allergy_notes || '';
-            const vacc = mr?.vaccination_status || '';
-            const hasAllergy = !!allergy.trim();
-            const hasVacc = !!vacc.trim();
-            if (!hasAllergy && !hasVacc) return null;
-            return (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-2 mb-4">
-                {hasAllergy && (
-                  <div className="flex items-start gap-2 rounded-md border border-destructive/40 bg-destructive/10 p-3 text-sm">
-                    <AlertTriangle className="h-4 w-4 mt-0.5 text-destructive shrink-0" />
-                    <div><div className="font-semibold text-destructive">Аллергии / противопоказания</div><div className="text-foreground/90">{allergy}</div></div>
-                  </div>
-                )}
-                {hasVacc && (
-                  <div className="flex items-start gap-2 rounded-md border border-blue-500/40 bg-blue-500/10 p-3 text-sm">
-                    <Syringe className="h-4 w-4 mt-0.5 text-blue-400 shrink-0" />
-                    <div><div className="font-semibold text-blue-400">Вакцинация</div><div className="text-foreground/90">{vacc}</div></div>
-                  </div>
+              <div className="flex flex-wrap gap-2 mt-4">
+                <Button type="button" variant="outline" size="sm" onClick={loadFromLastVisit}>
+                  <History className="h-4 w-4 mr-1" /> Загрузить из прошлого
+                </Button>
+                {templates.length > 0 && (
+                  <Select onValueChange={applyTemplate}>
+                    <SelectTrigger className="w-auto h-9 gap-2">
+                      <Sparkles className="h-4 w-4" /><SelectValue placeholder="Применить шаблон" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {templates.map(t => <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
                 )}
               </div>
-            );
-          })()}
 
-          {/* Vitals strip — всегда на виду */}
-          <Card className="p-3 mb-4 bg-muted/30">
-            <div className="flex items-center gap-2 mb-2 text-xs uppercase tracking-wide text-muted-foreground"><Activity className="h-3.5 w-3.5" />Витальные показатели</div>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-              <div><Label className="text-xs flex items-center gap-1"><Weight className="h-3 w-3" />Вес (кг)</Label><Input type="number" step="0.1" value={form.weight} onChange={(e) => setForm(f => ({ ...f, weight: e.target.value }))} /></div>
-              <div><Label className="text-xs flex items-center gap-1"><Thermometer className="h-3 w-3" />Температура (°C)</Label><Input type="number" step="0.1" value={form.temperature} onChange={(e) => setForm(f => ({ ...f, temperature: e.target.value }))} /></div>
-              <div><Label className="text-xs flex items-center gap-1"><Heart className="h-3 w-3" />Пульс (уд/мин)</Label><Input type="number" value={form.pulse} onChange={(e) => setForm(f => ({ ...f, pulse: e.target.value }))} /></div>
-              <div><Label className="text-xs flex items-center gap-1"><Wind className="h-3 w-3" />ЧДД (вд/мин)</Label><Input type="number" value={form.respiratory_rate} onChange={(e) => setForm(f => ({ ...f, respiratory_rate: e.target.value }))} /></div>
-            </div>
-          </Card>
+              <Separator className="my-4" />
+
+              {/* Patient safety alerts */}
+              {(() => {
+                const pet = pets.find(p => p.id === form.pet_id);
+                if (!pet) return null;
+                const mr = Array.isArray(pet.medical_records) ? pet.medical_records[0] : pet.medical_records;
+                const allergy = mr?.allergy_notes || '';
+                const vacc = mr?.vaccination_status || '';
+                const hasAllergy = !!allergy.trim();
+                const hasVacc = !!vacc.trim();
+                if (!hasAllergy && !hasVacc) return null;
+                return (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-2 mb-4">
+                    {hasAllergy && (
+                      <div className="flex items-start gap-2 rounded-md border border-destructive/40 bg-destructive/10 p-3 text-sm">
+                        <AlertTriangle className="h-4 w-4 mt-0.5 text-destructive shrink-0" />
+                        <div><div className="font-semibold text-destructive">Аллергии / противопоказания</div><div className="text-foreground/90">{allergy}</div></div>
+                      </div>
+                    )}
+                    {hasVacc && (
+                      <div className="flex items-start gap-2 rounded-md border border-blue-500/40 bg-blue-500/10 p-3 text-sm">
+                        <Syringe className="h-4 w-4 mt-0.5 text-blue-400 shrink-0" />
+                        <div><div className="font-semibold text-blue-400">Вакцинация</div><div className="text-foreground/90">{vacc}</div></div>
+                      </div>
+                    )}
+                  </div>
+                );
+              })()}
+
+              {/* Vitals */}
+              <Card className="p-3 mb-4 bg-muted/30">
+                <div className="flex items-center gap-2 mb-2 text-xs uppercase tracking-wide text-muted-foreground"><Activity className="h-3.5 w-3.5" />Витальные показатели</div>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                  <div><Label className="text-xs flex items-center gap-1"><Weight className="h-3 w-3" />Вес (кг)</Label><Input type="number" step="0.1" value={form.weight} onChange={(e) => setForm(f => ({ ...f, weight: e.target.value }))} /></div>
+                  <div><Label className="text-xs flex items-center gap-1"><Thermometer className="h-3 w-3" />Температура (°C)</Label><Input type="number" step="0.1" value={form.temperature} onChange={(e) => setForm(f => ({ ...f, temperature: e.target.value }))} /></div>
+                  <div><Label className="text-xs flex items-center gap-1"><Heart className="h-3 w-3" />Пульс (уд/мин)</Label><Input type="number" value={form.pulse} onChange={(e) => setForm(f => ({ ...f, pulse: e.target.value }))} /></div>
+                  <div><Label className="text-xs flex items-center gap-1"><Wind className="h-3 w-3" />ЧДД (вд/мин)</Label><Input type="number" value={form.respiratory_rate} onChange={(e) => setForm(f => ({ ...f, respiratory_rate: e.target.value }))} /></div>
+                </div>
+              </Card>
+            </CollapsibleContent>
+          </Collapsible>
 
           <Tabs value={activeTab} onValueChange={setActiveTab}>
-            <TabsList className="flex flex-wrap h-auto">
+            <TabsList className="flex flex-wrap h-auto sticky top-0 z-10 bg-background">
               <TabsTrigger value="soap"><FileText className="h-4 w-4 mr-1" />SOAP</TabsTrigger>
               <TabsTrigger value="services"><Stethoscope className="h-4 w-4 mr-1" />Услуги</TabsTrigger>
               <TabsTrigger value="materials"><Package className="h-4 w-4 mr-1" />Материалы</TabsTrigger>
               <TabsTrigger value="invoice"><Receipt className="h-4 w-4 mr-1" />Счёт</TabsTrigger>
             </TabsList>
+
 
             <TabsContent value="soap" className="space-y-3 pt-3">
               <div>

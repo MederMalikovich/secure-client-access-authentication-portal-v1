@@ -428,6 +428,15 @@ export default function Reports() {
               >
                 Этот месяц
               </Button>
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setDateFrom('2000-01-01');
+                  setDateTo(format(new Date(), 'yyyy-MM-dd'));
+                }}
+              >
+                Всё время
+              </Button>
             </div>
           </div>
         </CardContent>
@@ -707,6 +716,67 @@ export default function Reports() {
                   </div>
                 ))}
               </div>
+            )}
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Additional reports: products & diseases */}
+      <div className="grid gap-6 lg:grid-cols-2 mt-6">
+        <Card className="glass">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Package className="h-5 w-5 text-primary" />
+              Популярные товары
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {topProducts.length === 0 ? (
+              <p className="text-sm text-muted-foreground py-12 text-center">Нет продаж за период</p>
+            ) : (
+              <div className="space-y-2">
+                {topProducts.map((p, i) => (
+                  <div key={i} className="flex items-center justify-between p-3 rounded-lg bg-card/40 border border-border/40">
+                    <div className="flex items-center gap-3 min-w-0">
+                      <div className="h-8 w-8 rounded-full bg-primary/15 text-primary flex items-center justify-center text-xs font-semibold shrink-0">
+                        {i + 1}
+                      </div>
+                      <div className="min-w-0">
+                        <p className="text-sm font-medium truncate">{p.name}</p>
+                        <p className="text-xs text-muted-foreground">{p.qty} шт.</p>
+                      </div>
+                    </div>
+                    <p className="text-sm font-semibold text-primary shrink-0">{formatCurrency(p.revenue)}</p>
+                  </div>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        <Card className="glass">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Activity className="h-5 w-5 text-secondary" />
+              Распространённые заболевания
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {topDiseases.length === 0 ? (
+              <p className="text-sm text-muted-foreground py-12 text-center">Нет поставленных диагнозов за период</p>
+            ) : (
+              <ResponsiveContainer width="100%" height={300}>
+                <BarChart data={topDiseases} layout="vertical">
+                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                  <XAxis type="number" stroke="hsl(var(--muted-foreground))" fontSize={12} allowDecimals={false} />
+                  <YAxis type="category" dataKey="name" stroke="hsl(var(--muted-foreground))" fontSize={12} width={160} />
+                  <Tooltip
+                    contentStyle={{ backgroundColor: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: '8px' }}
+                    formatter={(v: number) => [v, 'Случаев']}
+                  />
+                  <Bar dataKey="count" fill="hsl(var(--secondary))" radius={[0, 4, 4, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
             )}
           </CardContent>
         </Card>

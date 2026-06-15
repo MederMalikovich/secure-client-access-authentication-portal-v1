@@ -231,17 +231,23 @@ export default function Reports() {
       );
 
       // Revenue by doctor (period) — sum paid invoices via visits.veterinarian_id
-      const { data: visitsWithVet } = await supabase
-        .from('visits')
-        .select('veterinarian_id, vet:profiles!visits_veterinarian_id_fkey(full_name), invoices(total, status)')
-        .gte('visit_date', dateFrom)
-        .lte('visit_date', dateTo + 'T23:59:59')
-        .not('veterinarian_id', 'is', null);
+      const [{ data: visitsWithVet }, { data: vetList }] = await Promise.all([
+        supabase
+          .from('visits')
+          .select('veterinarian_id, invoices(total, status)')
+          .gte('visit_date', dateFrom)
+          .lte('visit_date', dateTo + 'T23:59:59')
+          .not('veterinarian_id', 'is', null),
+        supabase.rpc('list_public_veterinarians'),
+      ]);
+
+      const vetName: Record<string, string> = {};
+      ((vetList as any[]) || []).forEach((v) => { vetName[v.id] = v.full_name; });
 
       const docTotals: Record<string, { name: string; total: number; visits: number }> = {};
       (visitsWithVet || []).forEach((v: any) => {
         const id = v.veterinarian_id;
-        const name = v.vet?.full_name || 'Без врача';
+        const name = vetName[id] || 'Врач';
         if (!docTotals[id]) docTotals[id] = { name, total: 0, visits: 0 };
         docTotals[id].visits += 1;
         (v.invoices || []).forEach((inv: any) => {

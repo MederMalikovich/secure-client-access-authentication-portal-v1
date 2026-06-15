@@ -127,11 +127,13 @@ export default function Reports() {
       }));
       setRevenueData(chartData.length > 31 ? chartData.slice(0, 31) : chartData);
 
-      // Fetch real services usage from medical_record_services
-      const { data: serviceUsage } = await supabase
-        .from('medical_record_services')
-        .select('service_id, service:services(name)')
-        .not('service_id', 'is', null);
+      // Fetch real services usage from visit_services (filter by visit_date)
+      const { data: visitServices } = await supabase
+        .from('visit_services')
+        .select('service_id, quantity, service:services(name), visit:visits!inner(visit_date)')
+        .not('service_id', 'is', null)
+        .gte('visit.visit_date', dateFrom)
+        .lte('visit.visit_date', dateTo + 'T23:59:59');
 
       // Also count from appointments
       const { data: aptServices } = await supabase
@@ -142,7 +144,13 @@ export default function Reports() {
         .not('service_id', 'is', null);
 
       const serviceCounts: Record<string, { name: string; count: number }> = {};
-      [...(serviceUsage || []), ...(aptServices || [])].forEach((item: any) => {
+      (visitServices || []).forEach((item: any) => {
+        const id = item.service_id;
+        const name = item.service?.name || 'Неизвестно';
+        if (!serviceCounts[id]) serviceCounts[id] = { name, count: 0 };
+        serviceCounts[id].count += Number(item.quantity) || 1;
+      });
+      (aptServices || []).forEach((item: any) => {
         const id = item.service_id;
         const name = item.service?.name || 'Неизвестно';
         if (!serviceCounts[id]) serviceCounts[id] = { name, count: 0 };
@@ -153,7 +161,7 @@ export default function Reports() {
         .sort((a, b) => b.count - a.count)
         .slice(0, 5)
         .map(s => ({
-          name: s.name.length > 15 ? s.name.substring(0, 15) + '...' : s.name,
+          name: s.name.length > 20 ? s.name.substring(0, 20) + '...' : s.name,
           value: s.count,
         }));
       setServicesData(sortedServices);

@@ -215,6 +215,7 @@ export function VisitDialog({ open, onClose, visitId, initialPetId, initialAppoi
         respiratory_rate: data.respiratory_rate?.toString() || '',
         notes: data.notes || '',
         next_visit_date: data.next_visit_date ? format(new Date(data.next_visit_date), "yyyy-MM-dd'T'HH:mm") : '',
+        completed_at: data.completed_at || null,
       });
       const [svcRes, matRes] = await Promise.all([
         supabase.from('visit_services').select('*').eq('visit_id', id),

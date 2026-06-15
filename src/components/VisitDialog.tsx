@@ -81,7 +81,9 @@ export function VisitDialog({ open, onClose, visitId, initialPetId, initialAppoi
     respiratory_rate: '',
     notes: '',
     next_visit_date: '',
+    completed_at: null as string | null,
   });
+  const isCompleted = form.status === 'completed' || !!form.completed_at;
   const [visitServices, setVisitServices] = useState<ServiceLine[]>([]);
   const [visitMaterials, setVisitMaterials] = useState<MaterialLine[]>([]);
   const [activeTab, setActiveTab] = useState('soap');

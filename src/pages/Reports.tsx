@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
-import { format, subDays, startOfMonth, endOfMonth } from 'date-fns';
+import { format, subDays, startOfMonth, endOfMonth, differenceInDays, startOfWeek, startOfMonth as sOM } from 'date-fns';
 import { ru } from 'date-fns/locale';
-import { BarChart3, TrendingUp, Users, PawPrint, Calendar, DollarSign, Download } from 'lucide-react';
+import { BarChart3, TrendingUp, Users, PawPrint, Calendar, DollarSign, Download, Stethoscope, Award } from 'lucide-react';
 import { PageHeader } from '@/components/ui/page-header';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -40,6 +40,8 @@ export default function Reports() {
   const [revenueData, setRevenueData] = useState<any[]>([]);
   const [servicesData, setServicesData] = useState<any[]>([]);
   const [appointmentsByStatus, setAppointmentsByStatus] = useState<any[]>([]);
+  const [topClients, setTopClients] = useState<any[]>([]);
+  const [doctorRevenue, setDoctorRevenue] = useState<any[]>([]);
 
   useEffect(() => {
     fetchReportData();
@@ -88,25 +90,38 @@ export default function Reports() {
         avgCheck,
       });
 
-      // Generate revenue chart data from real invoices
-      const revenueByDay: Record<string, { revenue: number; appointments: number }> = {};
-      let currentDate = new Date(dateFrom);
-      const endDate = new Date(dateTo);
-      while (currentDate <= endDate) {
-        const key = format(currentDate, 'yyyy-MM-dd');
-        revenueByDay[key] = { revenue: 0, appointments: 0 };
-        currentDate.setDate(currentDate.getDate() + 1);
+      // Decide aggregation bucket: day / week / month based on range length
+      const rangeDays = Math.max(1, differenceInDays(new Date(dateTo), new Date(dateFrom)) + 1);
+      type Bucket = 'day' | 'week' | 'month';
+      const bucket: Bucket = rangeDays <= 31 ? 'day' : rangeDays <= 120 ? 'week' : 'month';
+      const bucketKey = (d: Date): string => {
+        if (bucket === 'day') return format(d, 'yyyy-MM-dd');
+        if (bucket === 'week') return format(startOfWeek(d, { weekStartsOn: 1 }), 'yyyy-MM-dd');
+        return format(sOM(d), 'yyyy-MM');
+      };
+      const bucketLabel = (key: string): string => {
+        if (bucket === 'month') {
+          const [y, m] = key.split('-');
+          return format(new Date(Number(y), Number(m) - 1, 1), 'LLL yyyy', { locale: ru });
+        }
+        return format(new Date(key), bucket === 'week' ? "d MMM" : 'd MMM', { locale: ru });
+      };
+
+      const buckets: Record<string, { revenue: number; appointments: number }> = {};
+      const cursor = new Date(dateFrom);
+      const endD = new Date(dateTo);
+      while (cursor <= endD) {
+        const k = bucketKey(cursor);
+        if (!buckets[k]) buckets[k] = { revenue: 0, appointments: 0 };
+        cursor.setDate(cursor.getDate() + 1);
       }
 
-      // Fill revenue per day
       invoices?.forEach((inv) => {
-        const day = format(new Date(inv.issued_at), 'yyyy-MM-dd');
-        if (revenueByDay[day]) {
-          revenueByDay[day].revenue += Number(inv.total);
-        }
+        const k = bucketKey(new Date(inv.issued_at));
+        if (buckets[k]) buckets[k].revenue += Number(inv.total);
       });
 
-      // Fill appointments per day
+      // Fill appointments per bucket
       const { data: appointmentsList } = await supabase
         .from('appointments')
         .select('scheduled_at')
@@ -114,18 +129,18 @@ export default function Reports() {
         .lte('scheduled_at', dateTo + 'T23:59:59');
 
       appointmentsList?.forEach((apt) => {
-        const day = format(new Date(apt.scheduled_at), 'yyyy-MM-dd');
-        if (revenueByDay[day]) {
-          revenueByDay[day].appointments += 1;
-        }
+        const k = bucketKey(new Date(apt.scheduled_at));
+        if (buckets[k]) buckets[k].appointments += 1;
       });
 
-      const chartData = Object.entries(revenueByDay).map(([date, vals]) => ({
-        date: format(new Date(date), 'd MMM', { locale: ru }),
-        revenue: vals.revenue,
-        appointments: vals.appointments,
-      }));
-      setRevenueData(chartData.length > 31 ? chartData.slice(0, 31) : chartData);
+      const chartData = Object.entries(buckets)
+        .sort(([a], [b]) => a.localeCompare(b))
+        .map(([key, vals]) => ({
+          date: bucketLabel(key),
+          revenue: vals.revenue,
+          appointments: vals.appointments,
+        }));
+      setRevenueData(chartData);
 
       // Fetch real services usage from visit_services (filter by visit_date)
       const { data: visitServices } = await supabase
@@ -166,28 +181,88 @@ export default function Reports() {
         }));
       setServicesData(sortedServices);
 
-      // Real appointments by status
-      const { data: statusData } = await supabase
-        .from('appointments')
+      // Real visit statuses (more accurate than appointment statuses)
+      const { data: visitStatusData } = await supabase
+        .from('visits')
         .select('status')
-        .gte('scheduled_at', dateFrom)
-        .lte('scheduled_at', dateTo + 'T23:59:59');
+        .gte('visit_date', dateFrom)
+        .lte('visit_date', dateTo + 'T23:59:59');
 
       const statusCounts: Record<string, number> = {};
       const statusLabels: Record<string, string> = {
-        scheduled: 'Запланировано',
-        confirmed: 'Подтверждено',
-        in_progress: 'В процессе',
-        completed: 'Завершено',
-        cancelled: 'Отменено',
-        no_show: 'Неявка',
+        waiting: 'Ожидание',
+        in_consultation: 'На приёме',
+        procedures: 'Процедуры',
+        hospital: 'Стационар',
+        completed: 'Завершён',
+        cancelled: 'Отменён',
       };
-      statusData?.forEach((a) => {
-        const label = statusLabels[a.status] || a.status;
+      visitStatusData?.forEach((v: any) => {
+        const label = statusLabels[v.status] || v.status;
         statusCounts[label] = (statusCounts[label] || 0) + 1;
       });
       setAppointmentsByStatus(
         Object.entries(statusCounts).map(([name, value]) => ({ name, value }))
+      );
+
+      // Top clients by revenue (period)
+      const { data: paidInvoicesFull } = await supabase
+        .from('invoices')
+        .select('total, client_id, client:clients(full_name)')
+        .gte('issued_at', dateFrom)
+        .lte('issued_at', dateTo + 'T23:59:59')
+        .eq('status', 'paid');
+
+      const clientTotals: Record<string, { name: string; total: number }> = {};
+      (paidInvoicesFull || []).forEach((inv: any) => {
+        const id = inv.client_id || 'unknown';
+        const name = inv.client?.full_name || 'Без клиента';
+        if (!clientTotals[id]) clientTotals[id] = { name, total: 0 };
+        clientTotals[id].total += Number(inv.total) || 0;
+      });
+      setTopClients(
+        Object.values(clientTotals)
+          .sort((a, b) => b.total - a.total)
+          .slice(0, 5)
+          .map(c => ({
+            name: c.name.length > 22 ? c.name.substring(0, 22) + '…' : c.name,
+            total: Math.round(c.total),
+          }))
+      );
+
+      // Revenue by doctor (period) — sum paid invoices via visits.veterinarian_id
+      const [{ data: visitsWithVet }, { data: vetList }] = await Promise.all([
+        supabase
+          .from('visits')
+          .select('veterinarian_id, invoices(total, status)')
+          .gte('visit_date', dateFrom)
+          .lte('visit_date', dateTo + 'T23:59:59')
+          .not('veterinarian_id', 'is', null),
+        supabase.rpc('list_public_veterinarians'),
+      ]);
+
+      const vetName: Record<string, string> = {};
+      ((vetList as any[]) || []).forEach((v) => { vetName[v.id] = v.full_name; });
+
+      const docTotals: Record<string, { name: string; total: number; visits: number }> = {};
+      (visitsWithVet || []).forEach((v: any) => {
+        const id = v.veterinarian_id;
+        const name = vetName[id] || 'Врач';
+        if (!docTotals[id]) docTotals[id] = { name, total: 0, visits: 0 };
+        docTotals[id].visits += 1;
+        (v.invoices || []).forEach((inv: any) => {
+          if (inv.status === 'paid') docTotals[id].total += Number(inv.total) || 0;
+        });
+      });
+      setDoctorRevenue(
+        Object.values(docTotals)
+          .sort((a, b) => b.total - a.total)
+          .slice(0, 8)
+          .map(d => ({
+            name: d.name.length > 22 ? d.name.substring(0, 22) + '…' : d.name,
+            total: Math.round(d.total),
+            visits: d.visits,
+          }))
       );
     } catch (error) {
     } finally {
@@ -519,6 +594,69 @@ export default function Reports() {
                 />
               </PieChart>
             </ResponsiveContainer>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Owner-focused reports */}
+      <div className="grid gap-6 lg:grid-cols-2 mt-6">
+        {/* Top Clients by Revenue */}
+        <Card className="glass">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Award className="h-5 w-5 text-primary" />
+              Топ-5 клиентов по выручке
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {topClients.length === 0 ? (
+              <p className="text-sm text-muted-foreground py-12 text-center">Нет оплаченных счетов за период</p>
+            ) : (
+              <ResponsiveContainer width="100%" height={300}>
+                <BarChart data={topClients} layout="vertical">
+                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                  <XAxis type="number" stroke="hsl(var(--muted-foreground))" fontSize={12} tickFormatter={(v) => formatCurrency(v)} />
+                  <YAxis type="category" dataKey="name" stroke="hsl(var(--muted-foreground))" fontSize={12} width={140} />
+                  <Tooltip
+                    contentStyle={{ backgroundColor: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: '8px' }}
+                    formatter={(v: number) => [formatCurrency(v), 'Выручка']}
+                  />
+                  <Bar dataKey="total" fill="hsl(var(--primary))" radius={[0, 4, 4, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Revenue by Doctor */}
+        <Card className="glass">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Stethoscope className="h-5 w-5 text-secondary" />
+              Выручка по врачам
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {doctorRevenue.length === 0 ? (
+              <p className="text-sm text-muted-foreground py-12 text-center">Нет данных по врачам за период</p>
+            ) : (
+              <div className="space-y-2">
+                {doctorRevenue.map((d, i) => (
+                  <div key={i} className="flex items-center justify-between p-3 rounded-lg bg-card/40 border border-border/40">
+                    <div className="flex items-center gap-3 min-w-0">
+                      <div className="h-8 w-8 rounded-full bg-secondary/15 text-secondary flex items-center justify-center text-xs font-semibold shrink-0">
+                        {i + 1}
+                      </div>
+                      <div className="min-w-0">
+                        <p className="text-sm font-medium truncate">{d.name}</p>
+                        <p className="text-xs text-muted-foreground">{d.visits} визит(ов)</p>
+                      </div>
+                    </div>
+                    <p className="text-sm font-semibold text-primary shrink-0">{formatCurrency(d.total)}</p>
+                  </div>
+                ))}
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>

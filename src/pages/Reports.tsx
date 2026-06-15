@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { format, subDays, startOfMonth, endOfMonth, differenceInDays, startOfWeek, startOfMonth as sOM } from 'date-fns';
 import { ru } from 'date-fns/locale';
-import { BarChart3, TrendingUp, Users, PawPrint, Calendar, DollarSign, Download, Stethoscope, Award } from 'lucide-react';
+import { BarChart3, TrendingUp, Users, PawPrint, Calendar, DollarSign, Download, Stethoscope, Award, Package, Activity } from 'lucide-react';
 import { PageHeader } from '@/components/ui/page-header';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -42,6 +42,8 @@ export default function Reports() {
   const [appointmentsByStatus, setAppointmentsByStatus] = useState<any[]>([]);
   const [topClients, setTopClients] = useState<any[]>([]);
   const [doctorRevenue, setDoctorRevenue] = useState<any[]>([]);
+  const [topProducts, setTopProducts] = useState<any[]>([]);
+  const [topDiseases, setTopDiseases] = useState<any[]>([]);
 
   useEffect(() => {
     fetchReportData();
@@ -262,6 +264,55 @@ export default function Reports() {
             name: d.name.length > 22 ? d.name.substring(0, 22) + '…' : d.name,
             total: Math.round(d.total),
             visits: d.visits,
+          }))
+      );
+
+      // Top products (shop sales in period)
+      const { data: saleItems } = await supabase
+        .from('shop_sale_items')
+        .select('quantity, total, item_id, item:inventory_items(name), sale:shop_sales!inner(created_at)')
+        .gte('sale.created_at', dateFrom)
+        .lte('sale.created_at', dateTo + 'T23:59:59');
+      const prodTotals: Record<string, { name: string; qty: number; revenue: number }> = {};
+      (saleItems || []).forEach((it: any) => {
+        const id = it.item_id || 'unknown';
+        const name = it.item?.name || 'Товар';
+        if (!prodTotals[id]) prodTotals[id] = { name, qty: 0, revenue: 0 };
+        prodTotals[id].qty += Number(it.quantity) || 0;
+        prodTotals[id].revenue += Number(it.total) || 0;
+      });
+      setTopProducts(
+        Object.values(prodTotals)
+          .sort((a, b) => b.qty - a.qty)
+          .slice(0, 5)
+          .map(p => ({
+            name: p.name.length > 22 ? p.name.substring(0, 22) + '…' : p.name,
+            qty: p.qty,
+            revenue: Math.round(p.revenue),
+          }))
+      );
+
+      // Top diseases (diagnoses linked to medical_records in period)
+      const { data: diagRows } = await supabase
+        .from('medical_record_diagnoses')
+        .select('disease_id, custom_diagnosis, disease:diseases(name), created_at')
+        .gte('created_at', dateFrom)
+        .lte('created_at', dateTo + 'T23:59:59');
+      const diseaseCounts: Record<string, number> = {};
+      (diagRows || []).forEach((d: any) => {
+        const name = d.disease?.name || (d.custom_diagnosis ? d.custom_diagnosis : null);
+        if (!name) return;
+        const key = name.trim();
+        if (!key) return;
+        diseaseCounts[key] = (diseaseCounts[key] || 0) + 1;
+      });
+      setTopDiseases(
+        Object.entries(diseaseCounts)
+          .sort((a, b) => b[1] - a[1])
+          .slice(0, 8)
+          .map(([name, count]) => ({
+            name: name.length > 28 ? name.substring(0, 28) + '…' : name,
+            count,
           }))
       );
     } catch (error) {

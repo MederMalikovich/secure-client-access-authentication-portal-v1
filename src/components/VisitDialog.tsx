@@ -710,20 +710,22 @@ export function VisitDialog({ open, onClose, visitId, initialPetId, initialAppoi
           </Button>
           <Button
             onClick={() => save(true, false)}
-            disabled={saving || loading || form.status === 'completed'}
-            title={form.status === 'completed' ? 'Визит уже завершён' : undefined}
+            disabled={saving || loading || isCompleted}
+            title={isCompleted ? 'Визит уже завершён' : undefined}
           >
             <CheckCircle2 className="h-4 w-4 mr-1" />
-            {form.status === 'completed' ? 'Визит завершён' : 'Завершить визит'}
+            {isCompleted ? 'Визит завершён' : 'Завершить визит'}
           </Button>
-          <Button
-            onClick={() => save(true, true)}
-            disabled={saving || loading || form.status === 'completed'}
-            title={form.status === 'completed' ? 'Визит уже завершён' : 'Завершить и сразу открыть форму оплаты'}
-          >
-            <Receipt className="h-4 w-4 mr-1" />
-            Завершить визит и принять оплату
-          </Button>
+          {!isCompleted && (
+            <Button
+              onClick={() => save(true, true)}
+              disabled={saving || loading}
+              title="Завершить и сразу открыть форму оплаты"
+            >
+              <Receipt className="h-4 w-4 mr-1" />
+              Завершить визит и принять оплату
+            </Button>
+          )}
         </DialogFooter>
       </DialogContent>
     </Dialog>

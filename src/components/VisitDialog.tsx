@@ -186,6 +186,7 @@ export function VisitDialog({ open, onClose, visitId, initialPetId, initialAppoi
       respiratory_rate: '',
       notes: '',
       next_visit_date: '',
+      completed_at: null,
     });
     setVisitServices([]);
     setVisitMaterials([]);

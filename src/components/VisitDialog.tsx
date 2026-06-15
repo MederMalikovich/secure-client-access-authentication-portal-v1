@@ -660,6 +660,9 @@ export function VisitDialog({ open, onClose, visitId, initialPetId, initialAppoi
                   </Select>
                 </div>
                 <Textarea rows={2} value={form.assessment} onChange={(e) => setForm(f => ({ ...f, assessment: e.target.value }))} placeholder="Диагноз... (можно выбрать из списка выше или ввести вручную)" />
+              </div>
+              <div className="rounded-lg border-l-4 border-purple-500 bg-purple-500/5 p-3">
+                <Label className="flex items-center gap-2 text-purple-400 font-semibold">
                   <span className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-purple-500/20 text-xs">P</span>
                   Plan — лечение и рекомендации
                 </Label>

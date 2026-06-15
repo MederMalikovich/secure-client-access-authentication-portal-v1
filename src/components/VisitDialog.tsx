@@ -306,6 +306,10 @@ export function VisitDialog({ open, onClose, visitId, initialPetId, initialAppoi
       toast({ title: 'Врач занят', description: 'В выбранное время этот врач уже занят. Измените время или врача.', variant: 'destructive' });
       return;
     }
+    if (markCompleted && isCompleted) {
+      toast({ title: 'Визит уже завершён', description: 'Повторное завершение невозможно.', variant: 'destructive' });
+      return;
+    }
     setSaving(true);
     try {
       // Если завершаем визит — должна быть хотя бы одна услуга или материал к оплате,

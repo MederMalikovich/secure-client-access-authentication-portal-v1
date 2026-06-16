@@ -602,6 +602,66 @@ export default function Reports() {
         </Card>
       </div>
 
+      {/* Pet Growth Chart */}
+      <div className="grid gap-6 mb-6">
+        <Card className="glass">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <PawPrint className="h-5 w-5 text-yellow-500" />
+              Динамика количества питомцев
+            </CardTitle>
+            <p className="text-xs text-muted-foreground mt-1">
+              Новые регистрации и накопленный итог питомцев за период.
+            </p>
+          </CardHeader>
+          <CardContent>
+            <ResponsiveContainer width="100%" height={320}>
+              <ComposedChart data={petGrowthData}>
+                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                <XAxis dataKey="date" stroke="hsl(var(--muted-foreground))" fontSize={12} />
+                <YAxis
+                  yAxisId="left"
+                  stroke="hsl(var(--yellow-500))"
+                  fontSize={12}
+                  allowDecimals={false}
+                />
+                <YAxis
+                  yAxisId="right"
+                  orientation="right"
+                  stroke="hsl(var(--primary))"
+                  fontSize={12}
+                  allowDecimals={false}
+                />
+                <Tooltip
+                  contentStyle={{
+                    backgroundColor: 'hsl(var(--card))',
+                    border: '1px solid hsl(var(--border))',
+                    borderRadius: '8px',
+                  }}
+                />
+                <Legend />
+                <Bar
+                  yAxisId="left"
+                  dataKey="newPets"
+                  name="Новые питомцы"
+                  fill="hsl(var(--yellow-500))"
+                  radius={[4, 4, 0, 0]}
+                />
+                <Area
+                  yAxisId="right"
+                  type="monotone"
+                  dataKey="totalPets"
+                  name="Всего питомцев (накоп.)"
+                  stroke="hsl(var(--primary))"
+                  fill="hsl(var(--primary))"
+                  fillOpacity={0.15}
+                  strokeWidth={2}
+                />
+              </ComposedChart>
+            </ResponsiveContainer>
+          </CardContent>
+        </Card>
+      </div>
 
       <div className="grid gap-6 lg:grid-cols-2">
         {/* Popular Services */}

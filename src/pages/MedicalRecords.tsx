@@ -1192,6 +1192,8 @@ export default function MedicalRecords() {
         onClose={() => setVisitDialogOpen(false)}
         onSaved={() => fetchData()}
       />
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }

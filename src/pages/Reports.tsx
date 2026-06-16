@@ -156,6 +156,34 @@ export default function Reports() {
         }));
       setRevenueData(chartData);
 
+      // === Динамика количества питомцев (новые + накопленный итог) ===
+      const pets = petsRaw || [];
+      const allPetsUpToDate = pets.filter((p: any) => new Date(p.created_at) <= endD);
+      const petBuckets: Record<string, { newPets: number; totalPets: number }> = {};
+      const petCursor = new Date(dateFrom);
+      while (petCursor <= endD) {
+        const k = bucketKey(petCursor);
+        if (!petBuckets[k]) petBuckets[k] = { newPets: 0, totalPets: 0 };
+        petCursor.setDate(petCursor.getDate() + 1);
+      }
+      pets.forEach((p: any) => {
+        const d = new Date(p.created_at);
+        const k = bucketKey(d);
+        if (petBuckets[k]) petBuckets[k].newPets += 1;
+      });
+      let runningTotal = 0;
+      const petChartData = Object.entries(petBuckets)
+        .sort(([a], [b]) => a.localeCompare(b))
+        .map(([key, vals]) => {
+          runningTotal += vals.newPets;
+          return {
+            date: bucketLabel(key),
+            newPets: vals.newPets,
+            totalPets: runningTotal,
+          };
+        });
+      setPetGrowthData(petChartData);
+
       // === Популярные услуги (visit_services по visit_date) ===
       const { data: visitServices } = await supabase
         .from('visit_services')

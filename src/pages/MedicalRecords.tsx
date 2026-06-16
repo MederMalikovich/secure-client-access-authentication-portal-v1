@@ -43,6 +43,7 @@ import { ru } from 'date-fns/locale';
 import { VisitTimeline } from '@/components/VisitTimeline';
 import { VisitDialog } from '@/components/VisitDialog';
 import { PetSearchSelect } from '@/components/PetSearchSelect';
+import Prescriptions from '@/pages/Prescriptions';
 
 type PetMedicalTimeline = {
   petId: string;
@@ -483,6 +484,16 @@ export default function MedicalRecords() {
           </div>
         )}
       />
+
+      <Tabs defaultValue="records" className="mb-4">
+        <TabsList className="flex-wrap h-auto">
+          <TabsTrigger value="records"><FileText className="h-4 w-4 mr-1" />Медкарты и визиты</TabsTrigger>
+          <TabsTrigger value="prescriptions"><Pill className="h-4 w-4 mr-1" />Назначения</TabsTrigger>
+        </TabsList>
+        <TabsContent value="prescriptions" className="mt-4">
+          <Prescriptions />
+        </TabsContent>
+        <TabsContent value="records" className="mt-4 space-y-4">
 
       <Tabs value={viewMode} onValueChange={(v) => setViewMode(v as any)} className="mb-4">
         <TabsList>

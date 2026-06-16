@@ -42,6 +42,7 @@ import { format } from 'date-fns';
 import { ru } from 'date-fns/locale';
 import { VisitTimeline } from '@/components/VisitTimeline';
 import { VisitDialog } from '@/components/VisitDialog';
+import { PetSearchSelect } from '@/components/PetSearchSelect';
 
 type PetMedicalTimeline = {
   petId: string;

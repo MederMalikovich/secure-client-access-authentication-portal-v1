@@ -790,6 +790,12 @@ export default function Reports() {
           </CardContent>
         </Card>
       </div>
+        </TabsContent>
+
+        <TabsContent value="retention">
+          <ClientsAtRisk />
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }

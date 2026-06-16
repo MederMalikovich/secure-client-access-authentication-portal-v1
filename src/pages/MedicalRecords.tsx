@@ -138,6 +138,10 @@ export default function MedicalRecords() {
     fetchData();
   }, []);
 
+  useEffect(() => {
+    if (!timelinePetId && pets.length > 0) setTimelinePetId(pets[0].id);
+  }, [pets, timelinePetId]);
+
   const fetchData = async () => {
     try {
       const [recordsRes, petsRes, vetsRes] = await Promise.all([

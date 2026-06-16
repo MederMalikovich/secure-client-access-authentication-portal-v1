@@ -50,6 +50,7 @@ export default function Reports() {
   const [doctorRevenue, setDoctorRevenue] = useState<any[]>([]);
   const [topProducts, setTopProducts] = useState<any[]>([]);
   const [topDiseases, setTopDiseases] = useState<any[]>([]);
+  const [petGrowthData, setPetGrowthData] = useState<any[]>([]);
 
   useEffect(() => {
     fetchReportData();

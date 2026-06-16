@@ -502,79 +502,76 @@ export default function Reports() {
         </Card>
       </div>
 
-      {/* Charts */}
-      <div className="grid gap-6 lg:grid-cols-2 mb-6">
-        {/* Revenue Chart */}
+      {/* Stat for non-visit revenue */}
+      {stats.otherRevenue > 0 && (
+        <div className="text-xs text-muted-foreground mb-4 -mt-2">
+          В выручку включены {formatCurrency(stats.otherRevenue)} прочих оплат (магазин/стационар без визита, по дате счёта).
+        </div>
+      )}
+
+      {/* Combined Chart */}
+      <div className="grid gap-6 mb-6">
         <Card className="glass">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <TrendingUp className="h-5 w-5 text-primary" />
-              Динамика выручки
+              Выручка и приёмы
             </CardTitle>
+            <p className="text-xs text-muted-foreground mt-1">
+              Все данные сгруппированы по <b>дате визита</b>. Выручка — сумма оплаченных счетов, привязанных к визитам периода.
+            </p>
           </CardHeader>
           <CardContent>
-            <ResponsiveContainer width="100%" height={300}>
-              <AreaChart data={revenueData}>
-                <defs>
-                  <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.3} />
-                    <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0} />
-                  </linearGradient>
-                </defs>
+            <ResponsiveContainer width="100%" height={320}>
+              <ComposedChart data={revenueData}>
                 <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
                 <XAxis dataKey="date" stroke="hsl(var(--muted-foreground))" fontSize={12} />
-                <YAxis stroke="hsl(var(--muted-foreground))" fontSize={12} />
-                <Tooltip
-                  contentStyle={{
-                    backgroundColor: 'hsl(var(--card))',
-                    border: '1px solid hsl(var(--border))',
-                    borderRadius: '8px',
-                  }}
-                  formatter={(value: number) => [formatCurrency(value), 'Выручка']}
-                />
-                <Area
-                  type="monotone"
-                  dataKey="revenue"
+                <YAxis
+                  yAxisId="left"
                   stroke="hsl(var(--primary))"
-                  fillOpacity={1}
-                  fill="url(#colorRevenue)"
+                  fontSize={12}
+                  tickFormatter={(v) => v >= 1000 ? `${(v / 1000).toFixed(0)}к` : String(v)}
                 />
-              </AreaChart>
-            </ResponsiveContainer>
-          </CardContent>
-        </Card>
-
-        {/* Appointments Chart */}
-        <Card className="glass">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Calendar className="h-5 w-5 text-secondary" />
-              Количество приёмов
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <ResponsiveContainer width="100%" height={300}>
-              <BarChart data={revenueData}>
-                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                <XAxis dataKey="date" stroke="hsl(var(--muted-foreground))" fontSize={12} />
-                <YAxis stroke="hsl(var(--muted-foreground))" fontSize={12} />
+                <YAxis
+                  yAxisId="right"
+                  orientation="right"
+                  stroke="hsl(var(--secondary))"
+                  fontSize={12}
+                  allowDecimals={false}
+                />
                 <Tooltip
                   contentStyle={{
                     backgroundColor: 'hsl(var(--card))',
                     border: '1px solid hsl(var(--border))',
                     borderRadius: '8px',
                   }}
+                  formatter={(value: number, name: string) =>
+                    name === 'Выручка' ? [formatCurrency(value), name] : [value, name]
+                  }
                 />
+                <Legend />
                 <Bar
-                  dataKey="appointments"
-                  fill="hsl(var(--secondary))"
+                  yAxisId="left"
+                  dataKey="revenue"
+                  name="Выручка"
+                  fill="hsl(var(--primary))"
                   radius={[4, 4, 0, 0]}
                 />
-              </BarChart>
+                <Line
+                  yAxisId="right"
+                  type="monotone"
+                  dataKey="appointments"
+                  name="Приёмы"
+                  stroke="hsl(var(--secondary))"
+                  strokeWidth={2}
+                  dot={{ r: 3 }}
+                />
+              </ComposedChart>
             </ResponsiveContainer>
           </CardContent>
         </Card>
       </div>
+
 
       <div className="grid gap-6 lg:grid-cols-2">
         {/* Popular Services */}

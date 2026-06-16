@@ -644,7 +644,7 @@ export default function Reports() {
                   yAxisId="left"
                   dataKey="newPets"
                   name="Новые питомцы"
-                  fill="hsl(var(--yellow-500))"
+                  fill="hsl(var(--warning))"
                   radius={[4, 4, 0, 0]}
                 />
                 <Area

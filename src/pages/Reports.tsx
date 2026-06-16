@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { format, subDays, startOfMonth, endOfMonth, differenceInDays, startOfWeek, startOfMonth as sOM } from 'date-fns';
+import { format, subDays, startOfMonth, endOfMonth, differenceInDays, startOfWeek, startOfMonth as sOM, parseISO } from 'date-fns';
 import { ru } from 'date-fns/locale';
 import { BarChart3, TrendingUp, Users, PawPrint, Calendar, DollarSign, Download, Stethoscope, Award, Package, Activity, HeartHandshake } from 'lucide-react';
 import { PageHeader } from '@/components/ui/page-header';
@@ -50,6 +50,7 @@ export default function Reports() {
   const [doctorRevenue, setDoctorRevenue] = useState<any[]>([]);
   const [topProducts, setTopProducts] = useState<any[]>([]);
   const [topDiseases, setTopDiseases] = useState<any[]>([]);
+  const [petGrowthData, setPetGrowthData] = useState<any[]>([]);
 
   useEffect(() => {
     fetchReportData();
@@ -93,11 +94,12 @@ export default function Reports() {
       const otherRevenue = (otherInv || []).reduce((s, i: any) => s + Number(i.total || 0), 0);
 
       // Новые клиенты / питомцы
-      const [{ count: newClientsCount }, { count: newPetsCount }] = await Promise.all([
+      const [{ count: newClientsCount }, { count: newPetsCount }, { data: petsRaw }] = await Promise.all([
         supabase.from('clients').select('*', { count: 'exact', head: true })
           .gte('created_at', fromIso).lte('created_at', toIso),
         supabase.from('pets').select('*', { count: 'exact', head: true })
           .gte('created_at', fromIso).lte('created_at', toIso),
+        supabase.from('pets').select('id, created_at').order('created_at', { ascending: true }),
       ]);
 
       const totalRevenue = visitRevenue + otherRevenue;
@@ -153,6 +155,34 @@ export default function Reports() {
           appointments: vals.appointments,
         }));
       setRevenueData(chartData);
+
+      // === Динамика количества питомцев (новые + накопленный итог) ===
+      const pets = petsRaw || [];
+      const allPetsUpToDate = pets.filter((p: any) => new Date(p.created_at) <= endD);
+      const petBuckets: Record<string, { newPets: number; totalPets: number }> = {};
+      const petCursor = new Date(dateFrom);
+      while (petCursor <= endD) {
+        const k = bucketKey(petCursor);
+        if (!petBuckets[k]) petBuckets[k] = { newPets: 0, totalPets: 0 };
+        petCursor.setDate(petCursor.getDate() + 1);
+      }
+      pets.forEach((p: any) => {
+        const d = new Date(p.created_at);
+        const k = bucketKey(d);
+        if (petBuckets[k]) petBuckets[k].newPets += 1;
+      });
+      let runningTotal = 0;
+      const petChartData = Object.entries(petBuckets)
+        .sort(([a], [b]) => a.localeCompare(b))
+        .map(([key, vals]) => {
+          runningTotal += vals.newPets;
+          return {
+            date: bucketLabel(key),
+            newPets: vals.newPets,
+            totalPets: runningTotal,
+          };
+        });
+      setPetGrowthData(petChartData);
 
       // === Популярные услуги (visit_services по visit_date) ===
       const { data: visitServices } = await supabase
@@ -572,6 +602,66 @@ export default function Reports() {
         </Card>
       </div>
 
+      {/* Pet Growth Chart */}
+      <div className="grid gap-6 mb-6">
+        <Card className="glass">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <PawPrint className="h-5 w-5 text-yellow-500" />
+              Динамика количества питомцев
+            </CardTitle>
+            <p className="text-xs text-muted-foreground mt-1">
+              Новые регистрации и накопленный итог питомцев за период.
+            </p>
+          </CardHeader>
+          <CardContent>
+            <ResponsiveContainer width="100%" height={320}>
+              <ComposedChart data={petGrowthData}>
+                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                <XAxis dataKey="date" stroke="hsl(var(--muted-foreground))" fontSize={12} />
+                <YAxis
+                  yAxisId="left"
+                  stroke="hsl(var(--warning))"
+                  fontSize={12}
+                  allowDecimals={false}
+                />
+                <YAxis
+                  yAxisId="right"
+                  orientation="right"
+                  stroke="hsl(var(--primary))"
+                  fontSize={12}
+                  allowDecimals={false}
+                />
+                <Tooltip
+                  contentStyle={{
+                    backgroundColor: 'hsl(var(--card))',
+                    border: '1px solid hsl(var(--border))',
+                    borderRadius: '8px',
+                  }}
+                />
+                <Legend />
+                <Bar
+                  yAxisId="left"
+                  dataKey="newPets"
+                  name="Новые питомцы"
+                  fill="hsl(var(--warning))"
+                  radius={[4, 4, 0, 0]}
+                />
+                <Area
+                  yAxisId="right"
+                  type="monotone"
+                  dataKey="totalPets"
+                  name="Всего питомцев (накоп.)"
+                  stroke="hsl(var(--primary))"
+                  fill="hsl(var(--primary))"
+                  fillOpacity={0.15}
+                  strokeWidth={2}
+                />
+              </ComposedChart>
+            </ResponsiveContainer>
+          </CardContent>
+        </Card>
+      </div>
 
       <div className="grid gap-6 lg:grid-cols-2">
         {/* Popular Services */}

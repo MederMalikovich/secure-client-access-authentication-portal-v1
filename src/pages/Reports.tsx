@@ -382,6 +382,13 @@ export default function Reports() {
         }
       />
 
+      <Tabs defaultValue="overview" className="space-y-4">
+        <TabsList>
+          <TabsTrigger value="overview"><BarChart3 className="h-4 w-4 mr-1" />Финансы и операции</TabsTrigger>
+          <TabsTrigger value="retention"><HeartHandshake className="h-4 w-4 mr-1" />Удержание клиентов</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="overview" className="space-y-6">
       {/* Date Filter */}
       <Card className="glass mb-6">
         <CardContent className="pt-6">

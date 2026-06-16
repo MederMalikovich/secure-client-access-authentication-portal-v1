@@ -19,18 +19,13 @@ const mainNavItems: NavItem[] = [
   { title: 'Питомцы', url: '/pets', icon: PawPrint },
   { title: 'Медкарты', url: '/medical-records', icon: FileText },
   { title: 'Доска приёма', url: '/flowboard', icon: Calendar },
-  { title: 'Назначения', url: '/prescriptions', icon: Pill },
   { title: 'Стационар', url: '/hospitalization', icon: BedDouble },
-  { title: 'Услуги', url: '/services', icon: Stethoscope },
-  { title: 'Заболевания', url: '/diseases', icon: Syringe },
-  { title: 'Врачи', url: '/doctors', icon: UserCheck },
 ];
 
 const clientNavItems: NavItem[] = [
   { title: 'Мой кабинет', url: '/my-cabinet', icon: LayoutDashboard },
   { title: 'Мои питомцы', url: '/pets', icon: PawPrint },
   { title: 'Медкарты', url: '/medical-records', icon: FileText },
-  { title: 'Назначения', url: '/prescriptions', icon: Pill },
   { title: 'Стационар', url: '/hospitalization', icon: BedDouble },
   { title: 'Обучение', url: '/client-training', icon: GraduationCap },
 ];

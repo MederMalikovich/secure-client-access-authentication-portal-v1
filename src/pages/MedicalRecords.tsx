@@ -486,23 +486,26 @@ export default function MedicalRecords() {
         </TabsList>
         <TabsContent value="timeline" className="mt-4 space-y-3">
           <Card>
-            <CardContent className="p-4 space-y-3">
-              <Label>Питомец</Label>
-              <Select value={timelinePetId} onValueChange={setTimelinePetId}>
-                <SelectTrigger><SelectValue placeholder="Выберите питомца для просмотра timeline" /></SelectTrigger>
-                <SelectContent>
-                  {pets.map((p: any) => (
-                    <SelectItem key={p.id} value={p.id}>
-                      {p.name}{p.client?.full_name ? ` — ${p.client.full_name}` : ''}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              {timelinePetId && (
+            <CardContent className="p-4 space-y-4">
+              <div className="space-y-2">
+                <Label>Выберите питомца — откроется его единая медкарта</Label>
+                <PetSearchSelect
+                  pets={pets as any}
+                  value={timelinePetId}
+                  onChange={setTimelinePetId}
+                  placeholder="Найти по кличке или владельцу..."
+                />
+              </div>
+              {timelinePetId ? (
                 <VisitTimeline
                   petId={timelinePetId}
                   onOpenVisit={(id) => { setVisitDialogId(id); setVisitDialogOpen(true); }}
                 />
+              ) : (
+                <div className="text-center py-12 text-muted-foreground">
+                  <FileText className="h-12 w-12 mx-auto mb-3 opacity-40" />
+                  <p className="text-sm">Выберите питомца, чтобы увидеть всю историю лечения</p>
+                </div>
               )}
             </CardContent>
           </Card>

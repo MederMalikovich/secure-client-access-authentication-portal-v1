@@ -94,11 +94,12 @@ export default function Reports() {
       const otherRevenue = (otherInv || []).reduce((s, i: any) => s + Number(i.total || 0), 0);
 
       // Новые клиенты / питомцы
-      const [{ count: newClientsCount }, { count: newPetsCount }] = await Promise.all([
+      const [{ count: newClientsCount }, { count: newPetsCount }, { data: petsRaw }] = await Promise.all([
         supabase.from('clients').select('*', { count: 'exact', head: true })
           .gte('created_at', fromIso).lte('created_at', toIso),
         supabase.from('pets').select('*', { count: 'exact', head: true })
           .gte('created_at', fromIso).lte('created_at', toIso),
+        supabase.from('pets').select('id, created_at').order('created_at', { ascending: true }),
       ]);
 
       const totalRevenue = visitRevenue + otherRevenue;

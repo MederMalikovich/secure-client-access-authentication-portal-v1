@@ -307,7 +307,7 @@ export function VisitTimeline({ petId, onOpenVisit }: Props) {
                             <li key={p.id} className="text-sm">
                               <span className="font-medium">{p.medication_name}</span>
                               {p.dosage && <span className="text-muted-foreground"> — {p.dosage}</span>}
-                              {p.frequency && <span className="text-muted-foreground">, {p.frequency}</span>}
+                              {p.frequency_per_day && <span className="text-muted-foreground">, {p.frequency_per_day}× в день</span>}
                               {p.duration_days && <span className="text-muted-foreground">, {p.duration_days} дн.</span>}
                               {p.instructions && <div className="text-xs text-muted-foreground pl-2">{p.instructions}</div>}
                             </li>

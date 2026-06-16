@@ -452,7 +452,7 @@ export default function Reports() {
               <Button
                 variant="outline"
                 onClick={() => {
-                  setDateFrom('2000-01-01');
+                  setDateFrom('2026-01-01');
                   setDateTo(format(new Date(), 'yyyy-MM-dd'));
                 }}
               >

@@ -24,7 +24,10 @@ import {
   Pie,
   Cell,
   Legend,
+  ComposedChart,
+  Line,
 } from 'recharts';
+
 
 const COLORS = ['hsl(173, 80%, 40%)', 'hsl(270, 60%, 50%)', 'hsl(38, 92%, 50%)', 'hsl(142, 76%, 36%)', 'hsl(0, 84%, 60%)'];
 

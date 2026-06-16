@@ -38,6 +38,7 @@ export default function Reports() {
     newClients: 0,
     newPets: 0,
     avgCheck: 0,
+    otherRevenue: 0,
   });
   const [revenueData, setRevenueData] = useState<any[]>([]);
   const [servicesData, setServicesData] = useState<any[]>([]);
@@ -54,47 +55,59 @@ export default function Reports() {
   const fetchReportData = async () => {
     setLoading(true);
     try {
-      // Fetch invoices for revenue
-      const { data: invoices } = await supabase
-        .from('invoices')
-        .select('total, issued_at, status')
-        .gte('issued_at', dateFrom)
-        .lte('issued_at', dateTo + 'T23:59:59')
-        .eq('status', 'paid');
+      const fromIso = dateFrom;
+      const toIso = dateTo + 'T23:59:59';
 
-      const revenue = invoices?.reduce((sum, inv) => sum + Number(inv.total), 0) || 0;
-      const avgCheck = invoices && invoices.length > 0 ? revenue / invoices.length : 0;
+      // === Единый источник правды: визиты по visit_date + связанные оплаченные счета ===
+      const { data: visitsRaw } = await supabase
+        .from('visits')
+        .select('id, visit_date, status, veterinarian_id, client_id, invoices(total, status, client_id)')
+        .gte('visit_date', fromIso)
+        .lte('visit_date', toIso);
 
-      // Fetch appointments
-      const { count: appointmentsCount } = await supabase
-        .from('appointments')
-        .select('*', { count: 'exact', head: true })
-        .gte('scheduled_at', dateFrom)
-        .lte('scheduled_at', dateTo + 'T23:59:59');
+      const visits = visitsRaw || [];
 
-      // Fetch new clients
-      const { count: newClientsCount } = await supabase
-        .from('clients')
-        .select('*', { count: 'exact', head: true })
-        .gte('created_at', dateFrom)
-        .lte('created_at', dateTo + 'T23:59:59');
-
-      // Fetch new pets
-      const { count: newPetsCount } = await supabase
-        .from('pets')
-        .select('*', { count: 'exact', head: true })
-        .gte('created_at', dateFrom)
-        .lte('created_at', dateTo + 'T23:59:59');
-
-      setStats({
-        revenue,
-        appointments: appointmentsCount || 0,
-        newClients: newClientsCount || 0,
-        newPets: newPetsCount || 0,
-        avgCheck,
+      // Выручка по визитам (только оплаченные счета, привязанные к визиту в периоде)
+      let visitRevenue = 0;
+      let paidCount = 0;
+      visits.forEach((v: any) => {
+        (v.invoices || []).forEach((inv: any) => {
+          if (inv.status === 'paid') {
+            visitRevenue += Number(inv.total) || 0;
+            paidCount += 1;
+          }
+        });
       });
 
-      // Decide aggregation bucket: day / week / month based on range length
+      // Прочая выручка: оплаченные счета без visit_id (магазин/стационар) — issued_at в периоде
+      const { data: otherInv } = await supabase
+        .from('invoices')
+        .select('total')
+        .is('visit_id', null)
+        .eq('status', 'paid')
+        .gte('issued_at', fromIso)
+        .lte('issued_at', toIso);
+      const otherRevenue = (otherInv || []).reduce((s, i: any) => s + Number(i.total || 0), 0);
+
+      // Новые клиенты / питомцы
+      const [{ count: newClientsCount }, { count: newPetsCount }] = await Promise.all([
+        supabase.from('clients').select('*', { count: 'exact', head: true })
+          .gte('created_at', fromIso).lte('created_at', toIso),
+        supabase.from('pets').select('*', { count: 'exact', head: true })
+          .gte('created_at', fromIso).lte('created_at', toIso),
+      ]);
+
+      const totalRevenue = visitRevenue + otherRevenue;
+      setStats({
+        revenue: totalRevenue,
+        appointments: visits.length,
+        newClients: newClientsCount || 0,
+        newPets: newPetsCount || 0,
+        avgCheck: paidCount > 0 ? visitRevenue / paidCount : 0,
+        otherRevenue,
+      });
+
+      // === Бакеты для графика — строго по visit_date, и выручка и количество ===
       const rangeDays = Math.max(1, differenceInDays(new Date(dateTo), new Date(dateFrom)) + 1);
       type Bucket = 'day' | 'week' | 'month';
       const bucket: Bucket = rangeDays <= 31 ? 'day' : rangeDays <= 120 ? 'week' : 'month';
@@ -108,7 +121,7 @@ export default function Reports() {
           const [y, m] = key.split('-');
           return format(new Date(Number(y), Number(m) - 1, 1), 'LLL yyyy', { locale: ru });
         }
-        return format(new Date(key), bucket === 'week' ? "d MMM" : 'd MMM', { locale: ru });
+        return format(new Date(key), 'd MMM', { locale: ru });
       };
 
       const buckets: Record<string, { revenue: number; appointments: number }> = {};
@@ -120,21 +133,13 @@ export default function Reports() {
         cursor.setDate(cursor.getDate() + 1);
       }
 
-      invoices?.forEach((inv) => {
-        const k = bucketKey(new Date(inv.issued_at));
-        if (buckets[k]) buckets[k].revenue += Number(inv.total);
-      });
-
-      // Fill appointments per bucket
-      const { data: appointmentsList } = await supabase
-        .from('appointments')
-        .select('scheduled_at')
-        .gte('scheduled_at', dateFrom)
-        .lte('scheduled_at', dateTo + 'T23:59:59');
-
-      appointmentsList?.forEach((apt) => {
-        const k = bucketKey(new Date(apt.scheduled_at));
-        if (buckets[k]) buckets[k].appointments += 1;
+      visits.forEach((v: any) => {
+        const k = bucketKey(new Date(v.visit_date));
+        if (!buckets[k]) buckets[k] = { revenue: 0, appointments: 0 };
+        buckets[k].appointments += 1;
+        (v.invoices || []).forEach((inv: any) => {
+          if (inv.status === 'paid') buckets[k].revenue += Number(inv.total) || 0;
+        });
       });
 
       const chartData = Object.entries(buckets)
@@ -146,21 +151,13 @@ export default function Reports() {
         }));
       setRevenueData(chartData);
 
-      // Fetch real services usage from visit_services (filter by visit_date)
+      // === Популярные услуги (visit_services по visit_date) ===
       const { data: visitServices } = await supabase
         .from('visit_services')
         .select('service_id, quantity, service:services(name), visit:visits!inner(visit_date)')
         .not('service_id', 'is', null)
-        .gte('visit.visit_date', dateFrom)
-        .lte('visit.visit_date', dateTo + 'T23:59:59');
-
-      // Also count from appointments
-      const { data: aptServices } = await supabase
-        .from('appointments')
-        .select('service_id, service:services(name)')
-        .gte('scheduled_at', dateFrom)
-        .lte('scheduled_at', dateTo + 'T23:59:59')
-        .not('service_id', 'is', null);
+        .gte('visit.visit_date', fromIso)
+        .lte('visit.visit_date', toIso);
 
       const serviceCounts: Record<string, { name: string; count: number }> = {};
       (visitServices || []).forEach((item: any) => {
@@ -168,12 +165,6 @@ export default function Reports() {
         const name = item.service?.name || 'Неизвестно';
         if (!serviceCounts[id]) serviceCounts[id] = { name, count: 0 };
         serviceCounts[id].count += Number(item.quantity) || 1;
-      });
-      (aptServices || []).forEach((item: any) => {
-        const id = item.service_id;
-        const name = item.service?.name || 'Неизвестно';
-        if (!serviceCounts[id]) serviceCounts[id] = { name, count: 0 };
-        serviceCounts[id].count += 1;
       });
 
       const sortedServices = Object.values(serviceCounts)
@@ -185,13 +176,7 @@ export default function Reports() {
         }));
       setServicesData(sortedServices);
 
-      // Real visit statuses (more accurate than appointment statuses)
-      const { data: visitStatusData } = await supabase
-        .from('visits')
-        .select('status')
-        .gte('visit_date', dateFrom)
-        .lte('visit_date', dateTo + 'T23:59:59');
-
+      // === Статусы визитов (из тех же visits) ===
       const statusCounts: Record<string, number> = {};
       const statusLabels: Record<string, string> = {
         waiting: 'Ожидание',
@@ -201,7 +186,7 @@ export default function Reports() {
         completed: 'Завершён',
         cancelled: 'Отменён',
       };
-      visitStatusData?.forEach((v: any) => {
+      visits.forEach((v: any) => {
         const label = statusLabels[v.status] || v.status;
         statusCounts[label] = (statusCounts[label] || 0) + 1;
       });
@@ -209,20 +194,22 @@ export default function Reports() {
         Object.entries(statusCounts).map(([name, value]) => ({ name, value }))
       );
 
-      // Top clients by revenue (period)
-      const { data: paidInvoicesFull } = await supabase
-        .from('invoices')
-        .select('total, client_id, client:clients(full_name)')
-        .gte('issued_at', dateFrom)
-        .lte('issued_at', dateTo + 'T23:59:59')
-        .eq('status', 'paid');
-
+      // === Топ клиентов по выручке (через визиты в периоде) ===
+      const clientIds = Array.from(new Set(visits.map((v: any) => v.client_id).filter(Boolean)));
+      const clientNameMap: Record<string, string> = {};
+      if (clientIds.length > 0) {
+        const { data: cs } = await supabase.from('clients').select('id, full_name').in('id', clientIds);
+        (cs || []).forEach((c: any) => { clientNameMap[c.id] = c.full_name; });
+      }
       const clientTotals: Record<string, { name: string; total: number }> = {};
-      (paidInvoicesFull || []).forEach((inv: any) => {
-        const id = inv.client_id || 'unknown';
-        const name = inv.client?.full_name || 'Без клиента';
-        if (!clientTotals[id]) clientTotals[id] = { name, total: 0 };
-        clientTotals[id].total += Number(inv.total) || 0;
+      visits.forEach((v: any) => {
+        const id = v.client_id || 'unknown';
+        const name = clientNameMap[id] || 'Без клиента';
+        (v.invoices || []).forEach((inv: any) => {
+          if (inv.status !== 'paid') return;
+          if (!clientTotals[id]) clientTotals[id] = { name, total: 0 };
+          clientTotals[id].total += Number(inv.total) || 0;
+        });
       });
       setTopClients(
         Object.values(clientTotals)
@@ -234,22 +221,13 @@ export default function Reports() {
           }))
       );
 
-      // Revenue by doctor (period) — sum paid invoices via visits.veterinarian_id
-      const [{ data: visitsWithVet }, { data: vetList }] = await Promise.all([
-        supabase
-          .from('visits')
-          .select('veterinarian_id, invoices(total, status)')
-          .gte('visit_date', dateFrom)
-          .lte('visit_date', dateTo + 'T23:59:59')
-          .not('veterinarian_id', 'is', null),
-        supabase.rpc('list_public_veterinarians'),
-      ]);
-
+      // === Выручка по врачам (по visit_date) ===
+      const { data: vetList } = await supabase.rpc('list_public_veterinarians');
       const vetName: Record<string, string> = {};
       ((vetList as any[]) || []).forEach((v) => { vetName[v.id] = v.full_name; });
-
       const docTotals: Record<string, { name: string; total: number; visits: number }> = {};
-      (visitsWithVet || []).forEach((v: any) => {
+      visits.forEach((v: any) => {
+        if (!v.veterinarian_id) return;
         const id = v.veterinarian_id;
         const name = vetName[id] || 'Врач';
         if (!docTotals[id]) docTotals[id] = { name, total: 0, visits: 0 };
@@ -269,12 +247,12 @@ export default function Reports() {
           }))
       );
 
-      // Top products (shop sales in period)
+      // === Популярные товары (продажи в периоде) ===
       const { data: saleItems } = await supabase
         .from('shop_sale_items')
         .select('quantity, total, item_id, item:inventory_items(name), sale:shop_sales!inner(created_at)')
-        .gte('sale.created_at', dateFrom)
-        .lte('sale.created_at', dateTo + 'T23:59:59');
+        .gte('sale.created_at', fromIso)
+        .lte('sale.created_at', toIso);
       const prodTotals: Record<string, { name: string; qty: number; revenue: number }> = {};
       (saleItems || []).forEach((it: any) => {
         const id = it.item_id || 'unknown';
@@ -294,12 +272,12 @@ export default function Reports() {
           }))
       );
 
-      // Top diseases (diagnoses linked to medical_records in period)
+      // === Распространённые заболевания ===
       const { data: diagRows } = await supabase
         .from('medical_record_diagnoses')
         .select('disease_id, custom_diagnosis, disease:diseases(name), created_at')
-        .gte('created_at', dateFrom)
-        .lte('created_at', dateTo + 'T23:59:59');
+        .gte('created_at', fromIso)
+        .lte('created_at', toIso);
       const diseaseCounts: Record<string, number> = {};
       (diagRows || []).forEach((d: any) => {
         const name = d.disease?.name || (d.custom_diagnosis ? d.custom_diagnosis : null);
@@ -322,6 +300,7 @@ export default function Reports() {
       setLoading(false);
     }
   };
+
 
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat('kk-KZ', {

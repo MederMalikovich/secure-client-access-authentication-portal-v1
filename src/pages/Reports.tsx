@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { format, subDays, startOfMonth, endOfMonth, differenceInDays, startOfWeek, startOfMonth as sOM } from 'date-fns';
+import { format, subDays, startOfMonth, endOfMonth, differenceInDays, startOfWeek, startOfMonth as sOM, parseISO } from 'date-fns';
 import { ru } from 'date-fns/locale';
 import { BarChart3, TrendingUp, Users, PawPrint, Calendar, DollarSign, Download, Stethoscope, Award, Package, Activity, HeartHandshake } from 'lucide-react';
 import { PageHeader } from '@/components/ui/page-header';

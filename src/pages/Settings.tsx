@@ -42,6 +42,9 @@ import { WorkingHoursTab } from '@/components/settings/WorkingHoursTab';
 import { BackupTab } from '@/components/settings/BackupTab';
 import { ThemeCustomizer } from '@/components/settings/ThemeCustomizer';
 import { BrandingTab } from '@/components/settings/BrandingTab';
+import Services from '@/pages/Services';
+import Diseases from '@/pages/Diseases';
+import Doctors from '@/pages/Doctors';
 
 import { format } from 'date-fns';
 import { ru } from 'date-fns/locale';
@@ -361,6 +364,9 @@ export default function Settings() {
           {isAdmin && <TabsTrigger value="branding">Бренд</TabsTrigger>}
           <TabsTrigger value="schedule">График работы</TabsTrigger>
           <TabsTrigger value="notifications">Уведомления</TabsTrigger>
+          <TabsTrigger value="services">Услуги</TabsTrigger>
+          <TabsTrigger value="diseases">Заболевания</TabsTrigger>
+          <TabsTrigger value="doctors">Врачи</TabsTrigger>
           <TabsTrigger value="users">Пользователи</TabsTrigger>
           <TabsTrigger value="roles">Роли</TabsTrigger>
           <TabsTrigger value="visit-templates">Шаблоны визитов</TabsTrigger>
@@ -521,6 +527,18 @@ export default function Settings() {
 
         <TabsContent value="visit-templates">
           <VisitTemplatesManager />
+        </TabsContent>
+
+        <TabsContent value="services">
+          <Services />
+        </TabsContent>
+
+        <TabsContent value="diseases">
+          <Diseases />
+        </TabsContent>
+
+        <TabsContent value="doctors">
+          <Doctors />
         </TabsContent>
       </Tabs>
 

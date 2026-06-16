@@ -52,23 +52,34 @@ export function VisitTimeline({ petId, onOpenVisit }: Props) {
 
   const load = async () => {
     setLoading(true);
-    const [petRes, visitRes, vetRes] = await Promise.all([
+    const [petRes, visitRes, vetRes, presRes, filesRes] = await Promise.all([
       supabase.from('pets').select('*, client:clients(id, full_name, phone)').eq('id', petId).maybeSingle(),
       supabase.from('visits')
         .select(`*,
           veterinarian:profiles(full_name),
           services:visit_services(*),
           materials:visit_materials(*),
-          invoice:invoices(id, invoice_number, total, status),
-          prescriptions(id, medication_name, dosage, frequency, duration_days, instructions),
-          files:medical_record_files(id, title, study_type, study_date, file_path, file_name)
+          invoice:invoices(id, invoice_number, total, status)
         `)
         .eq('pet_id', petId)
         .order('visit_date', { ascending: false }),
       supabase.rpc('list_public_veterinarians'),
+      supabase.from('prescriptions')
+        .select('id, visit_id, medical_record_id, medication_name, dosage, frequency_per_day, duration_days, instructions, start_date')
+        .eq('pet_id', petId),
+      supabase.from('medical_record_files')
+        .select('id, medical_record_id, title, study_type, study_date, file_path, file_name')
+        .eq('pet_id', petId),
     ]);
+    const allPres = presRes.data || [];
+    const allFiles = filesRes.data || [];
+    const enriched = (visitRes.data || []).map((v: any) => ({
+      ...v,
+      prescriptions: allPres.filter(p => p.visit_id === v.id),
+      files: allFiles.filter(f => f.medical_record_id === v.medical_record_id),
+    }));
     setPet(petRes.data);
-    setVisits(visitRes.data || []);
+    setVisits(enriched);
     setVets(vetRes.data || []);
     setLoading(false);
   };

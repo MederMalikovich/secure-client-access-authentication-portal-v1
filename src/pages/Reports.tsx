@@ -1,12 +1,14 @@
 import { useEffect, useState } from 'react';
 import { format, subDays, startOfMonth, endOfMonth, differenceInDays, startOfWeek, startOfMonth as sOM } from 'date-fns';
 import { ru } from 'date-fns/locale';
-import { BarChart3, TrendingUp, Users, PawPrint, Calendar, DollarSign, Download, Stethoscope, Award, Package, Activity } from 'lucide-react';
+import { BarChart3, TrendingUp, Users, PawPrint, Calendar, DollarSign, Download, Stethoscope, Award, Package, Activity, HeartHandshake } from 'lucide-react';
 import { PageHeader } from '@/components/ui/page-header';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
+import { ClientsAtRisk } from '@/components/ClientsAtRisk';
 import { supabase } from '@/integrations/supabase/client';
 import {
   AreaChart,
@@ -380,6 +382,13 @@ export default function Reports() {
         }
       />
 
+      <Tabs defaultValue="overview" className="space-y-4">
+        <TabsList>
+          <TabsTrigger value="overview"><BarChart3 className="h-4 w-4 mr-1" />Финансы и операции</TabsTrigger>
+          <TabsTrigger value="retention"><HeartHandshake className="h-4 w-4 mr-1" />Удержание клиентов</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="overview" className="space-y-6">
       {/* Date Filter */}
       <Card className="glass mb-6">
         <CardContent className="pt-6">
@@ -781,6 +790,12 @@ export default function Reports() {
           </CardContent>
         </Card>
       </div>
+        </TabsContent>
+
+        <TabsContent value="retention">
+          <ClientsAtRisk />
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }

@@ -621,7 +621,7 @@ export default function Reports() {
                 <XAxis dataKey="date" stroke="hsl(var(--muted-foreground))" fontSize={12} />
                 <YAxis
                   yAxisId="left"
-                  stroke="hsl(var(--yellow-500))"
+                  stroke="hsl(var(--warning))"
                   fontSize={12}
                   allowDecimals={false}
                 />

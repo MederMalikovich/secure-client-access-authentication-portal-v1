@@ -364,6 +364,23 @@ export default function Inventory() {
       ),
     },
     {
+      key: 'expiry_date',
+      header: 'Срок годности',
+      cell: (item) => {
+        const exp = (item as any).expiry_date as string | null;
+        if (!exp) return <span className="text-muted-foreground text-sm">—</span>;
+        const d = new Date(exp);
+        const days = Math.floor((d.getTime() - Date.now()) / 86400000);
+        const cls = days < 0
+          ? 'text-destructive font-semibold'
+          : days <= 30
+            ? 'text-yellow-500 font-medium'
+            : '';
+        const label = days < 0 ? ' (просрочен)' : days <= 30 ? ` (${days} дн.)` : '';
+        return <span className={cls}>{new Intl.DateTimeFormat('ru-RU').format(d)}{label}</span>;
+      },
+    },
+    {
       key: 'actions',
       header: '',
       cell: (item) => canManage ? (

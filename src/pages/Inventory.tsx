@@ -275,6 +275,7 @@ export default function Inventory() {
       min_quantity: item.min_quantity.toString(),
       purchase_price: item.purchase_price.toString(),
       sale_price: item.sale_price.toString(),
+      expiry_date: (item as any).expiry_date || '',
       is_active: item.is_active,
     });
     setItemDialogOpen(true);
@@ -292,6 +293,7 @@ export default function Inventory() {
       min_quantity: '0',
       purchase_price: '0',
       sale_price: '0',
+      expiry_date: '',
       is_active: true,
     });
   };

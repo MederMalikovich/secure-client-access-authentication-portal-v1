@@ -62,6 +62,7 @@ export default function Inventory() {
     min_quantity: '0',
     purchase_price: '0',
     sale_price: '0',
+    expiry_date: '',
     is_active: true,
   });
 

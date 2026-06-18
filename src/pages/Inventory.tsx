@@ -543,7 +543,7 @@ export default function Inventory() {
             <DialogDescription>
               {stockListDialog === 'low'
                 ? 'Остаток ниже или равен минимальному. Нажмите на товар, чтобы оформить приход.'
-                : 'Просроченные и те, у которых срок истекает в ближайшие 30 дней.'}
+                : 'Просроченные и те, у которых срок истекает в ближайшие 30 дней. Нажмите на товар для редактирования.'}
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-2">
@@ -557,8 +557,12 @@ export default function Inventory() {
                   onClick={() => {
                     setStockListDialog(null);
                     if (canManage) {
-                      setSelectedItem(it);
-                      setMovementDialogOpen(true);
+                      if (stockListDialog === 'expiring') {
+                        openItemEdit(it);
+                      } else {
+                        setSelectedItem(it);
+                        setMovementDialogOpen(true);
+                      }
                     }
                   }}
                   className="w-full text-left p-3 rounded-lg border border-border hover:bg-muted/40 transition flex items-center justify-between"

@@ -120,6 +120,7 @@ export default function Inventory() {
     const data = {
       ...itemForm,
       category_id: itemForm.category_id || null,
+      expiry_date: itemForm.expiry_date || null,
       quantity: parseFloat(itemForm.quantity),
       min_quantity: parseFloat(itemForm.min_quantity),
       purchase_price: parseFloat(itemForm.purchase_price),

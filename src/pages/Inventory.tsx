@@ -313,17 +313,29 @@ export default function Inventory() {
     }).format(value);
   };
 
-  const lowStockItems = items.filter(i => i.quantity <= i.min_quantity && i.is_active);
-  const expiringItems = items.filter((i: any) => {
+  const isExpired = (i: any) => {
+    if (!i.is_active || !i.expiry_date) return false;
+    return new Date(i.expiry_date).getTime() < Date.now();
+  };
+  const isExpiring = (i: any) => {
     if (!i.is_active || !i.expiry_date) return false;
     const days = Math.floor((new Date(i.expiry_date).getTime() - Date.now()) / 86400000);
     return days >= 0 && days <= 30;
-  });
-  const expiredItems = items.filter((i: any) => {
-    if (!i.is_active || !i.expiry_date) return false;
-    return new Date(i.expiry_date).getTime() < Date.now();
-  });
+  };
+  const isLowStock = (i: any) => i.quantity <= i.min_quantity && i.is_active;
+  const isCritical = (i: any) => isExpired(i) || i.quantity === 0 || isLowStock(i);
+
+  const lowStockItems = items.filter(isLowStock);
+  const expiringItems = items.filter(isExpiring);
+  const expiredItems = items.filter(isExpired);
   const totalValue = items.reduce((sum, i) => sum + i.quantity * i.purchase_price, 0);
+
+  const sortedItems = [...items].sort((a, b) => {
+    const aCrit = isCritical(a) ? 0 : 1;
+    const bCrit = isCritical(b) ? 0 : 1;
+    if (aCrit !== bCrit) return aCrit - bCrit;
+    return a.name.localeCompare(b.name);
+  });
 
   const columns: Column<InventoryItem>[] = [
     {
@@ -531,7 +543,7 @@ export default function Inventory() {
             <DialogDescription>
               {stockListDialog === 'low'
                 ? 'Остаток ниже или равен минимальному. Нажмите на товар, чтобы оформить приход.'
-                : 'Просроченные и те, у которых срок истекает в ближайшие 30 дней.'}
+                : 'Просроченные и те, у которых срок истекает в ближайшие 30 дней. Нажмите на товар для редактирования.'}
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-2">
@@ -545,8 +557,12 @@ export default function Inventory() {
                   onClick={() => {
                     setStockListDialog(null);
                     if (canManage) {
-                      setSelectedItem(it);
-                      setMovementDialogOpen(true);
+                      if (stockListDialog === 'expiring') {
+                        openItemEdit(it);
+                      } else {
+                        setSelectedItem(it);
+                        setMovementDialogOpen(true);
+                      }
                     }
                   }}
                   className="w-full text-left p-3 rounded-lg border border-border hover:bg-muted/40 transition flex items-center justify-between"
@@ -617,7 +633,7 @@ export default function Inventory() {
       )}
 
       <DataTable
-        data={items}
+        data={sortedItems}
         columns={columns}
         searchPlaceholder="Поиск товара..."
         searchKey="name"

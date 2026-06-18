@@ -595,9 +595,9 @@ export default function Inventory() {
       {canManage && (
         <ExcelImporter
           title="Импорт товаров склада из Excel"
-          description="Загрузите .xlsx файл, чтобы массово добавить позиции склада. Столбец «Срок годности» — дата в формате ГГГГ-ММ-ДД (например, 2027-03-15). Оставьте пустым, если срок годности неприменим."
+          description="Загрузите .xlsx файл, чтобы массово добавить позиции склада. Столбец «Срок годности» — дата в формате ДД-ММ-ГГГГ (например, 15-03-2027). Оставьте пустым, если срок годности неприменим."
           expectedColumns={['Название', 'Категория', 'Остаток', 'Закупка', 'Продажа', 'Срок годности']}
-          exampleRow={{ 'Название': 'Амоксициллин 500мг', 'Категория': 'Антибиотики', 'Остаток': 50, 'Закупка': 200, 'Продажа': 350, 'Срок годности': '2027-03-15' }}
+          exampleRow={{ 'Название': 'Амоксициллин 500мг', 'Категория': 'Антибиотики', 'Остаток': 50, 'Закупка': 200, 'Продажа': 350, 'Срок годности': '15-03-2027' }}
           onParsed={async (rows) => {
             let inserted = 0, failed = 0;
             const catMap: Record<string, string> = {};
@@ -614,9 +614,20 @@ export default function Inventory() {
               const rawExp = r['Срок годности'];
               let expiry_date: string | null = null;
               if (rawExp) {
-                const d = rawExp instanceof Date ? rawExp : new Date(String(rawExp));
-                if (!isNaN(d.getTime())) expiry_date = d.toISOString().slice(0, 10);
+                if (rawExp instanceof Date && !isNaN(rawExp.getTime())) {
+                  expiry_date = `${rawExp.getFullYear()}-${String(rawExp.getMonth() + 1).padStart(2, '0')}-${String(rawExp.getDate()).padStart(2, '0')}`;
+                } else {
+                  const s = String(rawExp).trim();
+                  const m = s.match(/^(\d{2})[-./](\d{2})[-./](\d{4})$/);
+                  if (m) {
+                    expiry_date = `${m[3]}-${m[2]}-${m[1]}`;
+                  } else {
+                    const d = new Date(s);
+                    if (!isNaN(d.getTime())) expiry_date = d.toISOString().slice(0, 10);
+                  }
+                }
               }
+
               const { error } = await supabase.from('inventory_items').insert({
                 name, category_id, expiry_date,
                 quantity: Number(r['Остаток']) || 0,

@@ -487,9 +487,9 @@ export default function Inventory() {
       {canManage && (
         <ExcelImporter
           title="Импорт товаров склада из Excel"
-          description="Загрузите .xlsx файл, чтобы массово добавить позиции склада"
-          expectedColumns={['Название', 'Категория', 'Остаток', 'Закупка', 'Продажа']}
-          exampleRow={{ 'Название': 'Амоксициллин 500мг', 'Категория': 'Антибиотики', 'Остаток': 50, 'Закупка': 200, 'Продажа': 350 }}
+          description="Загрузите .xlsx файл, чтобы массово добавить позиции склада. Столбец «Срок годности» — дата в формате ГГГГ-ММ-ДД (например, 2027-03-15). Оставьте пустым, если срок годности неприменим."
+          expectedColumns={['Название', 'Категория', 'Остаток', 'Закупка', 'Продажа', 'Срок годности']}
+          exampleRow={{ 'Название': 'Амоксициллин 500мг', 'Категория': 'Антибиотики', 'Остаток': 50, 'Закупка': 200, 'Продажа': 350, 'Срок годности': '2027-03-15' }}
           onParsed={async (rows) => {
             let inserted = 0, failed = 0;
             const catMap: Record<string, string> = {};
@@ -503,8 +503,14 @@ export default function Inventory() {
                 const { data: nc } = await supabase.from('inventory_categories').insert({ name: catName }).select('id').single();
                 if (nc) { category_id = nc.id; catMap[catName.toLowerCase()] = nc.id; }
               }
+              const rawExp = r['Срок годности'];
+              let expiry_date: string | null = null;
+              if (rawExp) {
+                const d = rawExp instanceof Date ? rawExp : new Date(String(rawExp));
+                if (!isNaN(d.getTime())) expiry_date = d.toISOString().slice(0, 10);
+              }
               const { error } = await supabase.from('inventory_items').insert({
-                name, category_id,
+                name, category_id, expiry_date,
                 quantity: Number(r['Остаток']) || 0,
                 purchase_price: Number(r['Закупка']) || 0,
                 sale_price: Number(r['Продажа']) || 0,

@@ -655,6 +655,7 @@ export type Database = {
           category_id: string | null
           created_at: string
           description: string | null
+          expiry_date: string | null
           id: string
           is_active: boolean | null
           min_quantity: number | null
@@ -670,6 +671,7 @@ export type Database = {
           category_id?: string | null
           created_at?: string
           description?: string | null
+          expiry_date?: string | null
           id?: string
           is_active?: boolean | null
           min_quantity?: number | null
@@ -685,6 +687,7 @@ export type Database = {
           category_id?: string | null
           created_at?: string
           description?: string | null
+          expiry_date?: string | null
           id?: string
           is_active?: boolean | null
           min_quantity?: number | null

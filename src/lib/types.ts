@@ -196,6 +196,7 @@ export interface InventoryItem {
   purchase_price: number;
   sale_price: number;
   is_active: boolean;
+  expiry_date?: string | null;
   created_at: string;
   updated_at: string;
   category?: InventoryCategory;

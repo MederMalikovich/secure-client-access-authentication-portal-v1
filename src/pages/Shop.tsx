@@ -456,6 +456,13 @@ export default function Shop() {
                         <p className="text-sm text-muted-foreground">
                           {formatCurrency(item.sale_price)} • {item.quantity} {item.unit}
                         </p>
+                        {item.expiry_date && (() => {
+                          const d = new Date(item.expiry_date);
+                          const days = Math.floor((d.getTime() - Date.now()) / 86400000);
+                          const cls = days < 0 ? 'text-destructive' : days <= 30 ? 'text-yellow-500' : 'text-muted-foreground';
+                          const label = days < 0 ? ' (просрочен)' : days <= 30 ? ` (${days} дн.)` : '';
+                          return <p className={`text-xs ${cls}`}>Срок годности: {new Intl.DateTimeFormat('ru-RU').format(d)}{label}</p>;
+                        })()}
                       </div>
                       <Button
                         size="sm"

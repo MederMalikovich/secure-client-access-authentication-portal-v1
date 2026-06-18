@@ -62,6 +62,7 @@ export default function Inventory() {
     min_quantity: '0',
     purchase_price: '0',
     sale_price: '0',
+    expiry_date: '',
     is_active: true,
   });
 
@@ -119,6 +120,7 @@ export default function Inventory() {
     const data = {
       ...itemForm,
       category_id: itemForm.category_id || null,
+      expiry_date: itemForm.expiry_date || null,
       quantity: parseFloat(itemForm.quantity),
       min_quantity: parseFloat(itemForm.min_quantity),
       purchase_price: parseFloat(itemForm.purchase_price),
@@ -274,6 +276,7 @@ export default function Inventory() {
       min_quantity: item.min_quantity.toString(),
       purchase_price: item.purchase_price.toString(),
       sale_price: item.sale_price.toString(),
+      expiry_date: (item as any).expiry_date || '',
       is_active: item.is_active,
     });
     setItemDialogOpen(true);
@@ -291,6 +294,7 @@ export default function Inventory() {
       min_quantity: '0',
       purchase_price: '0',
       sale_price: '0',
+      expiry_date: '',
       is_active: true,
     });
   };
@@ -358,6 +362,23 @@ export default function Inventory() {
       cell: (item) => (
         <span className="font-semibold text-primary">{formatCurrency(item.sale_price)}</span>
       ),
+    },
+    {
+      key: 'expiry_date',
+      header: 'Срок годности',
+      cell: (item) => {
+        const exp = (item as any).expiry_date as string | null;
+        if (!exp) return <span className="text-muted-foreground text-sm">—</span>;
+        const d = new Date(exp);
+        const days = Math.floor((d.getTime() - Date.now()) / 86400000);
+        const cls = days < 0
+          ? 'text-destructive font-semibold'
+          : days <= 30
+            ? 'text-yellow-500 font-medium'
+            : '';
+        const label = days < 0 ? ' (просрочен)' : days <= 30 ? ` (${days} дн.)` : '';
+        return <span className={cls}>{new Intl.DateTimeFormat('ru-RU').format(d)}{label}</span>;
+      },
     },
     {
       key: 'actions',
@@ -466,9 +487,9 @@ export default function Inventory() {
       {canManage && (
         <ExcelImporter
           title="Импорт товаров склада из Excel"
-          description="Загрузите .xlsx файл, чтобы массово добавить позиции склада"
-          expectedColumns={['Название', 'Категория', 'Остаток', 'Закупка', 'Продажа']}
-          exampleRow={{ 'Название': 'Амоксициллин 500мг', 'Категория': 'Антибиотики', 'Остаток': 50, 'Закупка': 200, 'Продажа': 350 }}
+          description="Загрузите .xlsx файл, чтобы массово добавить позиции склада. Столбец «Срок годности» — дата в формате ГГГГ-ММ-ДД (например, 2027-03-15). Оставьте пустым, если срок годности неприменим."
+          expectedColumns={['Название', 'Категория', 'Остаток', 'Закупка', 'Продажа', 'Срок годности']}
+          exampleRow={{ 'Название': 'Амоксициллин 500мг', 'Категория': 'Антибиотики', 'Остаток': 50, 'Закупка': 200, 'Продажа': 350, 'Срок годности': '2027-03-15' }}
           onParsed={async (rows) => {
             let inserted = 0, failed = 0;
             const catMap: Record<string, string> = {};
@@ -482,8 +503,14 @@ export default function Inventory() {
                 const { data: nc } = await supabase.from('inventory_categories').insert({ name: catName }).select('id').single();
                 if (nc) { category_id = nc.id; catMap[catName.toLowerCase()] = nc.id; }
               }
+              const rawExp = r['Срок годности'];
+              let expiry_date: string | null = null;
+              if (rawExp) {
+                const d = rawExp instanceof Date ? rawExp : new Date(String(rawExp));
+                if (!isNaN(d.getTime())) expiry_date = d.toISOString().slice(0, 10);
+              }
               const { error } = await supabase.from('inventory_items').insert({
-                name, category_id,
+                name, category_id, expiry_date,
                 quantity: Number(r['Остаток']) || 0,
                 purchase_price: Number(r['Закупка']) || 0,
                 sale_price: Number(r['Продажа']) || 0,
@@ -602,6 +629,14 @@ export default function Inventory() {
                 type="number"
                 value={itemForm.sale_price}
                 onChange={(e) => setItemForm({ ...itemForm, sale_price: e.target.value })}
+              />
+            </div>
+            <div className="grid gap-2">
+              <Label>Срок годности</Label>
+              <Input
+                type="date"
+                value={itemForm.expiry_date}
+                onChange={(e) => setItemForm({ ...itemForm, expiry_date: e.target.value })}
               />
             </div>
             <div className="grid gap-2 md:col-span-2">

@@ -631,6 +631,14 @@ export default function Inventory() {
                 onChange={(e) => setItemForm({ ...itemForm, sale_price: e.target.value })}
               />
             </div>
+            <div className="grid gap-2">
+              <Label>Срок годности</Label>
+              <Input
+                type="date"
+                value={itemForm.expiry_date}
+                onChange={(e) => setItemForm({ ...itemForm, expiry_date: e.target.value })}
+              />
+            </div>
             <div className="grid gap-2 md:col-span-2">
               <Label>Описание</Label>
               <Textarea

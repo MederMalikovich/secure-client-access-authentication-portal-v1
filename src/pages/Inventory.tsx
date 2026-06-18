@@ -313,6 +313,15 @@ export default function Inventory() {
   };
 
   const lowStockItems = items.filter(i => i.quantity <= i.min_quantity && i.is_active);
+  const expiringItems = items.filter((i: any) => {
+    if (!i.is_active || !i.expiry_date) return false;
+    const days = Math.floor((new Date(i.expiry_date).getTime() - Date.now()) / 86400000);
+    return days >= 0 && days <= 30;
+  });
+  const expiredItems = items.filter((i: any) => {
+    if (!i.is_active || !i.expiry_date) return false;
+    return new Date(i.expiry_date).getTime() < Date.now();
+  });
   const totalValue = items.reduce((sum, i) => sum + i.quantity * i.purchase_price, 0);
 
   const columns: Column<InventoryItem>[] = [

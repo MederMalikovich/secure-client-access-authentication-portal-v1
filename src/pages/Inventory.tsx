@@ -49,6 +49,7 @@ export default function Inventory() {
   const [categoryDialogOpen, setCategoryDialogOpen] = useState(false);
   const [movementDialogOpen, setMovementDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [stockListDialog, setStockListDialog] = useState<null | 'low' | 'expiring'>(null);
   const [selectedItem, setSelectedItem] = useState<InventoryItem | null>(null);
   const [selectedCategory, setSelectedCategory] = useState<InventoryCategory | null>(null);
 

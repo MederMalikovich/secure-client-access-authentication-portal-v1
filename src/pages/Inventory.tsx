@@ -452,7 +452,7 @@ export default function Inventory() {
       />
 
       {/* Stats */}
-      <div className="grid gap-4 md:grid-cols-3 mb-6">
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 mb-6">
         <Card className="glass">
           <CardContent className="pt-6">
             <div className="flex items-center gap-4">
@@ -466,7 +466,11 @@ export default function Inventory() {
             </div>
           </CardContent>
         </Card>
-        <Card className="glass">
+        <Card
+          className="glass cursor-pointer transition hover:bg-muted/30"
+          onClick={() => lowStockItems.length > 0 && setStockListDialog('low')}
+          role="button"
+        >
           <CardContent className="pt-6">
             <div className="flex items-center gap-4">
               <div className="p-3 rounded-lg bg-destructive/10">
@@ -475,6 +479,29 @@ export default function Inventory() {
               <div>
                 <p className="text-sm text-muted-foreground">Мало на складе</p>
                 <p className="text-2xl font-bold text-destructive">{lowStockItems.length}</p>
+                {lowStockItems.length > 0 && (
+                  <p className="text-xs text-muted-foreground mt-0.5">Нажмите для списка</p>
+                )}
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+        <Card
+          className="glass cursor-pointer transition hover:bg-muted/30"
+          onClick={() => (expiringItems.length + expiredItems.length) > 0 && setStockListDialog('expiring')}
+          role="button"
+        >
+          <CardContent className="pt-6">
+            <div className="flex items-center gap-4">
+              <div className="p-3 rounded-lg bg-yellow-500/10">
+                <AlertTriangle className="h-6 w-6 text-yellow-500" />
+              </div>
+              <div>
+                <p className="text-sm text-muted-foreground">Истекает срок (≤30 дн.)</p>
+                <p className="text-2xl font-bold text-yellow-500">{expiringItems.length}</p>
+                {expiredItems.length > 0 && (
+                  <p className="text-xs text-destructive mt-0.5">+ {expiredItems.length} просрочено</p>
+                )}
               </div>
             </div>
           </CardContent>
@@ -493,6 +520,61 @@ export default function Inventory() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Stock list dialog */}
+      <Dialog open={stockListDialog !== null} onOpenChange={(o) => !o && setStockListDialog(null)}>
+        <DialogContent className="glass max-w-2xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>
+              {stockListDialog === 'low' ? 'Товары с низким остатком' : 'Товары с истекающим сроком годности'}
+            </DialogTitle>
+            <DialogDescription>
+              {stockListDialog === 'low'
+                ? 'Остаток ниже или равен минимальному. Нажмите на товар, чтобы оформить приход.'
+                : 'Просроченные и те, у которых срок истекает в ближайшие 30 дней.'}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-2">
+            {(stockListDialog === 'low' ? lowStockItems : [...expiredItems, ...expiringItems]).map((it: any) => {
+              const exp = it.expiry_date ? new Date(it.expiry_date) : null;
+              const days = exp ? Math.floor((exp.getTime() - Date.now()) / 86400000) : null;
+              return (
+                <button
+                  key={it.id}
+                  type="button"
+                  onClick={() => {
+                    setStockListDialog(null);
+                    if (canManage) {
+                      setSelectedItem(it);
+                      setMovementDialogOpen(true);
+                    }
+                  }}
+                  className="w-full text-left p-3 rounded-lg border border-border hover:bg-muted/40 transition flex items-center justify-between"
+                >
+                  <div>
+                    <div className="font-medium">{it.name}</div>
+                    <div className="text-xs text-muted-foreground">
+                      {it.category?.name || 'Без категории'}
+                      {exp && (
+                        <> · Срок: {new Intl.DateTimeFormat('ru-RU').format(exp)}
+                          {days !== null && days < 0 && <span className="text-destructive"> (просрочен)</span>}
+                          {days !== null && days >= 0 && days <= 30 && <span className="text-yellow-500"> ({days} дн.)</span>}
+                        </>
+                      )}
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <div className={`font-semibold ${it.quantity <= it.min_quantity ? 'text-destructive' : ''}`}>
+                      {it.quantity} {it.unit}
+                    </div>
+                    <div className="text-xs text-muted-foreground">мин. {it.min_quantity}</div>
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+        </DialogContent>
+      </Dialog>
 
       {canManage && (
         <ExcelImporter

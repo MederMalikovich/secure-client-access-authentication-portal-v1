@@ -24,9 +24,12 @@ export default function Flowboard() {
   const location = useLocation();
   const navigate = useNavigate();
   const [visits, setVisits] = useState<any[]>([]);
+  const [pendingAppointments, setPendingAppointments] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [initialAppointmentId, setInitialAppointmentId] = useState<string | null>(null);
+  const [initialPetId, setInitialPetId] = useState<string | null>(null);
   const [draggingId, setDraggingId] = useState<string | null>(null);
   const [scope, setScope] = useState<DateScope>('today');
   const [customDate, setCustomDate] = useState(format(new Date(), 'yyyy-MM-dd'));

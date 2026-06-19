@@ -54,7 +54,7 @@ export function StatCard({ title, value, icon, description, trend, accent, spark
           <div className="space-y-1.5 min-w-0 flex-1">
             <p className="text-xs md:text-sm font-medium text-muted-foreground/90 uppercase tracking-wide truncate">{title}</p>
             <p
-              className="text-2xl md:text-3xl xl:text-[2rem] font-bold tabular-nums leading-tight truncate animate-count-up"
+              className="text-lg md:text-xl xl:text-2xl font-bold tabular-nums leading-tight truncate animate-count-up"
               title={String(value)}
             >
               {value}

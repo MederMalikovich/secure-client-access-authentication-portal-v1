@@ -205,6 +205,11 @@ export function ClientDetailSheet({ client, open, onClose, onEdit, onAddAppointm
 
         </div>
 
+        {/* LTV dashboard — staff only */}
+        <ClientLifetimeValue invoices={invoices} appointments={appointments} />
+
+
+
         {/* Upcoming appointments alert */}
         {upcomingAppts.length > 0 && (
           <div className="mx-4 mt-4 p-3 rounded-xl bg-accent border border-border flex items-center gap-3">

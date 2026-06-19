@@ -21,6 +21,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { speciesLabels, paymentStatusLabels, appointmentStatusLabels } from '@/lib/types';
 import { formatCurrency } from '@/lib/currency';
 import { ClientNotificationPreferences } from '@/components/ClientNotificationPreferences';
+import { ClientReminders } from '@/components/ClientReminders';
 import { LoyaltyTierBadge } from '@/components/LoyaltyTierBadge';
 import { LoyaltyTierCard } from '@/components/LoyaltyTierCard';
 import { ClientLifetimeValue } from '@/components/ClientLifetimeValue';

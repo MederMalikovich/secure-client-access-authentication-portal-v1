@@ -730,11 +730,11 @@ export default function ClientPortal() {
                 К оплате
               </h3>
               {unpaidInvoices.map(inv => (
-                <Card key={inv.id} className="border-l-4 border-l-amber-500 cursor-pointer hover:shadow-md transition-shadow" onClick={() => fetchInvoiceDetails(inv)}>
+                <Card key={inv.id} className="border-l-4 border-l-amber-500 hover:shadow-md transition-shadow">
                   <CardContent className="p-4">
-                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                      <div className="space-y-1">
-                        <div className="flex items-center gap-2">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                      <div className="space-y-1 cursor-pointer flex-1" onClick={() => fetchInvoiceDetails(inv)}>
+                        <div className="flex items-center gap-2 flex-wrap">
                           <span className="font-semibold">Счёт #{inv.invoice_number}</span>
                           {getPaymentBadge(inv.status)}
                         </div>
@@ -743,7 +743,13 @@ export default function ClientPortal() {
                           {inv.pets?.name && ` • ${inv.pets.name}`}
                         </p>
                       </div>
-                      <span className="text-lg font-bold">{formatCurrency(inv.total)}</span>
+                      <div className="flex items-center gap-3">
+                        <span className="text-lg font-bold whitespace-nowrap">{formatCurrency(inv.total)}</span>
+                        <Button size="sm" onClick={(e) => { e.stopPropagation(); setPayInvoice(inv); }}>
+                          <CreditCard className="h-4 w-4 mr-1.5" />
+                          Оплатить
+                        </Button>
+                      </div>
                     </div>
                   </CardContent>
                 </Card>

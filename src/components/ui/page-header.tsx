@@ -33,7 +33,7 @@ export function PageHeader({
         <Breadcrumb>
           <BreadcrumbList>
             {breadcrumbs.map((item, index) => (
-              <span key={index} className="contents">
+              <Fragment key={index}>
                 <BreadcrumbItem>
                   {item.href ? (
                     <BreadcrumbLink asChild>
@@ -44,7 +44,7 @@ export function PageHeader({
                   )}
                 </BreadcrumbItem>
                 {index < breadcrumbs.length - 1 && <BreadcrumbSeparator />}
-              </span>
+              </Fragment>
             ))}
           </BreadcrumbList>
         </Breadcrumb>

@@ -86,6 +86,7 @@ export default function ClientPortal() {
   // Invoice detail state
   const [selectedInvoice, setSelectedInvoice] = useState<ClientPortalInvoice | null>(null);
   const [invoiceItems, setInvoiceItems] = useState<ClientPortalInvoiceItem[]>([]);
+  const [payInvoice, setPayInvoice] = useState<ClientPortalInvoice | null>(null);
 
   const clientId = profile?.client_id;
 

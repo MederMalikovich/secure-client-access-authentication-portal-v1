@@ -841,6 +841,97 @@ export default function Reports() {
       </div>
         </TabsContent>
 
+        <TabsContent value="services" className="space-y-6">
+          <Card className="glass">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Stethoscope className="h-5 w-5 text-primary" />
+                Структура оказанных услуг по категориям
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {categoryBreakdown.length === 0 ? (
+                <p className="text-sm text-muted-foreground py-12 text-center">Нет данных по услугам за выбранный период</p>
+              ) : (
+                <div className="grid lg:grid-cols-2 gap-6">
+                  <ResponsiveContainer width="100%" height={340}>
+                    <PieChart>
+                      <Pie
+                        data={categoryBreakdown}
+                        cx="50%"
+                        cy="50%"
+                        labelLine={false}
+                        outerRadius={120}
+                        dataKey="revenue"
+                        nameKey="name"
+                        label={({ name, percent }) => `${name.length > 14 ? name.slice(0,14)+'…' : name} ${(percent * 100).toFixed(0)}%`}
+                      >
+                        {categoryBreakdown.map((_, index) => (
+                          <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                        ))}
+                      </Pie>
+                      <Tooltip content={<GlassTooltipContent valueFormatter={(v) => formatCurrency(v)} />} />
+                    </PieChart>
+                  </ResponsiveContainer>
+                  <div className="space-y-2">
+                    {(() => {
+                      const totalRev = categoryBreakdown.reduce((s, c) => s + c.revenue, 0) || 1;
+                      return categoryBreakdown.map((c, i) => {
+                        const share = (c.revenue / totalRev) * 100;
+                        return (
+                          <div key={i} className="p-3 rounded-lg bg-card/40 border border-border/40">
+                            <div className="flex items-center justify-between gap-3 mb-1.5">
+                              <div className="flex items-center gap-2 min-w-0">
+                                <span className="h-3 w-3 rounded-sm shrink-0" style={{ background: COLORS[i % COLORS.length] }} />
+                                <p className="text-sm font-medium truncate">{c.name}</p>
+                              </div>
+                              <p className="text-sm font-semibold text-primary shrink-0">{formatCurrency(c.revenue)}</p>
+                            </div>
+                            <div className="h-1.5 rounded-full bg-muted overflow-hidden">
+                              <div className="h-full rounded-full" style={{ width: `${share}%`, background: COLORS[i % COLORS.length] }} />
+                            </div>
+                            <div className="flex justify-between text-[11px] text-muted-foreground mt-1">
+                              <span>{c.count} процедур</span>
+                              <span>{share.toFixed(1)}% выручки</span>
+                            </div>
+                          </div>
+                        );
+                      });
+                    })()}
+                  </div>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          <Card className="glass">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <BarChart3 className="h-5 w-5 text-secondary" />
+                Выручка по категориям
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {categoryBreakdown.length === 0 ? (
+                <p className="text-sm text-muted-foreground py-12 text-center">Нет данных</p>
+              ) : (
+                <ResponsiveContainer width="100%" height={Math.max(240, categoryBreakdown.length * 44)}>
+                  <BarChart data={categoryBreakdown} layout="vertical">
+                    <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                    <XAxis type="number" stroke="hsl(var(--muted-foreground))" fontSize={12} tickFormatter={(v) => formatCurrency(v)} />
+                    <YAxis type="category" dataKey="name" stroke="hsl(var(--muted-foreground))" fontSize={12} width={160} />
+                    <Tooltip
+                      cursor={{ fill: 'hsl(var(--primary) / 0.06)' }}
+                      content={<GlassTooltipContent valueFormatter={(v) => formatCurrency(v)} />}
+                    />
+                    <Bar dataKey="revenue" fill="hsl(var(--primary))" radius={[0, 4, 4, 0]} />
+                  </BarChart>
+                </ResponsiveContainer>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
         <TabsContent value="retention">
           <ClientsAtRisk />
         </TabsContent>

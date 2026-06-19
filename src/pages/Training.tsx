@@ -3,10 +3,11 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { InteractiveJourney } from '@/components/InteractiveJourney';
 import {
   GraduationCap, Users, PawPrint, Stethoscope, Calendar, FileText,
   DollarSign, Package, ShoppingCart, BarChart3, Settings, Bell,
-  Shield, AlertTriangle, CheckCircle2, Lightbulb, BookOpen, Pill, BedDouble, Sparkles,
+  Shield, AlertTriangle, CheckCircle2, Lightbulb, BookOpen, Pill, BedDouble, Sparkles, LayoutGrid,
 } from 'lucide-react';
 
 interface Step {

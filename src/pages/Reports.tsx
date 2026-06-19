@@ -4,6 +4,7 @@ import { ru } from 'date-fns/locale';
 import { BarChart3, TrendingUp, Users, PawPrint, Calendar, DollarSign, Download, Stethoscope, Award, Package, Activity, HeartHandshake } from 'lucide-react';
 import { PageHeader } from '@/components/ui/page-header';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { StatCard } from '@/components/ui/stat-card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -464,72 +465,37 @@ export default function Reports() {
       </Card>
 
       {/* Stats Cards */}
-      <div className="grid gap-4 md:grid-cols-5 mb-6">
-        <Card className="glass">
-          <CardContent className="pt-6">
-            <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-primary/10">
-                <DollarSign className="h-5 w-5 text-primary" />
-              </div>
-              <div>
-                <p className="text-xs text-muted-foreground">Выручка</p>
-                <p className="text-xl font-bold">{formatCurrency(stats.revenue)}</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        <Card className="glass">
-          <CardContent className="pt-6">
-            <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-secondary/10">
-                <Calendar className="h-5 w-5 text-secondary" />
-              </div>
-              <div>
-                <p className="text-xs text-muted-foreground">Приёмы</p>
-                <p className="text-xl font-bold">{stats.appointments}</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        <Card className="glass">
-          <CardContent className="pt-6">
-            <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-green-500/10">
-                <Users className="h-5 w-5 text-green-500" />
-              </div>
-              <div>
-                <p className="text-xs text-muted-foreground">Новые клиенты</p>
-                <p className="text-xl font-bold">{stats.newClients}</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        <Card className="glass">
-          <CardContent className="pt-6">
-            <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-yellow-500/10">
-                <PawPrint className="h-5 w-5 text-yellow-500" />
-              </div>
-              <div>
-                <p className="text-xs text-muted-foreground">Новые питомцы</p>
-                <p className="text-xl font-bold">{stats.newPets}</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        <Card className="glass">
-          <CardContent className="pt-6">
-            <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-purple-500/10">
-                <TrendingUp className="h-5 w-5 text-purple-500" />
-              </div>
-              <div>
-                <p className="text-xs text-muted-foreground">Средний чек</p>
-                <p className="text-xl font-bold">{formatCurrency(stats.avgCheck)}</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+      <div className="grid gap-3 md:gap-4 grid-cols-2 md:grid-cols-3 lg:grid-cols-5 mb-6">
+        <StatCard
+          title="Выручка"
+          value={formatCurrency(stats.revenue)}
+          icon={<DollarSign className="h-5 w-5" />}
+          accent="emerald"
+        />
+        <StatCard
+          title="Приёмы"
+          value={stats.appointments}
+          icon={<Calendar className="h-5 w-5" />}
+          accent="cyan"
+        />
+        <StatCard
+          title="Новые клиенты"
+          value={stats.newClients}
+          icon={<Users className="h-5 w-5" />}
+          accent="purple"
+        />
+        <StatCard
+          title="Новые питомцы"
+          value={stats.newPets}
+          icon={<PawPrint className="h-5 w-5" />}
+          accent="amber"
+        />
+        <StatCard
+          title="Средний чек"
+          value={formatCurrency(stats.avgCheck)}
+          icon={<TrendingUp className="h-5 w-5" />}
+          accent="rose"
+        />
       </div>
 
       {/* Stat for non-visit revenue */}

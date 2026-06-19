@@ -1,124 +1,70 @@
-# План: Visit-Centric архитектура ветклиники
+# План: визуальный апгрейд + LTV в карточке клиента
 
-Это крупная переработка ядра системы. Разделяю на 4 этапа, чтобы можно было проверять промежуточные результаты. Если хочешь, реализую все этапы подряд в одном заходе, либо по одному — скажи.
+Стиль остаётся текущий (тёмный fintech, glassmorphism, cyan/purple градиенты) — усиливаем его, не меняем направление.
 
----
+## 1. LTV-дашборд в карточке клиента (только для персонала)
 
-## Этап 0. Быстрые фиксы (включаю в Этап 1)
+Расположение: `ClientDetailSheet.tsx`, новый блок сверху под именем клиента. Скрыт для роли `Client` (проверка через `useAuth`).
 
-**Автосчёт при выписке из стационара**
-- При смене статуса hospitalization на `discharged`: подсчитать дни × `daily_rate`, создать invoice + invoice_item «Стационар: N дней × X ₸» автоматически.
-- Реализую через PG-триггер `auto_invoice_on_discharge` + UI-уведомление «Счёт #YYYY-NNNNNN создан».
+Показываем 2 главные метрики (по итогам опроса):
+- **Lifetime Value** — сумма всех оплаченных счетов клиента (`invoices.status='paid'`, `sum(total)`)
+- **Средний чек** — LTV / количество оплаченных счетов
 
----
+Плюс компактно: количество визитов, дата последнего визита (как контекст к LTV — без отдельных карточек).
 
-## Этап 1. Visit-Centric ядро (БД)
+Визуально: glass-карточка с тонким cyan→purple градиентом, крупная сумма в ₸, иконка-бейдж, мини-метка тренда (▲/▼ vs прошлые 90 дней). Анимация fade-in при открытии sheet.
 
-**Главный принцип:** одна медкарта на питомца на всю жизнь. Каждый приём = `visit` внутри неё.
+## 2. Полный визуальный refresh дашбордов и отчётов
 
-### Новые/изменённые таблицы
+### Общие токены (`src/index.css`)
+- Новые градиентные токены: `--gradient-card`, `--gradient-stat-1..4`, `--gradient-mesh` (мягкий aurora-фон для hero-секций дашборда)
+- Тени с цветом: `--shadow-glow-cyan`, `--shadow-glow-purple`, `--shadow-card-hover`
+- Утилиты: `.stat-card-premium`, `.chart-card`, `.metric-pill`, `.trend-up`, `.trend-down`
+- Усилить `.glass` (двойной border: внутренний highlight + внешний)
 
-```text
-pets
-  └─ medical_record (1:1, создаётся автоматически при создании питомца)
-        └─ visits (1:N) ← новая таблица, центр системы
-              ├─ visit_services (услуги визита)
-              ├─ visit_materials (списание со склада)
-              ├─ visit_diagnoses
-              ├─ prescriptions (FK → visit_id)
-              ├─ hospitalizations (FK → visit_id)
-              └─ invoice (1:1, генерируется из визита)
-```
+### Новый общий компонент `PremiumStatCard`
+`src/components/ui/premium-stat-card.tsx` — карточка с:
+- иконкой в градиентном круге с glow
+- крупным значением, подписью
+- delta-индикатором (▲ +12% / ▼ −3%)
+- опциональным sparkline (recharts `<Area>` без осей)
+- hover: lift + усиленный glow
 
-**Новая таблица `visits`** (SOAP + workflow):
-- `medical_record_id`, `pet_id`, `client_id`, `appointment_id?`, `veterinarian_id`
-- `visit_date`, `status` (`waiting`/`in_consultation`/`procedures`/`hospital`/`completed`/`cancelled`)
-- SOAP: `subjective` (жалобы+анамнез), `objective` (осмотр+vitals), `assessment` (диагноз), `plan` (лечение+рекомендации)
-- `weight`, `temperature`, `pulse`, `respiratory_rate`
-- `chief_complaint`, `notes`, `next_visit_date`
-- `created_at`, `updated_at`
+Используется в Dashboard, Reports, Finances, Inventory, Shop, Hospitalization, MedicalRecords.
 
-**Миграция данных:** существующие `medical_records` конвертируются → одна `medical_record` на питомца + N `visits`. Старые поля сохраняются, ничего не удаляется.
+### Страницы
+- **Dashboard** — заменить текущие stat-карточки на `PremiumStatCard` с sparkline-данными. Hero-секция с aurora-mesh фоном и приветствием. Графики (если есть) — gradient-fill `<Area>`, тонкий grid, кастомный tooltip в glass-стиле.
+- **Reports** — все stat-карточки → premium. Графики Recharts: gradient fills, scrollable legend, кастомный tooltip. «Топ-5» — список с прогресс-барами и градиентными бейджами.
+- **Finances** — premium-карточки, динамика выручки area-chart с двойным градиентом.
+- **Inventory / Shop / Hospitalization / MedicalRecords** — заменить существующие stat-карточки на `PremiumStatCard`, единый стиль во всех модулях.
 
-**Триггеры автоматизации после `visit.status = 'completed'`:**
-1. `auto_create_invoice_from_visit` — создаёт invoice со всеми `visit_services` и `visit_materials`
-2. `auto_deduct_inventory_on_visit_complete` — списание материалов
-3. `auto_create_medical_record_for_new_pet` — при создании pet
+### Recharts tooltip
+Общий `ChartTooltipGlass` — стеклянный с blur, цветовым акцентом, форматированием ₸.
 
-### Лояльность — уровни
-Расширяю `loyalty_settings`:
-- `silver_threshold` (0), `gold_threshold` (50000), `vip_threshold` (200000)
-- `silver_percent`, `gold_percent`, `vip_percent` (% начисления по уровню)
+## 3. Рекомендации по дальнейшему улучшению UI
 
-Расчёт уровня = sum(payments за 12 мес). Хранится в `clients.loyalty_tier` (вычисляется триггером после payment).
-
----
-
-## Этап 2. Visit-Centric UI
-
-### `MedicalRecords.tsx` → Timeline view
-- Левая колонка: список питомцев с поиском
-- Правая: timeline визитов (новые сверху), карточки с датой/врачом/диагнозом/статусом
-- Фильтры: дата (range), врач, диагноз (поиск), статус
-- Клик по визиту → раскрытие SOAP + услуги + назначения + счёт
-
-### Новый компонент `VisitDialog.tsx` (центральный)
-Открывается из:
-- Календаря (кнопка «Начать приём» на appointment)
-- Медкарты (кнопка «+ Новый визит»)
-- Flowboard
-
-Вкладки:
-1. **SOAP** — 4 секции: Жалобы / Осмотр (+vitals) / Диагноз / План
-2. **Услуги** — добавить из каталога, цены подтягиваются
-3. **Препараты/материалы** — со склада, авто-списание
-4. **Назначения** — встроенный prescription editor
-5. **Счёт** — превью invoice до сохранения
-
-**Быстрый режим врача:**
-- Кнопка «Загрузить из прошлого визита» (vitals + лечение)
-- Шаблоны приёмов (вакцинация, осмотр, кастрация и т.д.) — новая таблица `visit_templates`
-- «Повторить назначение» — копирует prescription из истории
-
-### Календарь
-- Кнопка «▶ Начать приём» на appointment → создаёт visit со статусом `in_consultation`, открывает VisitDialog
-
-### Новая страница `Flowboard.tsx` (`/flowboard`)
-Kanban-доска по статусам визитов на сегодня:
-- Колонки: Ожидает / На приёме / Процедуры / Стационар / Завершён
-- Drag-and-drop для смены статуса
-- Карточка: питомец, владелец, врач, время, длительность
-
----
-
-## Этап 3. Лояльность + UX подсказки
-
-- Бейдж уровня (Silver/Gold/VIP) в `ClientDetailSheet`, `ClientPortal`, invoice
-- Настройки порогов и % в `Settings → Лояльность`
-- `ProcessHint` на каждом ключевом экране: что делать дальше
-- Обновить `Training.tsx` и `ClientTraining.tsx` — раздел «Visit-centric workflow»
-
----
+Кратко в финальном ответе (без кода в этой итерации):
+- единая типографика с tabular-nums для цифр в таблицах
+- микро-анимации (hover-lift, count-up для метрик)
+- skeleton-loaders вместо спиннеров
+- консистентные empty-states с иллюстрацией и CTA
+- breadcrumbs + sticky-заголовки страниц
+- command palette (уже есть Cmd+K — расширить)
+- более явные visual hierarchy в формах (группировка, секции)
+- option на сжатую плотность (compact mode) для опытных пользователей
 
 ## Технические детали
 
-- **Совместимость:** старые `medical_records` остаются как «легаси-визиты»; UI рендерит их в том же timeline
-- **RLS:** для `visits`, `visit_services`, `visit_materials`, `visit_templates` — те же роли что и у medical_records
-- **Триггеры:** все в `SECURITY DEFINER` с `SET search_path = public`
-- **Безопасность счетов:** уже есть guard от дублей (submitting state)
-- **Realtime:** включаю для `visits` чтобы Flowboard обновлялся live
+- Новый компонент: `src/components/ui/premium-stat-card.tsx`
+- Расширение `src/index.css` (токены + утилиты), без изменения существующих имён переменных — обратная совместимость
+- Расчёт LTV — клиентский: уже загруженные `invoices` фильтруем по `client_id` + `status='paid'`. Если в `ClientDetailSheet` их нет — добавить запрос параллельно к существующим
+- Recharts уже в проекте — новые зависимости не нужны
+- Sparkline data для Dashboard — агрегация из существующих visits/invoices по последним 7/30 дням
+- Скрытие LTV для роли Client — `if (role === 'client') return null` в блоке
 
-## Файлы, которые будут затронуты
-- Новые: `src/pages/Flowboard.tsx`, `src/components/VisitDialog.tsx`, `src/components/VisitTimeline.tsx`, `src/components/VisitTemplatesManager.tsx`
-- Edited: `MedicalRecords.tsx`, `Calendar.tsx`, `Hospitalization.tsx`, `Settings.tsx`, `ClientDetailSheet.tsx`, `Finances.tsx`, `Loyalty.tsx`, `App.tsx`, sidebars, `Training.tsx`, `ClientTraining.tsx`
-- Migrations: 3 шт (visit-схема, hospitalization auto-invoice, loyalty tiers)
+## Что не меняется
 
----
-
-## Объём работы
-Это ~2-3 часа агентского времени и большое изменение БД. Готов начать?
-
-**Подтверди:**
-1. Делаем все 4 этапа последовательно в этом сообщении? (рекомендую)
-2. Или хочешь разбить — например, сначала Этап 0 (фикс стационара) + Этап 1 (БД), потом UI?
-3. Сохранить старые `medical_records` как fallback или мигрировать жёстко в `visits`? (рекомендую сохранить)
+- Структура навигации, маршруты, бизнес-логика
+- Цветовая палитра (cyan/purple/dark) — только усиление
+- Существующие диалоги/формы CRUD
+- Auth, RLS, edge-функции

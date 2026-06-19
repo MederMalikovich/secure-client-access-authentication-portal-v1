@@ -23,6 +23,7 @@ import { formatCurrency } from '@/lib/currency';
 import { ClientNotificationPreferences } from '@/components/ClientNotificationPreferences';
 import { LoyaltyTierBadge } from '@/components/LoyaltyTierBadge';
 import { LoyaltyTierCard } from '@/components/LoyaltyTierCard';
+import { ClientLifetimeValue } from '@/components/ClientLifetimeValue';
 
 interface ClientDetailSheetProps {
   client: any;
@@ -203,6 +204,11 @@ export function ClientDetailSheet({ client, open, onClose, onEdit, onAddAppointm
         </div>
 
         </div>
+
+        {/* LTV dashboard — staff only */}
+        <ClientLifetimeValue invoices={invoices} appointments={appointments} />
+
+
 
         {/* Upcoming appointments alert */}
         {upcomingAppts.length > 0 && (

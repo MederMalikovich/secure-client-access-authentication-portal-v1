@@ -21,6 +21,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { speciesLabels, paymentStatusLabels, appointmentStatusLabels } from '@/lib/types';
 import { formatCurrency } from '@/lib/currency';
 import { ClientNotificationPreferences } from '@/components/ClientNotificationPreferences';
+import { ClientReminders } from '@/components/ClientReminders';
 import { LoyaltyTierBadge } from '@/components/LoyaltyTierBadge';
 import { LoyaltyTierCard } from '@/components/LoyaltyTierCard';
 import { ClientLifetimeValue } from '@/components/ClientLifetimeValue';
@@ -476,8 +477,15 @@ export function ClientDetailSheet({ client, open, onClose, onEdit, onAddAppointm
               )}
             </TabsContent>
 
-            <TabsContent value="notifications" className="mt-4">
-              <ClientNotificationPreferences clientId={client.id} />
+            <TabsContent value="notifications" className="mt-4 space-y-6">
+              <ClientReminders clientId={client.id} clientName={client.full_name} />
+              <div className="border-t pt-4">
+                <div className="flex items-center gap-2 mb-3">
+                  <Bell className="h-4 w-4 text-primary" />
+                  <h3 className="text-sm font-semibold">Каналы связи клиента</h3>
+                </div>
+                <ClientNotificationPreferences clientId={client.id} />
+              </div>
             </TabsContent>
           </Tabs>
 

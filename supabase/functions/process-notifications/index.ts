@@ -18,6 +18,7 @@ Deno.serve(async (req) => {
     appointmentReminders: 0,
     lowStockAlerts: 0,
     followUpReminders: 0,
+    customReminders: 0,
   }
 
   try {
@@ -143,6 +144,40 @@ Deno.serve(async (req) => {
         results.followUpReminders++
       }
     }
+
+    // 4. CUSTOM CLIENT REMINDERS (manual from client card)
+    const { data: dueReminders } = await supabase
+      .from('notifications')
+      .select('id, client_id, channel, title, message')
+      .eq('type', 'custom_client_reminder')
+      .eq('is_sent', false)
+      .not('client_id', 'is', null)
+      .lte('scheduled_for', now.toISOString())
+
+    for (const r of dueReminders || []) {
+      try {
+        const channelOverride = r.channel && ['whatsapp','email','telegram','instagram'].includes(r.channel)
+          ? r.channel : undefined
+        const { error: sendErr } = await supabase.functions.invoke('send-channel-notification', {
+          body: {
+            client_id: r.client_id,
+            title: r.title || 'Напоминание',
+            message: r.message || '',
+            channel_override: channelOverride,
+          },
+        })
+        await supabase.from('notifications').update({
+          is_sent: true,
+          sent_at: new Date().toISOString(),
+          message: sendErr ? `${r.message}\n[Ошибка отправки: ${sendErr.message}]` : r.message,
+        }).eq('id', r.id)
+        if (!sendErr) results.customReminders++
+      } catch (e) {
+        console.error('Failed to send custom reminder', r.id, e)
+      }
+    }
+
+
 
     return new Response(JSON.stringify({ success: true, results }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },

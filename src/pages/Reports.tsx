@@ -53,6 +53,7 @@ export default function Reports() {
   const [topProducts, setTopProducts] = useState<any[]>([]);
   const [topDiseases, setTopDiseases] = useState<any[]>([]);
   const [petGrowthData, setPetGrowthData] = useState<any[]>([]);
+  const [categoryBreakdown, setCategoryBreakdown] = useState<any[]>([]);
 
   useEffect(() => {
     fetchReportData();
@@ -186,20 +187,29 @@ export default function Reports() {
         });
       setPetGrowthData(petChartData);
 
-      // === Популярные услуги (visit_services по visit_date) ===
+      // === Популярные услуги + структура по категориям (visit_services по visit_date) ===
       const { data: visitServices } = await supabase
         .from('visit_services')
-        .select('service_id, quantity, service:services(name), visit:visits!inner(visit_date)')
+        .select('service_id, quantity, total, service:services(name, category_id, category:service_categories(id, name)), visit:visits!inner(visit_date)')
         .not('service_id', 'is', null)
         .gte('visit.visit_date', fromIso)
         .lte('visit.visit_date', toIso);
 
       const serviceCounts: Record<string, { name: string; count: number }> = {};
+      const categoryTotals: Record<string, { name: string; revenue: number; count: number }> = {};
       (visitServices || []).forEach((item: any) => {
         const id = item.service_id;
         const name = item.service?.name || 'Неизвестно';
+        const qty = Number(item.quantity) || 1;
+        const total = Number(item.total) || 0;
         if (!serviceCounts[id]) serviceCounts[id] = { name, count: 0 };
-        serviceCounts[id].count += Number(item.quantity) || 1;
+        serviceCounts[id].count += qty;
+
+        const catId = item.service?.category?.id || item.service?.category_id || 'uncat';
+        const catName = item.service?.category?.name || 'Без категории';
+        if (!categoryTotals[catId]) categoryTotals[catId] = { name: catName, revenue: 0, count: 0 };
+        categoryTotals[catId].revenue += total;
+        categoryTotals[catId].count += qty;
       });
 
       const sortedServices = Object.values(serviceCounts)
@@ -210,6 +220,12 @@ export default function Reports() {
           value: s.count,
         }));
       setServicesData(sortedServices);
+
+      setCategoryBreakdown(
+        Object.values(categoryTotals)
+          .sort((a, b) => b.revenue - a.revenue)
+          .map(c => ({ name: c.name, revenue: Math.round(c.revenue), count: c.count }))
+      );
 
       // === Статусы визитов (из тех же visits) ===
       const statusCounts: Record<string, number> = {};
@@ -399,6 +415,7 @@ export default function Reports() {
       <Tabs defaultValue="overview" className="space-y-4">
         <TabsList>
           <TabsTrigger value="overview"><BarChart3 className="h-4 w-4 mr-1" />Финансы и операции</TabsTrigger>
+          <TabsTrigger value="services"><Stethoscope className="h-4 w-4 mr-1" />Структура услуг</TabsTrigger>
           <TabsTrigger value="retention"><HeartHandshake className="h-4 w-4 mr-1" />Удержание клиентов</TabsTrigger>
         </TabsList>
 
@@ -822,6 +839,97 @@ export default function Reports() {
           </CardContent>
         </Card>
       </div>
+        </TabsContent>
+
+        <TabsContent value="services" className="space-y-6">
+          <Card className="glass">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Stethoscope className="h-5 w-5 text-primary" />
+                Структура оказанных услуг по категориям
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {categoryBreakdown.length === 0 ? (
+                <p className="text-sm text-muted-foreground py-12 text-center">Нет данных по услугам за выбранный период</p>
+              ) : (
+                <div className="grid lg:grid-cols-2 gap-6">
+                  <ResponsiveContainer width="100%" height={340}>
+                    <PieChart>
+                      <Pie
+                        data={categoryBreakdown}
+                        cx="50%"
+                        cy="50%"
+                        labelLine={false}
+                        outerRadius={120}
+                        dataKey="revenue"
+                        nameKey="name"
+                        label={({ name, percent }) => `${name.length > 14 ? name.slice(0,14)+'…' : name} ${(percent * 100).toFixed(0)}%`}
+                      >
+                        {categoryBreakdown.map((_, index) => (
+                          <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                        ))}
+                      </Pie>
+                      <Tooltip content={<GlassTooltipContent valueFormatter={(v) => formatCurrency(v)} />} />
+                    </PieChart>
+                  </ResponsiveContainer>
+                  <div className="space-y-2">
+                    {(() => {
+                      const totalRev = categoryBreakdown.reduce((s, c) => s + c.revenue, 0) || 1;
+                      return categoryBreakdown.map((c, i) => {
+                        const share = (c.revenue / totalRev) * 100;
+                        return (
+                          <div key={i} className="p-3 rounded-lg bg-card/40 border border-border/40">
+                            <div className="flex items-center justify-between gap-3 mb-1.5">
+                              <div className="flex items-center gap-2 min-w-0">
+                                <span className="h-3 w-3 rounded-sm shrink-0" style={{ background: COLORS[i % COLORS.length] }} />
+                                <p className="text-sm font-medium truncate">{c.name}</p>
+                              </div>
+                              <p className="text-sm font-semibold text-primary shrink-0">{formatCurrency(c.revenue)}</p>
+                            </div>
+                            <div className="h-1.5 rounded-full bg-muted overflow-hidden">
+                              <div className="h-full rounded-full" style={{ width: `${share}%`, background: COLORS[i % COLORS.length] }} />
+                            </div>
+                            <div className="flex justify-between text-[11px] text-muted-foreground mt-1">
+                              <span>{c.count} процедур</span>
+                              <span>{share.toFixed(1)}% выручки</span>
+                            </div>
+                          </div>
+                        );
+                      });
+                    })()}
+                  </div>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          <Card className="glass">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <BarChart3 className="h-5 w-5 text-secondary" />
+                Выручка по категориям
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {categoryBreakdown.length === 0 ? (
+                <p className="text-sm text-muted-foreground py-12 text-center">Нет данных</p>
+              ) : (
+                <ResponsiveContainer width="100%" height={Math.max(240, categoryBreakdown.length * 44)}>
+                  <BarChart data={categoryBreakdown} layout="vertical">
+                    <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                    <XAxis type="number" stroke="hsl(var(--muted-foreground))" fontSize={12} tickFormatter={(v) => formatCurrency(v)} />
+                    <YAxis type="category" dataKey="name" stroke="hsl(var(--muted-foreground))" fontSize={12} width={160} />
+                    <Tooltip
+                      cursor={{ fill: 'hsl(var(--primary) / 0.06)' }}
+                      content={<GlassTooltipContent valueFormatter={(v) => formatCurrency(v)} />}
+                    />
+                    <Bar dataKey="revenue" fill="hsl(var(--primary))" radius={[0, 4, 4, 0]} />
+                  </BarChart>
+                </ResponsiveContainer>
+              )}
+            </CardContent>
+          </Card>
         </TabsContent>
 
         <TabsContent value="retention">

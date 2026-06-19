@@ -3,6 +3,7 @@ import { AppSidebar } from './AppSidebar';
 import { MobileNav } from './MobileNav';
 import { GlobalSearch } from '@/components/GlobalSearch';
 import { NotificationBell } from '@/components/NotificationBell';
+import { AuroraBackground } from '@/components/ui/aurora-background';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/contexts/AuthContext';
 

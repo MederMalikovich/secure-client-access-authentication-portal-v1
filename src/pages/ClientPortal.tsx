@@ -24,6 +24,7 @@ import { TimePicker } from '@/components/ui/time-picker';
 import { useWorkingHours, generateDaySlots, isDayWorking } from '@/hooks/useWorkingHours';
 import { getUserFriendlyError } from '@/lib/errorHandler';
 import { LoyaltyTierCard } from '@/components/LoyaltyTierCard';
+import { OnlinePaymentDialog } from '@/components/OnlinePaymentDialog';
 
 type AppointmentRow = Database['public']['Tables']['appointments']['Row'];
 type InvoiceRow = Database['public']['Tables']['invoices']['Row'];

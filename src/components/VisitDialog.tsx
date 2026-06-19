@@ -351,6 +351,18 @@ export function VisitDialog({ open, onClose, visitId, initialPetId, initialAppoi
 
   const save = async (markCompleted = false, goToPayment = false) => {
     if (!form.pet_id) { toast({ title: 'Выберите питомца', variant: 'destructive' }); return; }
+    // Fallback: resolve client_id from pet if still empty (pets list may not have been loaded yet)
+    let clientId = form.client_id;
+    if (!clientId) {
+      const pet = pets.find(p => p.id === form.pet_id);
+      clientId = pet?.client_id || '';
+      if (!clientId) {
+        const { data: petRow } = await supabase.from('pets').select('client_id').eq('id', form.pet_id).maybeSingle();
+        clientId = petRow?.client_id || '';
+      }
+      if (!clientId) { toast({ title: 'Не удалось определить клиента питомца', variant: 'destructive' }); return; }
+      setForm(f => ({ ...f, client_id: clientId }));
+    }
     if (form.veterinarian_id && busyVetIds.has(form.veterinarian_id)) {
       toast({ title: 'Врач занят', description: 'В выбранное время этот врач уже занят. Измените время или врача.', variant: 'destructive' });
       return;

@@ -415,6 +415,7 @@ export default function Reports() {
       <Tabs defaultValue="overview" className="space-y-4">
         <TabsList>
           <TabsTrigger value="overview"><BarChart3 className="h-4 w-4 mr-1" />Финансы и операции</TabsTrigger>
+          <TabsTrigger value="services"><Stethoscope className="h-4 w-4 mr-1" />Структура услуг</TabsTrigger>
           <TabsTrigger value="retention"><HeartHandshake className="h-4 w-4 mr-1" />Удержание клиентов</TabsTrigger>
         </TabsList>
 

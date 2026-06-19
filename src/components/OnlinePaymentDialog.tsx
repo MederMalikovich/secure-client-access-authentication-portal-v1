@@ -46,7 +46,7 @@ export function OnlinePaymentDialog({ open, onOpenChange, invoice, onPaid }: Onl
 
       const { error: invErr } = await supabase
         .from('invoices')
-        .update({ status: 'paid', paid_at: new Date().toISOString() })
+        .update({ status: 'paid' })
         .eq('id', invoice.id);
       if (invErr) throw invErr;
 

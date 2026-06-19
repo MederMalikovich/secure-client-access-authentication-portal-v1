@@ -18,6 +18,7 @@ Deno.serve(async (req) => {
     appointmentReminders: 0,
     lowStockAlerts: 0,
     followUpReminders: 0,
+    customReminders: 0,
   }
 
   try {

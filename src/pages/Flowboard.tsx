@@ -101,6 +101,23 @@ export default function Flowboard() {
   };
 
   const visible = filterByScope(visits, scope, customDate, 'visit_date');
+  // Online/pending appointments without a visit yet — show as virtual cards in "waiting"
+  const pendingVirtualCards = useMemo(() => {
+    const mapped = pendingAppointments.map((a: any) => ({
+      id: `apt-${a.id}`,
+      __isAppointment: true,
+      appointment_id: a.id,
+      pet_id: a.pet_id,
+      pet: a.pet,
+      client: a.client,
+      veterinarian_id: a.veterinarian_id,
+      veterinarian: a.veterinarian,
+      visit_date: a.scheduled_at,
+      status: 'waiting' as VisitStatus,
+      service_name: a.service?.name,
+    }));
+    return filterByScope(mapped, scope, customDate, 'visit_date');
+  }, [pendingAppointments, scope, customDate]);
 
   const workload = useMemo(() => {
     const active = visible.filter(v => v.status !== 'completed' && v.status !== 'cancelled');

@@ -230,6 +230,7 @@ export default function Dashboard() {
       {/* Stats */}
       <div className="grid min-w-0 grid-cols-2 gap-3 md:gap-4 lg:grid-cols-4">
         <StatCard
+          index={0}
           title="Клиенты"
           value={stats.totalClients}
           icon={<Users className="h-5 w-5" />}
@@ -237,6 +238,7 @@ export default function Dashboard() {
           accent="cyan"
         />
         <StatCard
+          index={1}
           title="Питомцы"
           value={stats.totalPets}
           icon={<PawPrint className="h-5 w-5" />}
@@ -244,6 +246,7 @@ export default function Dashboard() {
           accent="purple"
         />
         <StatCard
+          index={2}
           title="Приёмы сегодня"
           value={stats.todayAppointments}
           icon={<Calendar className="h-5 w-5" />}
@@ -252,6 +255,7 @@ export default function Dashboard() {
           sparkline={appointmentsData.slice(-14).map(d => d.appointments)}
         />
         <StatCard
+          index={3}
           title="Выручка за месяц"
           value={formatCurrency(stats.monthlyRevenue)}
           icon={<DollarSign className="h-5 w-5" />}
@@ -260,6 +264,7 @@ export default function Dashboard() {
           sparkline={revenueData.slice(-14).map(d => d.revenue)}
         />
       </div>
+
 
       {/* Upcoming Notifications */}
       {upcomingNotifs.length > 0 && (

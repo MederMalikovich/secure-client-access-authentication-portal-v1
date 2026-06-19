@@ -3,13 +3,12 @@ import { format } from 'date-fns';
 
 /**
  * Export invoices+payments to 1C-compatible CSV (UTF-8 with BOM, semicolon-separated).
- * Period: optional date range filtering on issued_at.
  */
 export async function exportTo1C(opts?: { from?: Date; to?: Date }): Promise<void> {
   let q = supabase
     .from('invoices')
     .select(
-      'id, invoice_number, issued_at, paid_at, status, subtotal, discount, total, notes, client_id, clients(full_name, iin, phone), invoice_items(description, quantity, unit_price, total), payments(amount, payment_method, paid_at)'
+      'id, invoice_number, issued_at, status, subtotal, discount, total, notes, client_id, clients(full_name, client_number, phone), invoice_items(description, quantity, unit_price, total), payments(amount, payment_method, paid_at)'
     )
     .order('issued_at', { ascending: true });
 
@@ -20,7 +19,7 @@ export async function exportTo1C(opts?: { from?: Date; to?: Date }): Promise<voi
   if (error) throw error;
 
   const sep = ';';
-  const esc = (v: any) => {
+  const esc = (v: unknown) => {
     const s = v == null ? '' : String(v);
     const needs = /[";\n\r]/.test(s);
     const safe = s.replace(/"/g, '""');
@@ -28,57 +27,44 @@ export async function exportTo1C(opts?: { from?: Date; to?: Date }): Promise<voi
   };
 
   const header = [
-    'Номер счёта',
-    'Дата',
-    'Дата оплаты',
-    'Статус',
-    'Клиент',
-    'ИИН',
-    'Телефон',
-    'Наименование',
-    'Кол-во',
-    'Цена',
-    'Сумма',
-    'Скидка по счёту',
-    'Итого по счёту',
-    'Оплачено',
-    'Способ оплаты',
+    'Номер счёта', 'Дата', 'Дата оплаты', 'Статус',
+    'Клиент', 'Код клиента', 'Телефон',
+    'Наименование', 'Кол-во', 'Цена', 'Сумма',
+    'Скидка по счёту', 'Итого по счёту', 'Оплачено', 'Способ оплаты',
   ];
 
   const rows: string[] = [header.map(esc).join(sep)];
 
-  for (const inv of data || []) {
-    const items: any[] = (inv as any).invoice_items || [];
-    const payments: any[] = (inv as any).payments || [];
+  for (const inv of (data || []) as any[]) {
+    const items: any[] = inv.invoice_items || [];
+    const payments: any[] = inv.payments || [];
     const paidSum = payments.reduce((s, p) => s + Number(p.amount || 0), 0);
+    const lastPaidAt = payments
+      .map((p: any) => p.paid_at)
+      .filter(Boolean)
+      .sort()
+      .pop();
     const methods = Array.from(new Set(payments.map((p: any) => p.payment_method))).join(', ');
-    const client = (inv as any).clients || {};
+    const client = inv.clients || {};
     const baseCols = [
       inv.invoice_number,
       inv.issued_at ? format(new Date(inv.issued_at), 'yyyy-MM-dd HH:mm') : '',
-      inv.paid_at ? format(new Date(inv.paid_at), 'yyyy-MM-dd HH:mm') : '',
+      lastPaidAt ? format(new Date(lastPaidAt), 'yyyy-MM-dd HH:mm') : '',
       inv.status,
       client.full_name || '',
-      client.iin || '',
+      client.client_number || '',
       client.phone || '',
     ];
     if (items.length === 0) {
       rows.push([
-        ...baseCols,
-        '', '', '', '',
-        inv.discount ?? 0,
-        inv.total ?? 0,
-        paidSum,
-        methods,
+        ...baseCols, '', '', '', '',
+        inv.discount ?? 0, inv.total ?? 0, paidSum, methods,
       ].map(esc).join(sep));
     } else {
-      items.forEach((it, idx) => {
+      items.forEach((it: any, idx: number) => {
         rows.push([
           ...baseCols,
-          it.description,
-          it.quantity,
-          it.unit_price,
-          it.total,
+          it.description, it.quantity, it.unit_price, it.total,
           idx === 0 ? (inv.discount ?? 0) : '',
           idx === 0 ? (inv.total ?? 0) : '',
           idx === 0 ? paidSum : '',
@@ -88,7 +74,6 @@ export async function exportTo1C(opts?: { from?: Date; to?: Date }): Promise<voi
     }
   }
 
-  // BOM + CRLF for Windows / 1С
   const csv = '\uFEFF' + rows.join('\r\n');
   const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
   const url = URL.createObjectURL(blob);

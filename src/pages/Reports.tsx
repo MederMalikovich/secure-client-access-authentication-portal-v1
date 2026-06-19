@@ -854,23 +854,30 @@ export default function Reports() {
                 <p className="text-sm text-muted-foreground py-12 text-center">Нет данных по услугам за выбранный период</p>
               ) : (
                 <div className="grid lg:grid-cols-2 gap-6">
-                  <ResponsiveContainer width="100%" height={340}>
+                  <ResponsiveContainer width="100%" height={380}>
                     <PieChart>
                       <Pie
                         data={categoryBreakdown}
                         cx="50%"
-                        cy="50%"
+                        cy="42%"
                         labelLine={false}
-                        outerRadius={120}
+                        outerRadius={100}
+                        innerRadius={55}
                         dataKey="revenue"
                         nameKey="name"
-                        label={({ name, percent }) => `${name.length > 14 ? name.slice(0,14)+'…' : name} ${(percent * 100).toFixed(0)}%`}
+                        label={({ percent }) => `${(percent * 100).toFixed(0)}%`}
                       >
                         {categoryBreakdown.map((_, index) => (
                           <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                         ))}
                       </Pie>
                       <Tooltip content={<GlassTooltipContent valueFormatter={(v) => formatCurrency(v)} />} />
+                      <Legend
+                        verticalAlign="bottom"
+                        align="center"
+                        iconType="circle"
+                        wrapperStyle={{ paddingTop: 16, fontSize: 12, lineHeight: '18px' }}
+                      />
                     </PieChart>
                   </ResponsiveContainer>
                   <div className="space-y-2">

@@ -235,6 +235,13 @@ export function VisitDialog({ open, onClose, visitId, initialPetId, initialAppoi
     setActiveTab('soap');
   };
 
+  // Auto-resolve client_id when pet is preselected (e.g. opened with initialPetId or from appointment)
+  useEffect(() => {
+    if (!form.pet_id || form.client_id) return;
+    const pet = pets.find(p => p.id === form.pet_id);
+    if (pet?.client_id) setForm(f => ({ ...f, client_id: pet.client_id }));
+  }, [form.pet_id, form.client_id, pets]);
+
   const loadVisit = async (id: string) => {
     setLoading(true);
     try {

@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Users, PawPrint, Calendar, DollarSign, Plus, TrendingUp, Clock, FileText, Receipt, Trophy, Bell, Stethoscope } from 'lucide-react';
 import { PageHeader } from '@/components/ui/page-header';
 import { StatCard } from '@/components/ui/stat-card';
+import { GlassTooltipContent } from '@/components/ui/glass-tooltip';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';

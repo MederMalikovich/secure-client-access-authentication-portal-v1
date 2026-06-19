@@ -157,7 +157,7 @@ Deno.serve(async (req) => {
     for (const r of dueReminders || []) {
       try {
         const channelOverride = r.channel && ['whatsapp','email','telegram','instagram'].includes(r.channel)
-          ? [r.channel] : undefined
+          ? r.channel : undefined
         const { error: sendErr } = await supabase.functions.invoke('send-channel-notification', {
           body: {
             client_id: r.client_id,

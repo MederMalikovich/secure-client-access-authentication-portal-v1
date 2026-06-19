@@ -32,9 +32,9 @@ const channelMeta: Record<string, { icon: any; label: string; color: string; des
   },
   whatsapp: {
     icon: MessageCircle,
-    label: 'WhatsApp',
+    label: 'WhatsApp Business',
     color: 'text-green-500',
-    description: 'Уведомления через WhatsApp Business API (Twilio)',
+    description: 'Уведомления через WhatsApp Business — Meta Cloud API или Twilio',
   },
   instagram: {
     icon: Instagram,

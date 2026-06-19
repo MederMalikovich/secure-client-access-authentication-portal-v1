@@ -212,7 +212,10 @@ export default function Flowboard() {
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-3">
             {COLUMNS.map(col => {
-              const items = visible.filter(v => v.status === col);
+              const items: any[] = [
+                ...visible.filter(v => v.status === col),
+                ...(col === 'waiting' ? pendingVirtualCards : []),
+              ];
               return (
                 <div
                   key={col}
@@ -228,18 +231,38 @@ export default function Flowboard() {
                     {items.map(v => (
                       <Card
                         key={v.id}
-                        draggable
-                        onDragStart={() => setDraggingId(v.id)}
-                        onClick={() => { setEditingId(v.id); setDialogOpen(true); }}
-                        className="p-3 cursor-pointer hover:border-primary/50 transition-colors"
+                        draggable={!v.__isAppointment}
+                        onDragStart={() => { if (!v.__isAppointment) setDraggingId(v.id); }}
+                        onClick={() => {
+                          if (v.__isAppointment) {
+                            setEditingId(null);
+                            setInitialAppointmentId(v.appointment_id);
+                            setInitialPetId(v.pet_id);
+                          } else {
+                            setEditingId(v.id);
+                            setInitialAppointmentId(null);
+                            setInitialPetId(null);
+                          }
+                          setDialogOpen(true);
+                        }}
+                        className={cn(
+                          "p-3 cursor-pointer hover:border-primary/50 transition-colors",
+                          v.__isAppointment && "border-dashed border-primary/40 bg-primary/5"
+                        )}
                       >
                         <div className="flex items-center gap-2 text-sm font-medium">
                           <PawPrint className="h-4 w-4 text-primary shrink-0" />
                           <span className="truncate">{v.pet?.name || 'Питомец'}</span>
+                          {v.__isAppointment && (
+                            <Badge variant="outline" className="ml-auto text-[10px] py-0 px-1.5 h-4">Онлайн</Badge>
+                          )}
                         </div>
                         <div className="flex items-center gap-1 text-xs text-muted-foreground mt-1">
                           <User className="h-3 w-3" /> <span className="truncate">{v.client?.full_name || '—'}</span>
                         </div>
+                        {v.__isAppointment && v.service_name && (
+                          <div className="text-xs text-primary/80 mt-1 truncate">{v.service_name}</div>
+                        )}
                         <div className="flex items-center justify-between text-xs text-muted-foreground mt-1">
                           <span className="flex items-center gap-1"><Clock className="h-3 w-3" /> {format(new Date(v.visit_date), 'd MMM HH:mm')}</span>
                           {v.veterinarian?.full_name && <span className="flex items-center gap-1 truncate"><Stethoscope className="h-3 w-3" />{v.veterinarian.full_name.split(' ')[0]}</span>}

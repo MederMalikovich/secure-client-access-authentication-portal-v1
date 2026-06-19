@@ -16,7 +16,8 @@ export function MainLayout({ children }: MainLayoutProps) {
   const isClient = hasRole('client');
 
   return (
-    <div className="min-h-screen bg-background overflow-x-hidden">
+    <div className="min-h-screen bg-background overflow-x-hidden relative">
+      <AuroraBackground />
       <GlobalSearch />
       
       {/* Mobile navigation */}

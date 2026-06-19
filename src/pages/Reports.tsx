@@ -5,6 +5,7 @@ import { BarChart3, TrendingUp, Users, PawPrint, Calendar, DollarSign, Download,
 import { PageHeader } from '@/components/ui/page-header';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { StatCard } from '@/components/ui/stat-card';
+import { GlassTooltipContent } from '@/components/ui/glass-tooltip';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';

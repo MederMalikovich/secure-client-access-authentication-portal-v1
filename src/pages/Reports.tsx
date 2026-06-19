@@ -467,36 +467,44 @@ export default function Reports() {
       {/* Stats Cards */}
       <div className="grid gap-3 md:gap-4 grid-cols-2 md:grid-cols-3 lg:grid-cols-5 mb-6">
         <StatCard
+          index={0}
           title="Выручка"
           value={formatCurrency(stats.revenue)}
           icon={<DollarSign className="h-5 w-5" />}
           accent="emerald"
+          sparkline={revenueData.slice(-14).map((d: any) => d.revenue)}
         />
         <StatCard
+          index={1}
           title="Приёмы"
           value={stats.appointments}
           icon={<Calendar className="h-5 w-5" />}
           accent="cyan"
+          sparkline={revenueData.slice(-14).map((d: any) => d.appointments)}
         />
         <StatCard
+          index={2}
           title="Новые клиенты"
           value={stats.newClients}
           icon={<Users className="h-5 w-5" />}
           accent="purple"
         />
         <StatCard
+          index={3}
           title="Новые питомцы"
           value={stats.newPets}
           icon={<PawPrint className="h-5 w-5" />}
           accent="amber"
         />
         <StatCard
+          index={4}
           title="Средний чек"
           value={formatCurrency(stats.avgCheck)}
           icon={<TrendingUp className="h-5 w-5" />}
           accent="rose"
         />
       </div>
+
 
       {/* Stat for non-visit revenue */}
       {stats.otherRevenue > 0 && (

@@ -920,6 +920,21 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import CashRegister from './CashRegister';
 
 export default function Finances() {
+  const { toast } = useToast();
+  const [exporting1c, setExporting1c] = useState(false);
+
+  const handleExport1c = async () => {
+    setExporting1c(true);
+    try {
+      await exportTo1C();
+      toast({ title: 'Экспорт готов', description: 'Файл для 1С загружен (CSV, UTF-8)' });
+    } catch (e: any) {
+      toast({ variant: 'destructive', title: 'Ошибка экспорта', description: String(e?.message || e) });
+    } finally {
+      setExporting1c(false);
+    }
+  };
+
   return (
     <div>
       <PageHeader
@@ -929,6 +944,12 @@ export default function Finances() {
           { label: 'Дашборд', href: '/dashboard' },
           { label: 'Финансы' },
         ]}
+        actions={
+          <Button variant="outline" size="sm" onClick={handleExport1c} disabled={exporting1c}>
+            <FileDown className="h-4 w-4 mr-1.5" />
+            {exporting1c ? 'Экспорт...' : 'Экспорт в 1С'}
+          </Button>
+        }
       />
       <Tabs defaultValue="invoices" className="space-y-4">
         <TabsList>

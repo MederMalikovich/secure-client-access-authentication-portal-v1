@@ -3,6 +3,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
 import { TrendingUp, TrendingDown } from 'lucide-react';
 import { Area, AreaChart, ResponsiveContainer } from 'recharts';
+import { AnimatedNumber } from '@/components/ui/animated-number';
 
 type Accent = 'cyan' | 'purple' | 'amber' | 'emerald' | 'rose' | 'default';
 
@@ -19,6 +20,8 @@ interface StatCardProps {
   accent?: Accent;
   /** Мини-график (sparkline). Массив чисел по периодам. */
   sparkline?: number[];
+  /** Index in a grid for stagger animation. */
+  index?: number;
   className?: string;
 }
 

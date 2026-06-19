@@ -33,18 +33,18 @@ export function PageHeader({
         <Breadcrumb>
           <BreadcrumbList>
             {breadcrumbs.map((item, index) => (
-              <BreadcrumbItem key={index}>
-                {item.href ? (
-                  <>
+              <span key={index} className="contents">
+                <BreadcrumbItem>
+                  {item.href ? (
                     <BreadcrumbLink asChild>
                       <Link to={item.href}>{item.label}</Link>
                     </BreadcrumbLink>
-                    {index < breadcrumbs.length - 1 && <BreadcrumbSeparator />}
-                  </>
-                ) : (
-                  <BreadcrumbPage>{item.label}</BreadcrumbPage>
-                )}
-              </BreadcrumbItem>
+                  ) : (
+                    <BreadcrumbPage>{item.label}</BreadcrumbPage>
+                  )}
+                </BreadcrumbItem>
+                {index < breadcrumbs.length - 1 && <BreadcrumbSeparator />}
+              </span>
             ))}
           </BreadcrumbList>
         </Breadcrumb>

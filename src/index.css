@@ -274,12 +274,58 @@
   to { opacity: 1; transform: translateY(0); }
 }
 
-.animate-fade-in { animation: fadeIn 0.4s cubic-bezier(.4,0,.2,1); }
-.animate-slide-in-left { animation: slideInLeft 0.3s ease-out; }
+.animate-fade-in { animation: fadeIn 0.5s cubic-bezier(.4,0,.2,1) both; }
+.animate-slide-in-left { animation: slideInLeft 0.3s ease-out both; }
 .animate-pulse-glow { animation: pulse-glow 2s ease-in-out infinite; }
-.animate-count-up { animation: count-up 0.5s cubic-bezier(.4,0,.2,1); }
+.animate-count-up { animation: count-up 0.5s cubic-bezier(.4,0,.2,1) both; }
 .animate-shimmer {
   background: linear-gradient(90deg, transparent, hsl(0 0% 100% / 0.06), transparent);
   background-size: 200% 100%;
   animation: shimmer 2.4s linear infinite;
+}
+
+/* ===== Aurora background orbs ===== */
+@keyframes aurora-drift-1 {
+  0%, 100% { transform: translate3d(-8%, -6%, 0) scale(1); }
+  50%      { transform: translate3d(6%, 4%, 0) scale(1.15); }
+}
+@keyframes aurora-drift-2 {
+  0%, 100% { transform: translate3d(6%, 4%, 0) scale(1.1); }
+  50%      { transform: translate3d(-6%, -4%, 0) scale(0.95); }
+}
+@keyframes aurora-drift-3 {
+  0%, 100% { transform: translate3d(0, 6%, 0) scale(1); }
+  50%      { transform: translate3d(-4%, -8%, 0) scale(1.2); }
+}
+
+.aurora-orb {
+  position: absolute;
+  border-radius: 9999px;
+  will-change: transform;
+}
+.aurora-orb-1 {
+  top: -10%; left: -8%;
+  width: 55vw; height: 55vw; max-width: 720px; max-height: 720px;
+  background: radial-gradient(circle, hsl(195 85% 55% / 0.55) 0%, transparent 70%);
+  animation: aurora-drift-1 22s ease-in-out infinite;
+}
+.aurora-orb-2 {
+  top: 30%; right: -12%;
+  width: 50vw; height: 50vw; max-width: 680px; max-height: 680px;
+  background: radial-gradient(circle, hsl(270 65% 60% / 0.5) 0%, transparent 70%);
+  animation: aurora-drift-2 28s ease-in-out infinite;
+}
+.aurora-orb-3 {
+  bottom: -15%; left: 25%;
+  width: 60vw; height: 60vw; max-width: 800px; max-height: 800px;
+  background: radial-gradient(circle, hsl(38 92% 60% / 0.4) 0%, transparent 70%);
+  animation: aurora-drift-3 32s ease-in-out infinite;
+}
+
+/* Theme tuning */
+:root .aurora-orb { opacity: 0.32; mix-blend-mode: multiply; filter: blur(110px); }
+.dark .aurora-orb { opacity: 0.55; mix-blend-mode: screen; filter: blur(90px); }
+
+@media (prefers-reduced-motion: reduce) {
+  .aurora-orb { animation: none; }
 }

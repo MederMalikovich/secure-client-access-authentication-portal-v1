@@ -3,6 +3,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
 import { TrendingUp, TrendingDown } from 'lucide-react';
 import { Area, AreaChart, ResponsiveContainer } from 'recharts';
+import { AnimatedNumber } from '@/components/ui/animated-number';
 
 type Accent = 'cyan' | 'purple' | 'amber' | 'emerald' | 'rose' | 'default';
 
@@ -19,6 +20,8 @@ interface StatCardProps {
   accent?: Accent;
   /** Мини-график (sparkline). Массив чисел по периодам. */
   sparkline?: number[];
+  /** Index in a grid for stagger animation. */
+  index?: number;
   className?: string;
 }
 
@@ -39,26 +42,30 @@ function autoAccent(seed: string): Accent {
   return autoAccents[Math.abs(h) % autoAccents.length];
 }
 
-export function StatCard({ title, value, icon, description, trend, accent, sparkline, className }: StatCardProps) {
+export function StatCard({ title, value, icon, description, trend, accent, sparkline, index = 0, className }: StatCardProps) {
   const a = accentMap[accent ?? autoAccent(title)];
   const sparkData = sparkline?.map((v, i) => ({ i, v })) ?? null;
+  const delay = `${Math.min(index, 8) * 80}ms`;
 
   return (
-    <Card className={cn(
-      'glass-premium hover-lift animate-fade-in min-w-0 relative group',
-      a.glow,
-      className,
-    )}>
+    <Card
+      className={cn(
+        'glass-premium hover-lift animate-fade-in min-w-0 relative group',
+        a.glow,
+        className,
+      )}
+      style={{ animationDelay: delay }}
+    >
       <CardContent className="p-4 md:p-5 relative">
         <div className="flex items-start justify-between gap-3 min-w-0">
           <div className="space-y-1.5 min-w-0 flex-1">
             <p className="text-xs md:text-sm font-medium text-muted-foreground/90 uppercase tracking-wide truncate">{title}</p>
-            <p
-              className="text-lg md:text-xl xl:text-2xl font-bold tabular-nums leading-tight truncate animate-count-up"
+            <AnimatedNumber
+              value={value}
+              className="block text-lg md:text-xl xl:text-2xl font-bold tabular-nums leading-tight truncate"
               title={String(value)}
-            >
-              {value}
-            </p>
+            />
+
             {(description || trend) && (
               <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 pt-0.5">
                 {trend && (

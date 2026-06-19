@@ -5,6 +5,7 @@ import { BarChart3, TrendingUp, Users, PawPrint, Calendar, DollarSign, Download,
 import { PageHeader } from '@/components/ui/page-header';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { StatCard } from '@/components/ui/stat-card';
+import { GlassTooltipContent } from '@/components/ui/glass-tooltip';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -467,36 +468,44 @@ export default function Reports() {
       {/* Stats Cards */}
       <div className="grid gap-3 md:gap-4 grid-cols-2 md:grid-cols-3 lg:grid-cols-5 mb-6">
         <StatCard
+          index={0}
           title="Выручка"
           value={formatCurrency(stats.revenue)}
           icon={<DollarSign className="h-5 w-5" />}
           accent="emerald"
+          sparkline={revenueData.slice(-14).map((d: any) => d.revenue)}
         />
         <StatCard
+          index={1}
           title="Приёмы"
           value={stats.appointments}
           icon={<Calendar className="h-5 w-5" />}
           accent="cyan"
+          sparkline={revenueData.slice(-14).map((d: any) => d.appointments)}
         />
         <StatCard
+          index={2}
           title="Новые клиенты"
           value={stats.newClients}
           icon={<Users className="h-5 w-5" />}
           accent="purple"
         />
         <StatCard
+          index={3}
           title="Новые питомцы"
           value={stats.newPets}
           icon={<PawPrint className="h-5 w-5" />}
           accent="amber"
         />
         <StatCard
+          index={4}
           title="Средний чек"
           value={formatCurrency(stats.avgCheck)}
           icon={<TrendingUp className="h-5 w-5" />}
           accent="rose"
         />
       </div>
+
 
       {/* Stat for non-visit revenue */}
       {stats.otherRevenue > 0 && (
@@ -536,13 +545,11 @@ export default function Reports() {
                   allowDecimals={false}
                 />
                 <Tooltip
-                  contentStyle={{
-                    backgroundColor: 'hsl(var(--card))',
-                    border: '1px solid hsl(var(--border))',
-                    borderRadius: '8px',
-                  }}
-                  formatter={(value: number, name: string) =>
-                    name === 'Выручка' ? [formatCurrency(value), name] : [value, name]
+                  cursor={{ fill: 'hsl(var(--primary) / 0.06)' }}
+                  content={
+                    <GlassTooltipContent
+                      valueFormatter={(v, name) => (name === 'Выручка' ? formatCurrency(v) : String(v))}
+                    />
                   }
                 />
                 <Legend />
@@ -599,11 +606,8 @@ export default function Reports() {
                   allowDecimals={false}
                 />
                 <Tooltip
-                  contentStyle={{
-                    backgroundColor: 'hsl(var(--card))',
-                    border: '1px solid hsl(var(--border))',
-                    borderRadius: '8px',
-                  }}
+                  cursor={{ fill: 'hsl(var(--primary) / 0.06)' }}
+                  content={<GlassTooltipContent />}
                 />
                 <Legend />
                 <Bar
@@ -651,11 +655,8 @@ export default function Reports() {
                   width={100}
                 />
                 <Tooltip
-                  contentStyle={{
-                    backgroundColor: 'hsl(var(--card))',
-                    border: '1px solid hsl(var(--border))',
-                    borderRadius: '8px',
-                  }}
+                  cursor={{ fill: 'hsl(var(--primary) / 0.06)' }}
+                  content={<GlassTooltipContent />}
                 />
                 <Bar dataKey="value" fill="hsl(var(--primary))" radius={[0, 4, 4, 0]} />
               </BarChart>
@@ -690,11 +691,7 @@ export default function Reports() {
                 </Pie>
                 <Legend />
                 <Tooltip
-                  contentStyle={{
-                    backgroundColor: 'hsl(var(--card))',
-                    border: '1px solid hsl(var(--border))',
-                    borderRadius: '8px',
-                  }}
+                  content={<GlassTooltipContent />}
                 />
               </PieChart>
             </ResponsiveContainer>
@@ -722,8 +719,8 @@ export default function Reports() {
                   <XAxis type="number" stroke="hsl(var(--muted-foreground))" fontSize={12} tickFormatter={(v) => formatCurrency(v)} />
                   <YAxis type="category" dataKey="name" stroke="hsl(var(--muted-foreground))" fontSize={12} width={140} />
                   <Tooltip
-                    contentStyle={{ backgroundColor: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: '8px' }}
-                    formatter={(v: number) => [formatCurrency(v), 'Выручка']}
+                    cursor={{ fill: 'hsl(var(--primary) / 0.06)' }}
+                    content={<GlassTooltipContent valueFormatter={(v) => formatCurrency(v)} />}
                   />
                   <Bar dataKey="total" fill="hsl(var(--primary))" radius={[0, 4, 4, 0]} />
                 </BarChart>
@@ -815,8 +812,8 @@ export default function Reports() {
                   <XAxis type="number" stroke="hsl(var(--muted-foreground))" fontSize={12} allowDecimals={false} />
                   <YAxis type="category" dataKey="name" stroke="hsl(var(--muted-foreground))" fontSize={12} width={160} />
                   <Tooltip
-                    contentStyle={{ backgroundColor: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: '8px' }}
-                    formatter={(v: number) => [v, 'Случаев']}
+                    cursor={{ fill: 'hsl(var(--secondary) / 0.08)' }}
+                    content={<GlassTooltipContent />}
                   />
                   <Bar dataKey="count" fill="hsl(var(--secondary))" radius={[0, 4, 4, 0]} />
                 </BarChart>

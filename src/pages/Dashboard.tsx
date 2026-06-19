@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Users, PawPrint, Calendar, DollarSign, Plus, TrendingUp, Clock, FileText, Receipt, Trophy, Bell, Stethoscope } from 'lucide-react';
 import { PageHeader } from '@/components/ui/page-header';
 import { StatCard } from '@/components/ui/stat-card';
+import { GlassTooltipContent } from '@/components/ui/glass-tooltip';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -230,6 +231,7 @@ export default function Dashboard() {
       {/* Stats */}
       <div className="grid min-w-0 grid-cols-2 gap-3 md:gap-4 lg:grid-cols-4">
         <StatCard
+          index={0}
           title="Клиенты"
           value={stats.totalClients}
           icon={<Users className="h-5 w-5" />}
@@ -237,6 +239,7 @@ export default function Dashboard() {
           accent="cyan"
         />
         <StatCard
+          index={1}
           title="Питомцы"
           value={stats.totalPets}
           icon={<PawPrint className="h-5 w-5" />}
@@ -244,6 +247,7 @@ export default function Dashboard() {
           accent="purple"
         />
         <StatCard
+          index={2}
           title="Приёмы сегодня"
           value={stats.todayAppointments}
           icon={<Calendar className="h-5 w-5" />}
@@ -252,6 +256,7 @@ export default function Dashboard() {
           sparkline={appointmentsData.slice(-14).map(d => d.appointments)}
         />
         <StatCard
+          index={3}
           title="Выручка за месяц"
           value={formatCurrency(stats.monthlyRevenue)}
           icon={<DollarSign className="h-5 w-5" />}
@@ -260,6 +265,7 @@ export default function Dashboard() {
           sparkline={revenueData.slice(-14).map(d => d.revenue)}
         />
       </div>
+
 
       {/* Upcoming Notifications */}
       {upcomingNotifs.length > 0 && (
@@ -320,10 +326,10 @@ export default function Dashboard() {
                 <XAxis dataKey="date" stroke="hsl(var(--muted-foreground))" tick={{ fontSize: 11 }} />
                 <YAxis stroke="hsl(var(--muted-foreground))" />
                 <Tooltip
-                  contentStyle={{ backgroundColor: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: '8px' }}
-                  formatter={(value: number) => [formatCurrency(value), 'Выручка']}
+                  cursor={{ stroke: 'hsl(var(--primary))', strokeOpacity: 0.2 }}
+                  content={<GlassTooltipContent valueFormatter={(v) => formatCurrency(v)} />}
                 />
-                <Area type="monotone" dataKey="revenue" stroke="hsl(var(--primary))" fillOpacity={1} fill="url(#colorRevenue)" />
+                <Area type="monotone" dataKey="revenue" name="Выручка" stroke="hsl(var(--primary))" fillOpacity={1} fill="url(#colorRevenue)" activeDot={{ r: 5, strokeWidth: 0, fill: 'hsl(var(--primary))', style: { filter: 'drop-shadow(0 0 6px hsl(var(--primary)))' } }} />
               </AreaChart>
             </ResponsiveContainer>
           </CardContent>
@@ -385,8 +391,8 @@ export default function Dashboard() {
               <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
               <XAxis dataKey="date" stroke="hsl(var(--muted-foreground))" tick={{ fontSize: 11 }} />
               <YAxis stroke="hsl(var(--muted-foreground))" />
-              <Tooltip contentStyle={{ backgroundColor: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: '8px' }} formatter={(value: number) => [value, 'Приёмы']} />
-              <Bar dataKey="appointments" fill="hsl(var(--secondary))" radius={[4, 4, 0, 0]} />
+              <Tooltip cursor={{ fill: 'hsl(var(--primary) / 0.08)' }} content={<GlassTooltipContent />} />
+              <Bar dataKey="appointments" name="Приёмы" fill="hsl(var(--secondary))" radius={[4, 4, 0, 0]} />
             </BarChart>
           </ResponsiveContainer>
         </CardContent>

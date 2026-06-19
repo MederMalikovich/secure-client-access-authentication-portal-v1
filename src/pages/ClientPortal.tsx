@@ -908,14 +908,34 @@ export default function ClientPortal() {
                   <span>Итого</span>
                   <span>{formatCurrency(selectedInvoice.total)}</span>
                 </div>
-                <div className="pt-2">
+                <div className="pt-2 flex items-center justify-between gap-2">
                   {getPaymentBadge(selectedInvoice.status)}
+                  {(selectedInvoice.status === 'pending' || selectedInvoice.status === 'partial') && (
+                    <Button
+                      size="sm"
+                      onClick={() => {
+                        const inv = selectedInvoice;
+                        setSelectedInvoice(null);
+                        setPayInvoice(inv);
+                      }}
+                    >
+                      <CreditCard className="h-4 w-4 mr-1.5" />
+                      Оплатить онлайн
+                    </Button>
+                  )}
                 </div>
               </div>
             )}
           </div>
         </DialogContent>
       </Dialog>
+
+      <OnlinePaymentDialog
+        open={!!payInvoice}
+        onOpenChange={(o) => { if (!o) setPayInvoice(null); }}
+        invoice={payInvoice ? { id: payInvoice.id, invoice_number: payInvoice.invoice_number, total: payInvoice.total } : null}
+        onPaid={() => { setPayInvoice(null); fetchData(); }}
+      />
     </div>
   );
 }

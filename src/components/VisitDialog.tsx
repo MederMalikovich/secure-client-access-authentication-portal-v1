@@ -235,6 +235,13 @@ export function VisitDialog({ open, onClose, visitId, initialPetId, initialAppoi
     setActiveTab('soap');
   };
 
+  // Auto-resolve client_id when pet is preselected (e.g. opened with initialPetId or from appointment)
+  useEffect(() => {
+    if (!form.pet_id || form.client_id) return;
+    const pet = pets.find(p => p.id === form.pet_id);
+    if (pet?.client_id) setForm(f => ({ ...f, client_id: pet.client_id }));
+  }, [form.pet_id, form.client_id, pets]);
+
   const loadVisit = async (id: string) => {
     setLoading(true);
     try {
@@ -344,6 +351,18 @@ export function VisitDialog({ open, onClose, visitId, initialPetId, initialAppoi
 
   const save = async (markCompleted = false, goToPayment = false) => {
     if (!form.pet_id) { toast({ title: 'Выберите питомца', variant: 'destructive' }); return; }
+    // Fallback: resolve client_id from pet if still empty (pets list may not have been loaded yet)
+    let clientId = form.client_id;
+    if (!clientId) {
+      const pet = pets.find(p => p.id === form.pet_id);
+      clientId = pet?.client_id || '';
+      if (!clientId) {
+        const { data: petRow } = await supabase.from('pets').select('client_id').eq('id', form.pet_id).maybeSingle();
+        clientId = petRow?.client_id || '';
+      }
+      if (!clientId) { toast({ title: 'Не удалось определить клиента питомца', variant: 'destructive' }); return; }
+      setForm(f => ({ ...f, client_id: clientId }));
+    }
     if (form.veterinarian_id && busyVetIds.has(form.veterinarian_id)) {
       toast({ title: 'Врач занят', description: 'В выбранное время этот врач уже занят. Измените время или врача.', variant: 'destructive' });
       return;
@@ -378,7 +397,7 @@ export function VisitDialog({ open, onClose, visitId, initialPetId, initialAppoi
 
       const payload: any = {
         pet_id: form.pet_id,
-        client_id: form.client_id,
+        client_id: clientId,
         veterinarian_id: form.veterinarian_id || null,
         visit_date: new Date(form.visit_date).toISOString(),
         status: baseStatus,
@@ -408,7 +427,7 @@ export function VisitDialog({ open, onClose, visitId, initialPetId, initialAppoi
             : baseStatus === 'in_consultation' || baseStatus === 'procedures' || baseStatus === 'hospital' ? 'in_progress'
             : 'scheduled';
           const { data: apt, error: aptErr } = await supabase.from('appointments').insert({
-            client_id: form.client_id,
+            client_id: clientId,
             pet_id: form.pet_id,
             veterinarian_id: form.veterinarian_id || null,
             scheduled_at: payload.visit_date,

@@ -397,7 +397,7 @@ export function VisitDialog({ open, onClose, visitId, initialPetId, initialAppoi
 
       const payload: any = {
         pet_id: form.pet_id,
-        client_id: form.client_id,
+        client_id: clientId,
         veterinarian_id: form.veterinarian_id || null,
         visit_date: new Date(form.visit_date).toISOString(),
         status: baseStatus,
@@ -427,7 +427,7 @@ export function VisitDialog({ open, onClose, visitId, initialPetId, initialAppoi
             : baseStatus === 'in_consultation' || baseStatus === 'procedures' || baseStatus === 'hospital' ? 'in_progress'
             : 'scheduled';
           const { data: apt, error: aptErr } = await supabase.from('appointments').insert({
-            client_id: form.client_id,
+            client_id: clientId,
             pet_id: form.pet_id,
             veterinarian_id: form.veterinarian_id || null,
             scheduled_at: payload.visit_date,

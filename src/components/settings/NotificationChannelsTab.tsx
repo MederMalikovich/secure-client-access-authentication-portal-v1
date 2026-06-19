@@ -32,9 +32,9 @@ const channelMeta: Record<string, { icon: any; label: string; color: string; des
   },
   whatsapp: {
     icon: MessageCircle,
-    label: 'WhatsApp',
+    label: 'WhatsApp Business',
     color: 'text-green-500',
-    description: 'Уведомления через WhatsApp Business API (Twilio)',
+    description: 'Уведомления через WhatsApp Business — Meta Cloud API или Twilio',
   },
   instagram: {
     icon: Instagram,
@@ -165,16 +165,59 @@ export function NotificationChannelsTab() {
         return (
           <div className="space-y-3">
             <div className="grid gap-2">
-              <Label className="text-xs">Номер Twilio (From)</Label>
-              <Input
-                placeholder="+14155238886"
-                value={config.twilio_from || ''}
-                onChange={e => updateConfigField('whatsapp', 'twilio_from', e.target.value)}
-              />
-              <p className="text-xs text-muted-foreground">
-                Номер WhatsApp из аккаунта Twilio
-              </p>
+              <Label className="text-xs">Провайдер</Label>
+              <select
+                className="h-9 rounded-md border border-input bg-background px-2 text-sm"
+                value={config.provider || 'meta'}
+                onChange={(e) => updateConfigField('whatsapp', 'provider', e.target.value)}
+              >
+                <option value="meta">Meta Cloud API (рекомендуется)</option>
+                <option value="twilio">Twilio</option>
+              </select>
             </div>
+
+            {(config.provider || 'meta') === 'meta' ? (
+              <>
+                <div className="grid gap-2">
+                  <Label className="text-xs">Phone Number ID</Label>
+                  <Input
+                    placeholder="1234567890"
+                    value={config.meta_phone_number_id || ''}
+                    onChange={(e) => updateConfigField('whatsapp', 'meta_phone_number_id', e.target.value)}
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Meta Business Suite → WhatsApp → API Setup → Phone number ID
+                  </p>
+                </div>
+                <div className="grid gap-2">
+                  <Label className="text-xs">Имя шаблона (опционально)</Label>
+                  <Input
+                    placeholder="appointment_reminder"
+                    value={config.meta_template_name || ''}
+                    onChange={(e) => updateConfigField('whatsapp', 'meta_template_name', e.target.value)}
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Если задано — используется утверждённый шаблон. Иначе отправляется обычное текстовое сообщение (только в течение 24ч сессии).
+                  </p>
+                </div>
+                <div className="p-3 rounded-lg bg-muted/50 border border-border text-xs text-muted-foreground space-y-1">
+                  <p>🔐 <strong>Permanent Access Token</strong> хранится отдельно как секрет <code className="font-mono">WHATSAPP_META_TOKEN</code>.</p>
+                  <p>Получить токен: Meta Business Suite → System Users → Generate Token (с правами <code>whatsapp_business_messaging</code>, <code>whatsapp_business_management</code>).</p>
+                </div>
+              </>
+            ) : (
+              <div className="grid gap-2">
+                <Label className="text-xs">Номер Twilio (From)</Label>
+                <Input
+                  placeholder="+14155238886"
+                  value={config.twilio_from || ''}
+                  onChange={(e) => updateConfigField('whatsapp', 'twilio_from', e.target.value)}
+                />
+                <p className="text-xs text-muted-foreground">
+                  Номер WhatsApp из аккаунта Twilio. Токен — секрет <code className="font-mono">TWILIO_API_KEY</code>.
+                </p>
+              </div>
+            )}
           </div>
         );
 

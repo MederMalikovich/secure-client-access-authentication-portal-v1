@@ -135,22 +135,73 @@ Deno.serve(async (req) => {
 
           case 'whatsapp': {
             const config = enabledChannels.get('whatsapp') as any
-            const twilioFrom = config?.twilio_from
+            const provider = config?.provider || 'meta'
             const whatsappNumber = prefs?.whatsapp_number
 
-            if (!twilioFrom || !whatsappNumber) {
-              results.whatsapp = { sent: false, error: 'Missing twilio_from or whatsapp_number' }
+            if (!whatsappNumber) {
+              results.whatsapp = { sent: false, error: 'Missing whatsapp_number in client preferences' }
               break
             }
 
+            if (provider === 'meta') {
+              const phoneId = config?.meta_phone_number_id
+              const token = Deno.env.get('WHATSAPP_META_TOKEN')
+              if (!phoneId || !token) {
+                results.whatsapp = { sent: false, error: 'Missing meta_phone_number_id or WHATSAPP_META_TOKEN secret' }
+                break
+              }
+              const to = whatsappNumber.replace(/[^0-9]/g, '')
+              const templateName = config?.meta_template_name
+              const body = templateName
+                ? {
+                    messaging_product: 'whatsapp',
+                    to,
+                    type: 'template',
+                    template: {
+                      name: templateName,
+                      language: { code: 'ru' },
+                      components: [
+                        { type: 'body', parameters: [
+                          { type: 'text', text: title },
+                          { type: 'text', text: message || '' },
+                        ] },
+                      ],
+                    },
+                  }
+                : {
+                    messaging_product: 'whatsapp',
+                    to,
+                    type: 'text',
+                    text: { body: `🏥 *${title}*\n\n${message || ''}` },
+                  }
+
+              const waResponse = await fetch(`https://graph.facebook.com/v20.0/${phoneId}/messages`, {
+                method: 'POST',
+                headers: {
+                  'Authorization': `Bearer ${token}`,
+                  'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(body),
+              })
+              const waResult = await waResponse.json()
+              results.whatsapp = waResponse.ok
+                ? { sent: true }
+                : { sent: false, error: JSON.stringify(waResult) }
+              break
+            }
+
+            // Twilio fallback
+            const twilioFrom = config?.twilio_from
+            if (!twilioFrom) {
+              results.whatsapp = { sent: false, error: 'Missing twilio_from' }
+              break
+            }
             const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY')
             const TWILIO_API_KEY = Deno.env.get('TWILIO_API_KEY')
-
             if (!LOVABLE_API_KEY || !TWILIO_API_KEY) {
               results.whatsapp = { sent: false, error: 'Twilio connector not configured' }
               break
             }
-
             const waResponse = await fetch('https://connector-gateway.lovable.dev/twilio/Messages.json', {
               method: 'POST',
               headers: {
@@ -164,7 +215,6 @@ Deno.serve(async (req) => {
                 Body: `🏥 ${title}\n\n${message || ''}`,
               }),
             })
-
             const waResult = await waResponse.json()
             results.whatsapp = waResponse.ok
               ? { sent: true }

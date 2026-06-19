@@ -24,6 +24,7 @@ import { TimePicker } from '@/components/ui/time-picker';
 import { useWorkingHours, generateDaySlots, isDayWorking } from '@/hooks/useWorkingHours';
 import { getUserFriendlyError } from '@/lib/errorHandler';
 import { LoyaltyTierCard } from '@/components/LoyaltyTierCard';
+import { OnlinePaymentDialog } from '@/components/OnlinePaymentDialog';
 
 type AppointmentRow = Database['public']['Tables']['appointments']['Row'];
 type InvoiceRow = Database['public']['Tables']['invoices']['Row'];
@@ -85,6 +86,7 @@ export default function ClientPortal() {
   // Invoice detail state
   const [selectedInvoice, setSelectedInvoice] = useState<ClientPortalInvoice | null>(null);
   const [invoiceItems, setInvoiceItems] = useState<ClientPortalInvoiceItem[]>([]);
+  const [payInvoice, setPayInvoice] = useState<ClientPortalInvoice | null>(null);
 
   const clientId = profile?.client_id;
 
@@ -728,11 +730,11 @@ export default function ClientPortal() {
                 К оплате
               </h3>
               {unpaidInvoices.map(inv => (
-                <Card key={inv.id} className="border-l-4 border-l-amber-500 cursor-pointer hover:shadow-md transition-shadow" onClick={() => fetchInvoiceDetails(inv)}>
+                <Card key={inv.id} className="border-l-4 border-l-amber-500 hover:shadow-md transition-shadow">
                   <CardContent className="p-4">
-                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                      <div className="space-y-1">
-                        <div className="flex items-center gap-2">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                      <div className="space-y-1 cursor-pointer flex-1" onClick={() => fetchInvoiceDetails(inv)}>
+                        <div className="flex items-center gap-2 flex-wrap">
                           <span className="font-semibold">Счёт #{inv.invoice_number}</span>
                           {getPaymentBadge(inv.status)}
                         </div>
@@ -741,7 +743,13 @@ export default function ClientPortal() {
                           {inv.pets?.name && ` • ${inv.pets.name}`}
                         </p>
                       </div>
-                      <span className="text-lg font-bold">{formatCurrency(inv.total)}</span>
+                      <div className="flex items-center gap-3">
+                        <span className="text-lg font-bold whitespace-nowrap">{formatCurrency(inv.total)}</span>
+                        <Button size="sm" onClick={(e) => { e.stopPropagation(); setPayInvoice(inv); }}>
+                          <CreditCard className="h-4 w-4 mr-1.5" />
+                          Оплатить
+                        </Button>
+                      </div>
                     </div>
                   </CardContent>
                 </Card>
@@ -900,14 +908,34 @@ export default function ClientPortal() {
                   <span>Итого</span>
                   <span>{formatCurrency(selectedInvoice.total)}</span>
                 </div>
-                <div className="pt-2">
+                <div className="pt-2 flex items-center justify-between gap-2">
                   {getPaymentBadge(selectedInvoice.status)}
+                  {(selectedInvoice.status === 'pending' || selectedInvoice.status === 'partial') && (
+                    <Button
+                      size="sm"
+                      onClick={() => {
+                        const inv = selectedInvoice;
+                        setSelectedInvoice(null);
+                        setPayInvoice(inv);
+                      }}
+                    >
+                      <CreditCard className="h-4 w-4 mr-1.5" />
+                      Оплатить онлайн
+                    </Button>
+                  )}
                 </div>
               </div>
             )}
           </div>
         </DialogContent>
       </Dialog>
+
+      <OnlinePaymentDialog
+        open={!!payInvoice}
+        onOpenChange={(o) => { if (!o) setPayInvoice(null); }}
+        invoice={payInvoice ? { id: payInvoice.id, invoice_number: payInvoice.invoice_number, total: payInvoice.total } : null}
+        onPaid={() => { setPayInvoice(null); fetchData(); }}
+      />
     </div>
   );
 }

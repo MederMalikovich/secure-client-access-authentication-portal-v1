@@ -281,7 +281,9 @@ export default function Flowboard() {
       <VisitDialog
         open={dialogOpen}
         visitId={editingId}
-        onClose={() => setDialogOpen(false)}
+        initialAppointmentId={initialAppointmentId || undefined}
+        initialPetId={initialPetId || undefined}
+        onClose={() => { setDialogOpen(false); setInitialAppointmentId(null); setInitialPetId(null); }}
         onSaved={load}
       />
     </div>

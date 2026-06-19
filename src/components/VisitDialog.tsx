@@ -149,10 +149,49 @@ export function VisitDialog({ open, onClose, visitId, initialPetId, initialAppoi
 
   useEffect(() => {
     if (!open) return;
-    void loadRefs();
-    if (visitId) void loadVisit(visitId);
-    else resetForm();
-  }, [open, visitId]);
+    void (async () => {
+      await loadRefs();
+      if (visitId) {
+        await loadVisit(visitId);
+      } else {
+        resetForm();
+        if (initialAppointmentId) await loadFromAppointment(initialAppointmentId);
+      }
+    })();
+  }, [open, visitId, initialAppointmentId]);
+
+  const loadFromAppointment = async (appointmentId: string) => {
+    try {
+      const { data: apt, error } = await supabase
+        .from('appointments')
+        .select('id, pet_id, client_id, veterinarian_id, scheduled_at, duration_minutes, notes, service_id, service:services(id, name, price)')
+        .eq('id', appointmentId)
+        .maybeSingle();
+      if (error) throw error;
+      if (!apt) return;
+      setForm(f => ({
+        ...f,
+        pet_id: apt.pet_id || f.pet_id,
+        client_id: apt.client_id || f.client_id,
+        veterinarian_id: apt.veterinarian_id || f.veterinarian_id,
+        visit_date: apt.scheduled_at ? format(new Date(apt.scheduled_at), "yyyy-MM-dd'T'HH:mm") : f.visit_date,
+        chief_complaint: apt.notes || f.chief_complaint,
+      }));
+      if (apt.duration_minutes) setDuration(apt.duration_minutes);
+      if (apt.service_id && apt.service) {
+        const s: any = apt.service;
+        setVisitServices(prev => prev.length ? prev : [{
+          service_id: s.id,
+          description: s.name,
+          quantity: 1,
+          unit_price: Number(s.price) || 0,
+        }]);
+      }
+    } catch (e) {
+      // silent — visit can still be filled manually
+      console.warn('Cannot prefill visit from appointment', e);
+    }
+  };
 
   const loadRefs = async () => {
     const [petsRes, vetsRes, servicesRes, invRes, tplRes, disRes] = await Promise.all([

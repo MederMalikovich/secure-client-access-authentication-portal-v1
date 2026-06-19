@@ -229,10 +229,36 @@ export default function Dashboard() {
 
       {/* Stats */}
       <div className="grid min-w-0 grid-cols-2 gap-3 md:gap-4 lg:grid-cols-4">
-        <StatCard title="Клиенты" value={stats.totalClients} icon={<Users className="h-4 w-4 md:h-5 md:w-5" />} description="Всего в базе" />
-        <StatCard title="Питомцы" value={stats.totalPets} icon={<PawPrint className="h-4 w-4 md:h-5 md:w-5" />} description="Всего в базе" />
-        <StatCard title="Приёмы сегодня" value={stats.todayAppointments} icon={<Calendar className="h-4 w-4 md:h-5 md:w-5" />} description={format(new Date(), 'd MMMM', { locale: ru })} />
-        <StatCard title="Выручка за месяц" value={formatCurrency(stats.monthlyRevenue)} icon={<DollarSign className="h-4 w-4 md:h-5 md:w-5" />} description={format(new Date(), 'LLLL yyyy', { locale: ru })} />
+        <StatCard
+          title="Клиенты"
+          value={stats.totalClients}
+          icon={<Users className="h-5 w-5" />}
+          description="Всего в базе"
+          accent="cyan"
+        />
+        <StatCard
+          title="Питомцы"
+          value={stats.totalPets}
+          icon={<PawPrint className="h-5 w-5" />}
+          description="Всего в базе"
+          accent="purple"
+        />
+        <StatCard
+          title="Приёмы сегодня"
+          value={stats.todayAppointments}
+          icon={<Calendar className="h-5 w-5" />}
+          description={format(new Date(), 'd MMMM', { locale: ru })}
+          accent="amber"
+          sparkline={appointmentsData.slice(-14).map(d => d.appointments)}
+        />
+        <StatCard
+          title="Выручка за месяц"
+          value={formatCurrency(stats.monthlyRevenue)}
+          icon={<DollarSign className="h-5 w-5" />}
+          description={format(new Date(), 'LLLL yyyy', { locale: ru })}
+          accent="emerald"
+          sparkline={revenueData.slice(-14).map(d => d.revenue)}
+        />
       </div>
 
       {/* Upcoming Notifications */}

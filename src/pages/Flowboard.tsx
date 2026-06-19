@@ -51,13 +51,25 @@ export default function Flowboard() {
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const { data, error } = await supabase
-        .from('visits')
-        .select('*, pet:pets(name, species), client:clients(full_name), veterinarian:profiles(full_name)')
-        .order('visit_date', { ascending: false })
-        .limit(500);
-      if (error) throw error;
-      setVisits(data || []);
+      const [visitsRes, aptRes] = await Promise.all([
+        supabase
+          .from('visits')
+          .select('*, pet:pets(name, species), client:clients(full_name), veterinarian:profiles(full_name), appointment_id')
+          .order('visit_date', { ascending: false })
+          .limit(500),
+        supabase
+          .from('appointments')
+          .select('id, pet_id, client_id, veterinarian_id, scheduled_at, status, notes, service_id, pet:pets(name, species), client:clients(full_name), veterinarian:profiles(full_name), service:services(name)')
+          .in('status', ['scheduled', 'confirmed'])
+          .order('scheduled_at', { ascending: false })
+          .limit(500),
+      ]);
+      if (visitsRes.error) throw visitsRes.error;
+      const vs = visitsRes.data || [];
+      setVisits(vs);
+      const linkedApt = new Set(vs.map((v: any) => v.appointment_id).filter(Boolean));
+      const pending = (aptRes.data || []).filter((a: any) => !linkedApt.has(a.id));
+      setPendingAppointments(pending);
     } catch (e) {
       toast({ title: 'Ошибка', description: getUserFriendlyError(e), variant: 'destructive' });
     } finally { setLoading(false); }
@@ -67,6 +79,7 @@ export default function Flowboard() {
     void load();
     const ch = supabase.channel('flowboard-visits')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'visits' }, () => void load())
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'appointments' }, () => void load())
       .subscribe();
     return () => { supabase.removeChannel(ch); };
   }, [load]);

@@ -187,20 +187,29 @@ export default function Reports() {
         });
       setPetGrowthData(petChartData);
 
-      // === Популярные услуги (visit_services по visit_date) ===
+      // === Популярные услуги + структура по категориям (visit_services по visit_date) ===
       const { data: visitServices } = await supabase
         .from('visit_services')
-        .select('service_id, quantity, service:services(name), visit:visits!inner(visit_date)')
+        .select('service_id, quantity, total, service:services(name, category_id, category:service_categories(id, name)), visit:visits!inner(visit_date)')
         .not('service_id', 'is', null)
         .gte('visit.visit_date', fromIso)
         .lte('visit.visit_date', toIso);
 
       const serviceCounts: Record<string, { name: string; count: number }> = {};
+      const categoryTotals: Record<string, { name: string; revenue: number; count: number }> = {};
       (visitServices || []).forEach((item: any) => {
         const id = item.service_id;
         const name = item.service?.name || 'Неизвестно';
+        const qty = Number(item.quantity) || 1;
+        const total = Number(item.total) || 0;
         if (!serviceCounts[id]) serviceCounts[id] = { name, count: 0 };
-        serviceCounts[id].count += Number(item.quantity) || 1;
+        serviceCounts[id].count += qty;
+
+        const catId = item.service?.category?.id || item.service?.category_id || 'uncat';
+        const catName = item.service?.category?.name || 'Без категории';
+        if (!categoryTotals[catId]) categoryTotals[catId] = { name: catName, revenue: 0, count: 0 };
+        categoryTotals[catId].revenue += total;
+        categoryTotals[catId].count += qty;
       });
 
       const sortedServices = Object.values(serviceCounts)
@@ -211,6 +220,12 @@ export default function Reports() {
           value: s.count,
         }));
       setServicesData(sortedServices);
+
+      setCategoryBreakdown(
+        Object.values(categoryTotals)
+          .sort((a, b) => b.revenue - a.revenue)
+          .map(c => ({ name: c.name, revenue: Math.round(c.revenue), count: c.count }))
+      );
 
       // === Статусы визитов (из тех же visits) ===
       const statusCounts: Record<string, number> = {};

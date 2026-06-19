@@ -326,10 +326,10 @@ export default function Dashboard() {
                 <XAxis dataKey="date" stroke="hsl(var(--muted-foreground))" tick={{ fontSize: 11 }} />
                 <YAxis stroke="hsl(var(--muted-foreground))" />
                 <Tooltip
-                  contentStyle={{ backgroundColor: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: '8px' }}
-                  formatter={(value: number) => [formatCurrency(value), 'Выручка']}
+                  cursor={{ stroke: 'hsl(var(--primary))', strokeOpacity: 0.2 }}
+                  content={<GlassTooltipContent valueFormatter={(v) => formatCurrency(v)} />}
                 />
-                <Area type="monotone" dataKey="revenue" stroke="hsl(var(--primary))" fillOpacity={1} fill="url(#colorRevenue)" />
+                <Area type="monotone" dataKey="revenue" name="Выручка" stroke="hsl(var(--primary))" fillOpacity={1} fill="url(#colorRevenue)" activeDot={{ r: 5, strokeWidth: 0, fill: 'hsl(var(--primary))', style: { filter: 'drop-shadow(0 0 6px hsl(var(--primary)))' } }} />
               </AreaChart>
             </ResponsiveContainer>
           </CardContent>

@@ -83,7 +83,7 @@ export default function MedicalRecords() {
   const [petSearch, setPetSearch] = useState('');
   const [uploadingFile, setUploadingFile] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const [viewMode, setViewMode] = useState<'classic' | 'timeline'>('timeline');
+  const [viewMode, setViewMode] = useState<'classic' | 'timeline' | 'summary'>('summary');
   const [timelinePetId, setTimelinePetId] = useState<string>('');
   const [visitDialogOpen, setVisitDialogOpen] = useState(false);
   const [visitDialogId, setVisitDialogId] = useState<string | null>(null);

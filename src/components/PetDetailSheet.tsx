@@ -43,8 +43,10 @@ export function PetDetailSheet({ pet, open, onClose, onEdit, onAddAppointment, i
   const [loading, setLoading] = useState(false);
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
   const [photoUrl, setPhotoUrl] = useState<string | null>(null);
+  const [visitsCount, setVisitsCount] = useState(0);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [quickVisitId, setQuickVisitId] = useState<string | null>(null);
+
 
   useEffect(() => {
     if (open && pet?.id) {

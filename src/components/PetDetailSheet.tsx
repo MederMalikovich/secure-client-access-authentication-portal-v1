@@ -62,7 +62,7 @@ export function PetDetailSheet({ pet, open, onClose, onEdit, onAddAppointment, i
   const fetchPetData = async (petId: string, clientId: string) => {
     setLoading(true);
     try {
-      const [mrRes, apptRes, invRes, visitsCountRes, mrCountRes, apptCountRes] = await Promise.all([
+      const [mrRes, visitsRes, upcomingApptRes, invRes, visitsCountRes, mrCountRes, apptCountRes] = await Promise.all([
         supabase
           .from('medical_records')
           .select(`*, veterinarian:profiles(full_name), diagnoses:medical_record_diagnoses(*, disease:diseases(name)), services:medical_record_services(*, service:services(name)), files:medical_record_files(*)`)
@@ -82,8 +82,6 @@ export function PetDetailSheet({ pet, open, onClose, onEdit, onAddAppointment, i
           .in('status', ['scheduled', 'confirmed'])
           .order('scheduled_at', { ascending: true })
           .limit(3),
-
-
         supabase
           .from('invoices')
           .select(`*, items:invoice_items(*)`)
@@ -105,11 +103,13 @@ export function PetDetailSheet({ pet, open, onClose, onEdit, onAddAppointment, i
           .in('status', ['completed', 'scheduled', 'confirmed', 'in_progress']),
       ]);
       setMedicalRecords(mrRes.data || []);
-      setVisits(apptRes.data || []);
+      setVisits(visitsRes.data || []);
+      setAppointments(upcomingApptRes.data || []);
       setInvoices(invRes.data || []);
 
       const totals = [visitsCountRes.count || 0, mrCountRes.count || 0, apptCountRes.count || 0];
       setVisitsCount(Math.max(...totals));
+
     } finally {
       setLoading(false);
     }

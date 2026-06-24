@@ -15,7 +15,7 @@ import { Switch } from '@/components/ui/switch';
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { PetSearchSelect } from '@/components/PetSearchSelect';
-import { BedDouble, Plus, Camera, Thermometer, Weight, Smile, Utensils, MessageSquare, FileText, Eye, EyeOff, ImagePlus, LogOut as DischargeIcon } from 'lucide-react';
+import { BedDouble, Plus, Camera, Thermometer, Weight, Smile, Utensils, MessageSquare, FileText, Eye, EyeOff, ImagePlus, LogOut as DischargeIcon, Download } from 'lucide-react';
 import { format, differenceInDays, parseISO } from 'date-fns';
 import { ru } from 'date-fns/locale';
 import { formatCurrency } from '@/lib/currency';
@@ -167,6 +167,23 @@ export default function Hospitalization() {
     }
   };
 
+  const downloadPhoto = async (url: string) => {
+    try {
+      const res = await fetch(url);
+      const blob = await res.blob();
+      const objUrl = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = objUrl;
+      a.download = url.split('/').pop() || `photo-${Date.now()}.jpg`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      setTimeout(() => URL.revokeObjectURL(objUrl), 1000);
+    } catch (e: any) {
+      window.open(url, '_blank');
+    }
+  };
+
   const addLog = async () => {
     if (!logSheetFor) return;
     try {
@@ -297,7 +314,19 @@ export default function Hospitalization() {
                             <p className="text-xs uppercase text-muted-foreground">Последние наблюдения</p>
                             {recent.map(l => (
                               <div key={l.id} className="text-sm bg-muted/20 rounded p-2 flex gap-2">
-                                {l.photo_url && <img src={l.photo_url} alt="" className="w-12 h-12 object-cover rounded" />}
+                                {l.photo_url && (
+                                  <button
+                                    type="button"
+                                    onClick={() => downloadPhoto(l.photo_url)}
+                                    title="Скачать фото"
+                                    className="shrink-0 relative group"
+                                  >
+                                    <img src={l.photo_url} alt="" className="w-12 h-12 object-cover rounded" />
+                                    <span className="absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 group-hover:opacity-100 rounded transition">
+                                      <Download className="h-4 w-4 text-white" />
+                                    </span>
+                                  </button>
+                                )}
                                 <div className="flex-1 min-w-0">
                                   <div className="flex items-center gap-2 text-xs text-muted-foreground">
                                     {format(parseISO(l.created_at), 'd MMM HH:mm', { locale: ru })}
@@ -483,7 +512,16 @@ export default function Hospitalization() {
                   <Card key={l.id}>
                     <CardContent className="py-3">
                       <div className="flex items-start gap-3">
-                        {l.photo_url && <img src={l.photo_url} className="w-20 h-20 object-cover rounded shrink-0" alt="" />}
+                        {l.photo_url && (
+                          <div className="shrink-0 flex flex-col items-center gap-1">
+                            <a href={l.photo_url} target="_blank" rel="noreferrer">
+                              <img src={l.photo_url} className="w-20 h-20 object-cover rounded" alt="" />
+                            </a>
+                            <Button size="sm" variant="outline" className="h-7 px-2 text-xs" onClick={() => downloadPhoto(l.photo_url)}>
+                              <Download className="h-3 w-3 mr-1" /> Скачать
+                            </Button>
+                          </div>
+                        )}
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2 text-xs text-muted-foreground">
                             {format(parseISO(l.created_at), 'd MMM yyyy HH:mm', { locale: ru })}

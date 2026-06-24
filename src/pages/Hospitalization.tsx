@@ -512,7 +512,16 @@ export default function Hospitalization() {
                   <Card key={l.id}>
                     <CardContent className="py-3">
                       <div className="flex items-start gap-3">
-                        {l.photo_url && <img src={l.photo_url} className="w-20 h-20 object-cover rounded shrink-0" alt="" />}
+                        {l.photo_url && (
+                          <div className="shrink-0 flex flex-col items-center gap-1">
+                            <a href={l.photo_url} target="_blank" rel="noreferrer">
+                              <img src={l.photo_url} className="w-20 h-20 object-cover rounded" alt="" />
+                            </a>
+                            <Button size="sm" variant="outline" className="h-7 px-2 text-xs" onClick={() => downloadPhoto(l.photo_url)}>
+                              <Download className="h-3 w-3 mr-1" /> Скачать
+                            </Button>
+                          </div>
+                        )}
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2 text-xs text-muted-foreground">
                             {format(parseISO(l.created_at), 'd MMM yyyy HH:mm', { locale: ru })}

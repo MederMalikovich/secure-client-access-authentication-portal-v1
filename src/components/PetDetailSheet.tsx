@@ -220,8 +220,9 @@ export function PetDetailSheet({ pet, open, onClose, onEdit, onAddAppointment, i
                 <div className="text-xs text-muted-foreground">Вес</div>
               </div>
               <div className="bg-background/60 rounded-xl p-3 text-center">
-                <div className="text-sm font-bold">{medicalRecords.length}</div>
+                <div className="text-sm font-bold">{visitsCount}</div>
                 <div className="text-xs text-muted-foreground">Визитов</div>
+
               </div>
             </div>
           </SheetHeader>

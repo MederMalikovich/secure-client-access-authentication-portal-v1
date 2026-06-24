@@ -74,6 +74,15 @@ export function PetDetailSheet({ pet, open, onClose, onEdit, onAddAppointment, i
           .select(`id, visit_date, status, chief_complaint, veterinarian:profiles(full_name), services:visit_services(description, quantity)`)
           .eq('pet_id', petId)
           .order('visit_date', { ascending: false }),
+        supabase
+          .from('appointments')
+          .select(`*, service:services(name), veterinarian:profiles(full_name)`)
+          .eq('pet_id', petId)
+          .gte('scheduled_at', new Date().toISOString())
+          .in('status', ['scheduled', 'confirmed'])
+          .order('scheduled_at', { ascending: true })
+          .limit(3),
+
 
         supabase
           .from('invoices')

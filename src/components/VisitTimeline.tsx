@@ -18,7 +18,9 @@ import { cn } from '@/lib/utils';
 interface Props {
   petId: string;
   onOpenVisit: (visitId: string | null) => void;
+  hideHeader?: boolean;
 }
+
 
 const speciesLabels: Record<string, string> = {
   dog: 'Собака', cat: 'Кошка', bird: 'Птица', rodent: 'Грызун',
@@ -35,7 +37,7 @@ function getAge(birthDate?: string | null) {
   return `${months} мес.`;
 }
 
-export function VisitTimeline({ petId, onOpenVisit }: Props) {
+export function VisitTimeline({ petId, onOpenVisit, hideHeader }: Props) {
   const [pet, setPet] = useState<any>(null);
   const [visits, setVisits] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
@@ -117,7 +119,8 @@ export function VisitTimeline({ petId, onOpenVisit }: Props) {
   return (
     <div className="space-y-4">
       {/* Pet header card */}
-      {pet && (
+      {!hideHeader && pet && (
+
         <Card className="p-4 bg-gradient-to-br from-primary/5 to-transparent border-primary/20">
           <div className="flex flex-wrap items-start justify-between gap-4">
             <div className="flex items-start gap-3 min-w-0">

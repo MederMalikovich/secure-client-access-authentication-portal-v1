@@ -21,6 +21,8 @@ import { formatCurrency } from '@/lib/currency';
 import { useToast } from '@/hooks/use-toast';
 import { startQuickReceive } from '@/lib/quickReceive';
 import { VisitDialog } from '@/components/VisitDialog';
+import { VisitTimeline } from '@/components/VisitTimeline';
+
 
 interface PetDetailSheetProps {
   pet: any;
@@ -288,116 +290,15 @@ export function PetDetailSheet({ pet, open, onClose, onEdit, onAddAppointment, i
               </TabsTrigger>
             </TabsList>
 
-            {/* Medical records tab */}
+            {/* Medical records tab — full medical timeline */}
             <TabsContent value="history" className="mt-4">
-              {loading ? (
-                <div className="text-center py-8 text-muted-foreground text-sm">Загрузка...</div>
-              ) : medicalRecords.length > 0 ? (
-                <div className="relative space-y-0">
-                  {medicalRecords.map((mr, index) => (
-                    <div key={mr.id} className="relative pb-4 pl-8 last:pb-0">
-                      {index < medicalRecords.length - 1 && (
-                        <div className="absolute left-[11px] top-7 h-[calc(100%-1.75rem)] w-px bg-border" />
-                      )}
-                      <div className="absolute left-0 top-4 flex h-6 w-6 items-center justify-center rounded-full border border-primary/30 bg-background">
-                        <Stethoscope className="h-3.5 w-3.5 text-primary" />
-                      </div>
-                      <Card className="hover:shadow-sm transition-shadow">
-                        <CardContent className="p-4 space-y-3">
-                      {/* Date & vet */}
-                      <div className="flex items-start justify-between gap-2">
-                        <div className="flex items-center gap-2">
-                          <div>
-                            <p className="font-medium text-sm">
-                              {format(new Date(mr.visit_date), 'd MMMM yyyy', { locale: ru })}
-                            </p>
-                            {mr.veterinarian && (
-                              <p className="text-xs text-muted-foreground">{mr.veterinarian.full_name}</p>
-                            )}
-                          </div>
-                        </div>
-                        {/* Vitals */}
-                        {(mr.weight_at_visit || mr.temperature) && (
-                          <div className="flex gap-3 text-xs text-muted-foreground">
-                            {mr.weight_at_visit && (
-                              <div className="flex items-center gap-1">
-                                <Weight className="h-3 w-3" />
-                                {mr.weight_at_visit} кг
-                              </div>
-                            )}
-                            {mr.temperature && (
-                              <div className="flex items-center gap-1">
-                                <Thermometer className="h-3 w-3" />
-                                {mr.temperature}°C
-                              </div>
-                            )}
-                          </div>
-                        )}
-                      </div>
-
-                      {/* Complaint */}
-                      {mr.chief_complaint && (
-                        <div>
-                          <p className="text-xs text-muted-foreground">Жалоба</p>
-                          <p className="text-sm">{mr.chief_complaint}</p>
-                        </div>
-                      )}
-
-                      {/* Diagnoses */}
-                      {mr.diagnoses?.length > 0 && (
-                        <div>
-                          <p className="text-xs text-muted-foreground mb-1">Диагноз</p>
-                          <div className="flex flex-wrap gap-1">
-                            {mr.diagnoses.map((d: any) => (
-                              <Badge key={d.id} variant="secondary" className="text-xs">
-                                {d.disease?.name || d.custom_diagnosis}
-                              </Badge>
-                            ))}
-                          </div>
-                        </div>
-                      )}
-
-                      {mr.diagnosis && !mr.diagnoses?.length && (
-                        <div>
-                          <p className="text-xs text-muted-foreground">Диагноз</p>
-                          <p className="text-sm">{mr.diagnosis}</p>
-                        </div>
-                      )}
-
-                      {/* Treatment */}
-                      {mr.treatment && (
-                        <div>
-                          <p className="text-xs text-muted-foreground">Лечение</p>
-                          <p className="text-sm">{mr.treatment}</p>
-                        </div>
-                      )}
-
-                      {/* Services */}
-                      {mr.services?.length > 0 && (
-                        <div className="pt-1 border-t border-border">
-                          <p className="text-xs text-muted-foreground mb-1">Услуги</p>
-                          <div className="flex flex-wrap gap-1">
-                            {mr.services.map((s: any) => (
-                              <Badge key={s.id} variant="outline" className="text-xs">
-                                {s.service?.name || '—'}
-                                {s.quantity > 1 && ` ×${s.quantity}`}
-                              </Badge>
-                            ))}
-                          </div>
-                        </div>
-                      )}
-                        </CardContent>
-                      </Card>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="text-center py-8 text-muted-foreground">
-                  <FileText className="h-8 w-8 mx-auto mb-2 opacity-30" />
-                  <p className="text-sm">Нет медицинских записей</p>
-                </div>
-              )}
+              <VisitTimeline
+                petId={pet.id}
+                hideHeader
+                onOpenVisit={(visitId) => { if (visitId) setQuickVisitId(visitId); }}
+              />
             </TabsContent>
+
 
             {/* Appointments tab */}
             <TabsContent value="appointments" className="mt-4 space-y-2">

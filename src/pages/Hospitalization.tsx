@@ -169,18 +169,35 @@ export default function Hospitalization() {
 
   const downloadPhoto = async (url: string) => {
     try {
-      const res = await fetch(url);
-      const blob = await res.blob();
+      let blob: Blob | null = null;
+      // Try via Supabase Storage API (avoids CORS issues with public URL fetch)
+      const marker = '/storage/v1/object/public/hospitalization-photos/';
+      const idx = url.indexOf(marker);
+      if (idx !== -1) {
+        const path = decodeURIComponent(url.substring(idx + marker.length).split('?')[0]);
+        const { data, error } = await supabase.storage.from('hospitalization-photos').download(path);
+        if (!error && data) blob = data;
+      }
+      if (!blob) {
+        const res = await fetch(url, { mode: 'cors', cache: 'no-store' });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        blob = await res.blob();
+      }
+      const filename = url.split('/').pop()?.split('?')[0] || `photo-${Date.now()}.jpg`;
       const objUrl = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = objUrl;
-      a.download = url.split('/').pop() || `photo-${Date.now()}.jpg`;
+      a.download = filename;
+      a.rel = 'noopener';
       document.body.appendChild(a);
       a.click();
       a.remove();
-      setTimeout(() => URL.revokeObjectURL(objUrl), 1000);
+      setTimeout(() => URL.revokeObjectURL(objUrl), 2000);
+      toast({ title: 'Фото скачано' });
     } catch (e: any) {
-      window.open(url, '_blank');
+      console.error('downloadPhoto failed', e);
+      toast({ title: 'Не удалось скачать', description: e?.message || 'Откроем в новой вкладке', variant: 'destructive' });
+      window.open(url, '_blank', 'noopener');
     }
   };
 

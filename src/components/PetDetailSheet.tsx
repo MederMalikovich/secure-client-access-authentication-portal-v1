@@ -96,8 +96,9 @@ export function PetDetailSheet({ pet, open, onClose, onEdit, onAddAppointment, i
           .in('status', ['completed', 'scheduled', 'confirmed', 'in_progress']),
       ]);
       setMedicalRecords(mrRes.data || []);
-      setAppointments(apptRes.data || []);
+      setVisits(apptRes.data || []);
       setInvoices(invRes.data || []);
+
       const totals = [visitsCountRes.count || 0, mrCountRes.count || 0, apptCountRes.count || 0];
       setVisitsCount(Math.max(...totals));
     } finally {

@@ -18,7 +18,9 @@ import { cn } from '@/lib/utils';
 interface Props {
   petId: string;
   onOpenVisit: (visitId: string | null) => void;
+  hideHeader?: boolean;
 }
+
 
 const speciesLabels: Record<string, string> = {
   dog: 'Собака', cat: 'Кошка', bird: 'Птица', rodent: 'Грызун',

@@ -21,6 +21,8 @@ import { formatCurrency } from '@/lib/currency';
 import { useToast } from '@/hooks/use-toast';
 import { startQuickReceive } from '@/lib/quickReceive';
 import { VisitDialog } from '@/components/VisitDialog';
+import { VisitTimeline } from '@/components/VisitTimeline';
+
 
 interface PetDetailSheetProps {
   pet: any;

@@ -41,6 +41,7 @@ import { MedicalRecord, Pet, Profile } from '@/lib/types';
 import { format } from 'date-fns';
 import { ru } from 'date-fns/locale';
 import { VisitTimeline } from '@/components/VisitTimeline';
+import { MedicalSummary } from '@/components/MedicalSummary';
 import { VisitDialog } from '@/components/VisitDialog';
 import { PetSearchSelect } from '@/components/PetSearchSelect';
 import Prescriptions from '@/pages/Prescriptions';

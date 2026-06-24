@@ -70,11 +70,11 @@ export function PetDetailSheet({ pet, open, onClose, onEdit, onAddAppointment, i
           .order('visit_date', { ascending: false })
           .limit(20),
         supabase
-          .from('appointments')
-          .select(`*, service:services(name), veterinarian:profiles(full_name)`)
+          .from('visits')
+          .select(`id, visit_date, status, chief_complaint, veterinarian:profiles(full_name), services:visit_services(description, quantity)`)
           .eq('pet_id', petId)
-          .order('scheduled_at', { ascending: false })
-          .limit(10),
+          .order('visit_date', { ascending: false }),
+
         supabase
           .from('invoices')
           .select(`*, items:invoice_items(*)`)

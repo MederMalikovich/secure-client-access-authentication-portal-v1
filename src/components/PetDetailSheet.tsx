@@ -295,7 +295,7 @@ export function PetDetailSheet({ pet, open, onClose, onEdit, onAddAppointment, i
               <VisitTimeline
                 petId={pet.id}
                 hideHeader
-                onOpenVisit={(visitId) => setQuickVisitId(visitId ?? 'new')}
+                onOpenVisit={(visitId) => { if (visitId) setQuickVisitId(visitId); }}
               />
             </TabsContent>
 

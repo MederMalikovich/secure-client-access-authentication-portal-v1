@@ -43,8 +43,10 @@ export function PetDetailSheet({ pet, open, onClose, onEdit, onAddAppointment, i
   const [loading, setLoading] = useState(false);
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
   const [photoUrl, setPhotoUrl] = useState<string | null>(null);
+  const [visitsCount, setVisitsCount] = useState(0);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [quickVisitId, setQuickVisitId] = useState<string | null>(null);
+
 
   useEffect(() => {
     if (open && pet?.id) {
@@ -56,7 +58,7 @@ export function PetDetailSheet({ pet, open, onClose, onEdit, onAddAppointment, i
   const fetchPetData = async (petId: string, clientId: string) => {
     setLoading(true);
     try {
-      const [mrRes, apptRes, invRes] = await Promise.all([
+      const [mrRes, apptRes, invRes, visitsCountRes, mrCountRes, apptCountRes] = await Promise.all([
         supabase
           .from('medical_records')
           .select(`*, veterinarian:profiles(full_name), diagnoses:medical_record_diagnoses(*, disease:diseases(name)), services:medical_record_services(*, service:services(name)), files:medical_record_files(*)`)
@@ -75,14 +77,30 @@ export function PetDetailSheet({ pet, open, onClose, onEdit, onAddAppointment, i
           .eq('pet_id', petId)
           .order('issued_at', { ascending: false })
           .limit(10),
+        supabase
+          .from('visits')
+          .select('id', { count: 'exact', head: true })
+          .eq('pet_id', petId),
+        supabase
+          .from('medical_records')
+          .select('id', { count: 'exact', head: true })
+          .eq('pet_id', petId),
+        supabase
+          .from('appointments')
+          .select('id', { count: 'exact', head: true })
+          .eq('pet_id', petId)
+          .in('status', ['completed', 'scheduled', 'confirmed', 'in_progress']),
       ]);
       setMedicalRecords(mrRes.data || []);
       setAppointments(apptRes.data || []);
       setInvoices(invRes.data || []);
+      const totals = [visitsCountRes.count || 0, mrCountRes.count || 0, apptCountRes.count || 0];
+      setVisitsCount(Math.max(...totals));
     } finally {
       setLoading(false);
     }
   };
+
 
   const openMedicalFile = async (filePath: string) => {
     const { data, error } = await supabase.storage.from('medical-record-files').createSignedUrl(filePath, 60);
@@ -202,8 +220,9 @@ export function PetDetailSheet({ pet, open, onClose, onEdit, onAddAppointment, i
                 <div className="text-xs text-muted-foreground">Вес</div>
               </div>
               <div className="bg-background/60 rounded-xl p-3 text-center">
-                <div className="text-sm font-bold">{medicalRecords.length}</div>
+                <div className="text-sm font-bold">{visitsCount}</div>
                 <div className="text-xs text-muted-foreground">Визитов</div>
+
               </div>
             </div>
           </SheetHeader>

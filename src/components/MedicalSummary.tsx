@@ -94,22 +94,46 @@ export function MedicalSummary({ petId, onOpenVisit }: Props) {
   // Group diagnoses by name; status: active if last occurrence within 90 days, else closed
   const diagnosisGroups = useMemo(() => {
     const map = new Map<string, { name: string; occurrences: any[]; first: Date; last: Date }>();
-    diagnoses.forEach((d) => {
-      const name = d.disease?.name || d.custom_diagnosis;
+    const push = (rawName: string | null | undefined, date: Date, payload: any) => {
+      if (!rawName) return;
+      const name = rawName.trim();
       if (!name) return;
-      const date = new Date(d.medical_record?.visit_date || d.created_at);
-      const key = name.toLowerCase().trim();
+      const key = name.toLowerCase().slice(0, 200);
       const ex = map.get(key);
       if (ex) {
-        ex.occurrences.push({ ...d, date });
+        ex.occurrences.push({ ...payload, date });
         if (date < ex.first) ex.first = date;
         if (date > ex.last) ex.last = date;
       } else {
-        map.set(key, { name, occurrences: [{ ...d, date }], first: date, last: date });
+        map.set(key, { name: name.slice(0, 200), occurrences: [{ ...payload, date }], first: date, last: date });
       }
+    };
+    // Structured diagnoses
+    diagnoses.forEach((d) => {
+      const name = d.disease?.name || d.custom_diagnosis;
+      const date = new Date(d.medical_record?.visit_date || d.created_at);
+      push(name, date, { id: d.id, notes: d.notes });
+    });
+    // Legacy: medical_records.diagnosis text
+    records.forEach((r) => {
+      if (!r.diagnosis) return;
+      const date = new Date(r.visit_date);
+      r.diagnosis.split(/[;\n]+/).forEach((part: string) => {
+        push(part, date, { id: r.id, notes: r.treatment });
+      });
+    });
+    // Visits assessment text — capture concrete diagnoses from completed visits
+    visits.forEach((v) => {
+      if (!v.assessment) return;
+      const date = new Date(v.visit_date);
+      v.assessment.split(/[;\n]+/).forEach((part: string) => {
+        const txt = part.trim();
+        if (txt.length < 3 || txt.length > 200) return;
+        push(txt, date, { id: v.id, notes: v.plan });
+      });
     });
     return Array.from(map.values()).sort((a, b) => b.last.getTime() - a.last.getTime());
-  }, [diagnoses]);
+  }, [diagnoses, records, visits]);
 
   const activeDiagnoses = diagnosisGroups.filter((g) => differenceInDays(new Date(), g.last) <= 90);
   const historyDiagnoses = diagnosisGroups;

@@ -41,7 +41,9 @@ export function PetDetailSheet({ pet, open, onClose, onEdit, onAddAppointment, i
   const { toast } = useToast();
   const [medicalRecords, setMedicalRecords] = useState<any[]>([]);
   const [appointments, setAppointments] = useState<any[]>([]);
+  const [visits, setVisits] = useState<any[]>([]);
   const [invoices, setInvoices] = useState<any[]>([]);
+
   const [loading, setLoading] = useState(false);
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
   const [photoUrl, setPhotoUrl] = useState<string | null>(null);

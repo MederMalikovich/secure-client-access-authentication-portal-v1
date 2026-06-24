@@ -41,7 +41,9 @@ export function PetDetailSheet({ pet, open, onClose, onEdit, onAddAppointment, i
   const { toast } = useToast();
   const [medicalRecords, setMedicalRecords] = useState<any[]>([]);
   const [appointments, setAppointments] = useState<any[]>([]);
+  const [visits, setVisits] = useState<any[]>([]);
   const [invoices, setInvoices] = useState<any[]>([]);
+
   const [loading, setLoading] = useState(false);
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
   const [photoUrl, setPhotoUrl] = useState<string | null>(null);
@@ -60,7 +62,7 @@ export function PetDetailSheet({ pet, open, onClose, onEdit, onAddAppointment, i
   const fetchPetData = async (petId: string, clientId: string) => {
     setLoading(true);
     try {
-      const [mrRes, apptRes, invRes, visitsCountRes, mrCountRes, apptCountRes] = await Promise.all([
+      const [mrRes, visitsRes, upcomingApptRes, invRes, visitsCountRes, mrCountRes, apptCountRes] = await Promise.all([
         supabase
           .from('medical_records')
           .select(`*, veterinarian:profiles(full_name), diagnoses:medical_record_diagnoses(*, disease:diseases(name)), services:medical_record_services(*, service:services(name)), files:medical_record_files(*)`)
@@ -68,11 +70,18 @@ export function PetDetailSheet({ pet, open, onClose, onEdit, onAddAppointment, i
           .order('visit_date', { ascending: false })
           .limit(20),
         supabase
+          .from('visits')
+          .select(`id, visit_date, status, chief_complaint, veterinarian:profiles(full_name), services:visit_services(description, quantity)`)
+          .eq('pet_id', petId)
+          .order('visit_date', { ascending: false }),
+        supabase
           .from('appointments')
           .select(`*, service:services(name), veterinarian:profiles(full_name)`)
           .eq('pet_id', petId)
-          .order('scheduled_at', { ascending: false })
-          .limit(10),
+          .gte('scheduled_at', new Date().toISOString())
+          .in('status', ['scheduled', 'confirmed'])
+          .order('scheduled_at', { ascending: true })
+          .limit(3),
         supabase
           .from('invoices')
           .select(`*, items:invoice_items(*)`)
@@ -94,10 +103,13 @@ export function PetDetailSheet({ pet, open, onClose, onEdit, onAddAppointment, i
           .in('status', ['completed', 'scheduled', 'confirmed', 'in_progress']),
       ]);
       setMedicalRecords(mrRes.data || []);
-      setAppointments(apptRes.data || []);
+      setVisits(visitsRes.data || []);
+      setAppointments(upcomingApptRes.data || []);
       setInvoices(invRes.data || []);
+
       const totals = [visitsCountRes.count || 0, mrCountRes.count || 0, apptCountRes.count || 0];
       setVisitsCount(Math.max(...totals));
+
     } finally {
       setLoading(false);
     }
@@ -300,47 +312,51 @@ export function PetDetailSheet({ pet, open, onClose, onEdit, onAddAppointment, i
             </TabsContent>
 
 
-            {/* Appointments tab */}
+            {/* Visits tab — full visits list */}
             <TabsContent value="appointments" className="mt-4 space-y-2">
               {loading ? (
                 <div className="text-center py-8 text-muted-foreground text-sm">Загрузка...</div>
-              ) : appointments.length > 0 ? (
-                appointments.map((appt) => (
-                  <Card key={appt.id}>
-                    <CardContent className="p-4">
-                      <div className="flex items-start justify-between gap-2">
-                        <div className="flex items-start gap-3">
-                          <div className="mt-0.5">
-                            {appt.status === 'completed' ? (
-                              <CheckCircle2 className="h-4 w-4 text-primary" />
-                            ) : appt.status === 'cancelled' ? (
-                              <AlertCircle className="h-4 w-4 text-muted-foreground" />
-                            ) : (
-                              <CircleDot className="h-4 w-4 text-primary" />
-                            )}
+              ) : visits.length > 0 ? (
+                visits.map((v) => {
+                  const title = v.services?.[0]?.description || v.chief_complaint || 'Визит';
+                  return (
+                    <Card key={v.id} className="cursor-pointer hover:border-primary/40 transition-colors" onClick={() => setQuickVisitId(v.id)}>
+                      <CardContent className="p-4">
+                        <div className="flex items-start justify-between gap-2">
+                          <div className="flex items-start gap-3 min-w-0">
+                            <div className="mt-0.5">
+                              {v.status === 'completed' ? (
+                                <CheckCircle2 className="h-4 w-4 text-primary" />
+                              ) : v.status === 'cancelled' ? (
+                                <AlertCircle className="h-4 w-4 text-muted-foreground" />
+                              ) : (
+                                <CircleDot className="h-4 w-4 text-primary" />
+                              )}
+                            </div>
+                            <div className="min-w-0">
+                              <p className="font-medium text-sm truncate">{title}</p>
+                              <p className="text-xs text-muted-foreground">
+                                {format(new Date(v.visit_date), 'd MMM yyyy, HH:mm', { locale: ru })}
+                                {v.veterinarian && ` • ${v.veterinarian.full_name}`}
+                              </p>
+                            </div>
                           </div>
-                          <div>
-                            <p className="font-medium text-sm">{appt.service?.name || 'Консультация'}</p>
-                            <p className="text-xs text-muted-foreground">
-                              {format(new Date(appt.scheduled_at), 'd MMM yyyy, HH:mm', { locale: ru })}
-                              {appt.veterinarian && ` • ${appt.veterinarian.full_name}`}
-                            </p>
-                          </div>
+                          <Badge variant="outline" className="text-xs shrink-0">
+                            {v.status === 'completed' ? 'Завершено' : v.status === 'cancelled' ? 'Отменён' : 'Активен'}
+                          </Badge>
                         </div>
-                        <Badge variant="outline" className="text-xs shrink-0">
-                          {appointmentStatusLabels[appt.status as keyof typeof appointmentStatusLabels]}
-                        </Badge>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))
+                      </CardContent>
+                    </Card>
+                  );
+                })
               ) : (
                 <div className="text-center py-8 text-muted-foreground">
                   <Calendar className="h-8 w-8 mx-auto mb-2 opacity-30" />
-                  <p className="text-sm">Нет записей</p>
+                  <p className="text-sm">Нет визитов</p>
                 </div>
               )}
             </TabsContent>
+
 
             <TabsContent value="studies" className="mt-4 space-y-2">
               {medicalRecords.flatMap((mr) => (mr.files || []).map((file: any) => ({ ...file, visit_date: mr.visit_date }))).length > 0 ? (

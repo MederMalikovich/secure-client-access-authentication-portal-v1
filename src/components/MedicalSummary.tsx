@@ -214,7 +214,30 @@ export function MedicalSummary({ petId, onOpenVisit }: Props) {
 
   // Active prescriptions
   const activePrescriptions = prescriptions.filter(p => p.status === 'active');
-  const completedPrescriptions = prescriptions.filter(p => p.status !== 'active');
+  const completedPrescriptions = useMemo(() => {
+    const base = prescriptions.filter(p => p.status !== 'active');
+    // Legacy free-text prescriptions from medical_records
+    const legacy: any[] = [];
+    records.forEach((r) => {
+      if (!r.prescriptions) return;
+      r.prescriptions.split(/[;\n]+/).forEach((part: string, idx: number) => {
+        const txt = part.trim();
+        if (txt.length < 2) return;
+        legacy.push({
+          id: `legacy-${r.id}-${idx}`,
+          medication_name: txt.slice(0, 140),
+          start_date: r.visit_date,
+          duration_days: null,
+          visit_id: null,
+        });
+      });
+    });
+    return [...base, ...legacy].sort((a, b) => {
+      const da = new Date(a.start_date || a.created_at || 0).getTime();
+      const db = new Date(b.start_date || b.created_at || 0).getTime();
+      return db - da;
+    });
+  }, [prescriptions, records]);
 
   // Helpers
   const openFile = async (path: string) => {

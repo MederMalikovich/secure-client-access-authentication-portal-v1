@@ -41,6 +41,7 @@ import { MedicalRecord, Pet, Profile } from '@/lib/types';
 import { format } from 'date-fns';
 import { ru } from 'date-fns/locale';
 import { VisitTimeline } from '@/components/VisitTimeline';
+import { MedicalSummary } from '@/components/MedicalSummary';
 import { VisitDialog } from '@/components/VisitDialog';
 import { PetSearchSelect } from '@/components/PetSearchSelect';
 import Prescriptions from '@/pages/Prescriptions';
@@ -83,7 +84,7 @@ export default function MedicalRecords() {
   const [petSearch, setPetSearch] = useState('');
   const [uploadingFile, setUploadingFile] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const [viewMode, setViewMode] = useState<'classic' | 'timeline'>('timeline');
+  const [viewMode, setViewMode] = useState<'classic' | 'timeline' | 'summary'>('summary');
   const [timelinePetId, setTimelinePetId] = useState<string>('');
   const [visitDialogOpen, setVisitDialogOpen] = useState(false);
   const [visitDialogId, setVisitDialogId] = useState<string | null>(null);
@@ -496,12 +497,14 @@ export default function MedicalRecords() {
         <TabsContent value="records" className="mt-4 space-y-4">
 
       <Tabs value={viewMode} onValueChange={(v) => setViewMode(v as any)} className="mb-4">
-        <TabsList>
-          <TabsTrigger value="timeline"><ClockIcon className="h-4 w-4 mr-1" />Timeline визитов</TabsTrigger>
+        <TabsList className="flex-wrap h-auto">
+          <TabsTrigger value="summary"><Stethoscope className="h-4 w-4 mr-1" />Сводная медкарта</TabsTrigger>
+          <TabsTrigger value="timeline"><ClockIcon className="h-4 w-4 mr-1" />Журнал визитов</TabsTrigger>
           <TabsTrigger value="classic"><FileText className="h-4 w-4 mr-1" />Классические записи</TabsTrigger>
         </TabsList>
-        <TabsContent value="timeline" className="mt-4 space-y-3">
-          <Card>
+
+        {(viewMode === 'summary' || viewMode === 'timeline') && (
+          <Card className="mt-4">
             <CardContent className="p-4 space-y-4">
               <div className="space-y-2">
                 <Label>Выберите питомца — откроется его единая медкарта</Label>
@@ -513,19 +516,26 @@ export default function MedicalRecords() {
                 />
               </div>
               {timelinePetId ? (
-                <VisitTimeline
-                  petId={timelinePetId}
-                  onOpenVisit={(id) => { setVisitDialogId(id); setVisitDialogOpen(true); }}
-                />
+                viewMode === 'summary' ? (
+                  <MedicalSummary
+                    petId={timelinePetId}
+                    onOpenVisit={(id) => { setVisitDialogId(id); setVisitDialogOpen(true); }}
+                  />
+                ) : (
+                  <VisitTimeline
+                    petId={timelinePetId}
+                    onOpenVisit={(id) => { setVisitDialogId(id); setVisitDialogOpen(true); }}
+                  />
+                )
               ) : (
                 <div className="text-center py-12 text-muted-foreground">
                   <FileText className="h-12 w-12 mx-auto mb-3 opacity-40" />
-                  <p className="text-sm">Выберите питомца, чтобы увидеть всю историю лечения</p>
+                  <p className="text-sm">Выберите питомца, чтобы увидеть всю медкарту</p>
                 </div>
               )}
             </CardContent>
           </Card>
-        </TabsContent>
+        )}
         <TabsContent value="classic" className="mt-4">
           {/* классическая раскладка ниже */}
         </TabsContent>

@@ -37,7 +37,7 @@ function getAge(birthDate?: string | null) {
   return `${months} мес.`;
 }
 
-export function VisitTimeline({ petId, onOpenVisit }: Props) {
+export function VisitTimeline({ petId, onOpenVisit, hideHeader }: Props) {
   const [pet, setPet] = useState<any>(null);
   const [visits, setVisits] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);

@@ -86,6 +86,7 @@ export default function MedicalRecords() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [viewMode, setViewMode] = useState<'classic' | 'timeline' | 'summary'>('summary');
   const [timelinePetId, setTimelinePetId] = useState<string>('');
+  const [timelineInitialSearch, setTimelineInitialSearch] = useState<string>('');
   const [visitDialogOpen, setVisitDialogOpen] = useState(false);
   const [visitDialogId, setVisitDialogId] = useState<string | null>(null);
   const [fileForm, setFileForm] = useState({
@@ -520,11 +521,16 @@ export default function MedicalRecords() {
                   <MedicalSummary
                     petId={timelinePetId}
                     onOpenVisit={(id) => { setVisitDialogId(id); setVisitDialogOpen(true); }}
+                    onOpenSection={(_section, hint) => {
+                      setTimelineInitialSearch(hint);
+                      setViewMode('timeline');
+                    }}
                   />
                 ) : (
                   <VisitTimeline
                     petId={timelinePetId}
                     onOpenVisit={(id) => { setVisitDialogId(id); setVisitDialogOpen(true); }}
+                    initialSearch={timelineInitialSearch}
                   />
                 )
               ) : (

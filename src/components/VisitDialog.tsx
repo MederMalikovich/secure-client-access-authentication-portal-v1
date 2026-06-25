@@ -257,6 +257,21 @@ export function VisitDialog({ open, onClose, visitId, initialPetId, initialAppoi
     if (pet?.client_id) setForm(f => ({ ...f, client_id: pet.client_id }));
   }, [form.pet_id, form.client_id, pets]);
 
+  // Load analyses for the selected pet
+  const loadAnalyses = async (petId: string) => {
+    if (!petId) { setAnalyses([]); return; }
+    const { data } = await supabase
+      .from('medical_record_files')
+      .select('*')
+      .eq('pet_id', petId)
+      .order('study_date', { ascending: false });
+    setAnalyses(data || []);
+  };
+  useEffect(() => {
+    if (open && form.pet_id) void loadAnalyses(form.pet_id);
+    if (!form.pet_id) setAnalyses([]);
+  }, [open, form.pet_id]);
+
   const loadVisit = async (id: string) => {
     setLoading(true);
     try {

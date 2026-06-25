@@ -18,7 +18,7 @@ import { useToast } from '@/hooks/use-toast';
 import { getUserFriendlyError } from '@/lib/errorHandler';
 import { formatCurrency } from '@/lib/currency';
 import { format } from 'date-fns';
-import { Plus, Trash2, History, Sparkles, FileText, Stethoscope, ClipboardList, Package, Receipt, Save, CheckCircle2, AlertTriangle, Syringe, Activity, Thermometer, Weight, Heart, Wind, ChevronDown, ChevronUp } from 'lucide-react';
+import { Plus, Trash2, History, Sparkles, FileText, Stethoscope, ClipboardList, Package, Receipt, Save, CheckCircle2, AlertTriangle, Syringe, Activity, Thermometer, Weight, Heart, Wind, ChevronDown, ChevronUp, FlaskConical, Upload, Download } from 'lucide-react';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 
 export type VisitStatus = 'waiting' | 'in_consultation' | 'procedures' | 'hospital' | 'completed' | 'cancelled';
@@ -91,6 +91,21 @@ export function VisitDialog({ open, onClose, visitId, initialPetId, initialAppoi
   const [detailsOpen, setDetailsOpen] = useState(true);
   const [duration, setDuration] = useState<number>(30);
   const [busyVetIds, setBusyVetIds] = useState<Set<string>>(new Set());
+
+  // Анализы и исследования
+  const [analyses, setAnalyses] = useState<any[]>([]);
+  const [analysisMode, setAnalysisMode] = useState<'upload' | 'manual'>('upload');
+  const [analysisForm, setAnalysisForm] = useState({
+    title: '',
+    study_type: 'analysis',
+    study_date: format(new Date(), "yyyy-MM-dd"),
+    laboratory_name: '',
+    notes: '',
+    result_text: '',
+    source: 'clinic' as 'clinic' | 'external',
+  });
+  const [uploadingAnalysis, setUploadingAnalysis] = useState(false);
+  const [analysisFile, setAnalysisFile] = useState<File | null>(null);
 
   // Check vet availability against appointments AND other visits
   useEffect(() => {

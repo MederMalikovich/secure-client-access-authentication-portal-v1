@@ -13,9 +13,17 @@ import { ru } from 'date-fns/locale';
 import { supabase } from '@/integrations/supabase/client';
 import { cn } from '@/lib/utils';
 
+export type SummarySection =
+  | 'active_treatment'
+  | 'history_treatment'
+  | 'labs'
+  | 'vaccination'
+  | 'surgery';
+
 interface Props {
   petId: string;
   onOpenVisit: (visitId: string | null) => void;
+  onOpenSection?: (section: SummarySection, searchHint: string) => void;
 }
 
 const speciesLabels: Record<string, string> = {
@@ -37,7 +45,7 @@ const VAX_RE = /(вакцин|прививк|ревакцин|vaccin)/i;
 const SURG_RE = /(операц|хирург|кастрац|стерилизац|удален|резекц|шов|анестез)/i;
 const NEXT_VAX_RE = /(до|до:|до\s|следующ\w*[:\s]+)\s*([0-3]?\d[.\-/][01]?\d[.\-/]\d{2,4})/i;
 
-export function MedicalSummary({ petId, onOpenVisit }: Props) {
+export function MedicalSummary({ petId, onOpenVisit, onOpenSection }: Props) {
   const [loading, setLoading] = useState(false);
   const [pet, setPet] = useState<any>(null);
   const [visits, setVisits] = useState<any[]>([]);

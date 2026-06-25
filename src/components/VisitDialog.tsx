@@ -355,6 +355,94 @@ export function VisitDialog({ open, onClose, visitId, initialPetId, initialAppoi
     toast({ title: `Шаблон «${t.name}» применён` });
   };
 
+  const resetAnalysisForm = () => {
+    setAnalysisForm({
+      title: '', study_type: 'analysis',
+      study_date: format(new Date(), "yyyy-MM-dd"),
+      laboratory_name: '', notes: '', result_text: '',
+      source: analysisForm.source,
+    });
+    setAnalysisFile(null);
+  };
+
+  const saveAnalysis = async () => {
+    if (!form.pet_id) { toast({ title: 'Выберите питомца', variant: 'destructive' }); return; }
+    if (analysisMode === 'upload' && !analysisFile) {
+      toast({ title: 'Выберите файл', variant: 'destructive' });
+      return;
+    }
+    if (analysisMode === 'manual' && !analysisForm.result_text.trim()) {
+      toast({ title: 'Введите результаты анализа', variant: 'destructive' });
+      return;
+    }
+    setUploadingAnalysis(true);
+    try {
+      const { data: mrId, error: mrErr } = await supabase.rpc('ensure_pet_medical_record', { _pet_id: form.pet_id });
+      if (mrErr) throw mrErr;
+
+      let file_path: string | null = null;
+      let file_name: string | null = null;
+      let file_size: number | null = null;
+      if (analysisMode === 'upload' && analysisFile) {
+        const safe = analysisFile.name.replace(/[^a-zA-Z0-9._-]/g, '_');
+        file_path = `${form.pet_id}/${mrId}/${Date.now()}_${safe}`;
+        const { error: upErr } = await supabase.storage.from('medical-record-files')
+          .upload(file_path, analysisFile, { contentType: analysisFile.type || 'application/octet-stream' });
+        if (upErr) throw upErr;
+        file_name = analysisFile.name;
+        file_size = analysisFile.size;
+      }
+
+      const notes = [
+        analysisForm.source === 'external' ? '[Принёс клиент]' : '[Внутренний анализ]',
+        analysisMode === 'manual' ? `Результат:\n${analysisForm.result_text}` : '',
+        analysisForm.notes,
+      ].filter(Boolean).join('\n');
+
+      const { data: user } = await supabase.auth.getUser();
+      const { error } = await (supabase as any).from('medical_record_files').insert({
+        medical_record_id: mrId,
+        pet_id: form.pet_id,
+        title: analysisForm.title || (analysisMode === 'upload' ? analysisFile?.name : 'Результат анализа'),
+        study_type: analysisForm.study_type,
+        study_date: new Date(analysisForm.study_date).toISOString(),
+        laboratory_name: analysisForm.laboratory_name || null,
+        file_path: file_path || '',
+        file_name: file_name || (analysisMode === 'manual' ? 'manual-entry.txt' : ''),
+        file_size,
+        notes: notes || null,
+        uploaded_by: user?.user?.id || null,
+      });
+      if (error) throw error;
+      toast({ title: 'Сохранено', description: 'Анализ добавлен в медкарту' });
+      resetAnalysisForm();
+      await loadAnalyses(form.pet_id);
+    } catch (e) {
+      toast({ title: 'Ошибка', description: getUserFriendlyError(e), variant: 'destructive' });
+    } finally {
+      setUploadingAnalysis(false);
+    }
+  };
+
+  const openAnalysisFile = async (path: string) => {
+    if (!path) return;
+    const { data } = await supabase.storage.from('medical-record-files').createSignedUrl(path, 60);
+    if (data?.signedUrl) window.open(data.signedUrl, '_blank', 'noopener,noreferrer');
+  };
+
+  const deleteAnalysis = async (a: any) => {
+    if (!confirm('Удалить эту запись анализа?')) return;
+    try {
+      if (a.file_path) await supabase.storage.from('medical-record-files').remove([a.file_path]);
+      const { error } = await supabase.from('medical_record_files').delete().eq('id', a.id);
+      if (error) throw error;
+      await loadAnalyses(form.pet_id);
+      toast({ title: 'Удалено' });
+    } catch (e) {
+      toast({ title: 'Ошибка', description: getUserFriendlyError(e), variant: 'destructive' });
+    }
+  };
+
   const addService = () => setVisitServices(s => [...s, { description: '', quantity: 1, unit_price: 0 }]);
   const updateService = (idx: number, patch: Partial<ServiceLine>) => setVisitServices(s => s.map((x, i) => i === idx ? { ...x, ...patch } : x));
   const removeService = (idx: number) => setVisitServices(s => s.filter((_, i) => i !== idx));

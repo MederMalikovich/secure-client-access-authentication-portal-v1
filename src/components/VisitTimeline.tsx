@@ -96,7 +96,11 @@ export function VisitTimeline({ petId, onOpenVisit, hideHeader, initialSearch }:
     if (filterVet !== 'all' && v.veterinarian_id !== filterVet) return false;
     if (search) {
       const q = search.toLowerCase();
-      const hay = `${v.assessment || ''} ${v.chief_complaint || ''} ${v.subjective || ''} ${v.objective || ''} ${v.plan || ''} ${v.recommendations || ''}`.toLowerCase();
+      const presText = (v.prescriptions || []).map((p: any) =>
+        `${p.medication_name || ''} ${p.instructions || ''}`).join(' ');
+      const filesText = (v.files || []).map((f: any) =>
+        `${f.title || ''} ${f.study_type || ''} ${f.file_name || ''}`).join(' ');
+      const hay = `${v.assessment || ''} ${v.chief_complaint || ''} ${v.subjective || ''} ${v.objective || ''} ${v.plan || ''} ${v.recommendations || ''} ${presText} ${filesText}`.toLowerCase();
       if (!hay.includes(q)) return false;
     }
     return true;

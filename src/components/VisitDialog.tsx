@@ -18,7 +18,7 @@ import { useToast } from '@/hooks/use-toast';
 import { getUserFriendlyError } from '@/lib/errorHandler';
 import { formatCurrency } from '@/lib/currency';
 import { format } from 'date-fns';
-import { Plus, Trash2, History, Sparkles, FileText, Stethoscope, ClipboardList, Package, Receipt, Save, CheckCircle2, AlertTriangle, Syringe, Activity, Thermometer, Weight, Heart, Wind, ChevronDown, ChevronUp } from 'lucide-react';
+import { Plus, Trash2, History, Sparkles, FileText, Stethoscope, ClipboardList, Package, Receipt, Save, CheckCircle2, AlertTriangle, Syringe, Activity, Thermometer, Weight, Heart, Wind, ChevronDown, ChevronUp, FlaskConical, Upload, Download } from 'lucide-react';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 
 export type VisitStatus = 'waiting' | 'in_consultation' | 'procedures' | 'hospital' | 'completed' | 'cancelled';
@@ -91,6 +91,21 @@ export function VisitDialog({ open, onClose, visitId, initialPetId, initialAppoi
   const [detailsOpen, setDetailsOpen] = useState(true);
   const [duration, setDuration] = useState<number>(30);
   const [busyVetIds, setBusyVetIds] = useState<Set<string>>(new Set());
+
+  // Анализы и исследования
+  const [analyses, setAnalyses] = useState<any[]>([]);
+  const [analysisMode, setAnalysisMode] = useState<'upload' | 'manual'>('upload');
+  const [analysisForm, setAnalysisForm] = useState({
+    title: '',
+    study_type: 'analysis',
+    study_date: format(new Date(), "yyyy-MM-dd"),
+    laboratory_name: '',
+    notes: '',
+    result_text: '',
+    source: 'clinic' as 'clinic' | 'external',
+  });
+  const [uploadingAnalysis, setUploadingAnalysis] = useState(false);
+  const [analysisFile, setAnalysisFile] = useState<File | null>(null);
 
   // Check vet availability against appointments AND other visits
   useEffect(() => {
@@ -242,6 +257,21 @@ export function VisitDialog({ open, onClose, visitId, initialPetId, initialAppoi
     if (pet?.client_id) setForm(f => ({ ...f, client_id: pet.client_id }));
   }, [form.pet_id, form.client_id, pets]);
 
+  // Load analyses for the selected pet
+  const loadAnalyses = async (petId: string) => {
+    if (!petId) { setAnalyses([]); return; }
+    const { data } = await supabase
+      .from('medical_record_files')
+      .select('*')
+      .eq('pet_id', petId)
+      .order('study_date', { ascending: false });
+    setAnalyses(data || []);
+  };
+  useEffect(() => {
+    if (open && form.pet_id) void loadAnalyses(form.pet_id);
+    if (!form.pet_id) setAnalyses([]);
+  }, [open, form.pet_id]);
+
   const loadVisit = async (id: string) => {
     setLoading(true);
     try {
@@ -323,6 +353,94 @@ export function VisitDialog({ open, onClose, visitId, initialPetId, initialAppoi
       setVisitServices(prev => [...prev, ...lines]);
     }
     toast({ title: `Шаблон «${t.name}» применён` });
+  };
+
+  const resetAnalysisForm = () => {
+    setAnalysisForm({
+      title: '', study_type: 'analysis',
+      study_date: format(new Date(), "yyyy-MM-dd"),
+      laboratory_name: '', notes: '', result_text: '',
+      source: analysisForm.source,
+    });
+    setAnalysisFile(null);
+  };
+
+  const saveAnalysis = async () => {
+    if (!form.pet_id) { toast({ title: 'Выберите питомца', variant: 'destructive' }); return; }
+    if (analysisMode === 'upload' && !analysisFile) {
+      toast({ title: 'Выберите файл', variant: 'destructive' });
+      return;
+    }
+    if (analysisMode === 'manual' && !analysisForm.result_text.trim()) {
+      toast({ title: 'Введите результаты анализа', variant: 'destructive' });
+      return;
+    }
+    setUploadingAnalysis(true);
+    try {
+      const { data: mrId, error: mrErr } = await supabase.rpc('ensure_pet_medical_record', { _pet_id: form.pet_id });
+      if (mrErr) throw mrErr;
+
+      let file_path: string | null = null;
+      let file_name: string | null = null;
+      let file_size: number | null = null;
+      if (analysisMode === 'upload' && analysisFile) {
+        const safe = analysisFile.name.replace(/[^a-zA-Z0-9._-]/g, '_');
+        file_path = `${form.pet_id}/${mrId}/${Date.now()}_${safe}`;
+        const { error: upErr } = await supabase.storage.from('medical-record-files')
+          .upload(file_path, analysisFile, { contentType: analysisFile.type || 'application/octet-stream' });
+        if (upErr) throw upErr;
+        file_name = analysisFile.name;
+        file_size = analysisFile.size;
+      }
+
+      const notes = [
+        analysisForm.source === 'external' ? '[Принёс клиент]' : '[Внутренний анализ]',
+        analysisMode === 'manual' ? `Результат:\n${analysisForm.result_text}` : '',
+        analysisForm.notes,
+      ].filter(Boolean).join('\n');
+
+      const { data: user } = await supabase.auth.getUser();
+      const { error } = await (supabase as any).from('medical_record_files').insert({
+        medical_record_id: mrId,
+        pet_id: form.pet_id,
+        title: analysisForm.title || (analysisMode === 'upload' ? analysisFile?.name : 'Результат анализа'),
+        study_type: analysisForm.study_type,
+        study_date: new Date(analysisForm.study_date).toISOString(),
+        laboratory_name: analysisForm.laboratory_name || null,
+        file_path: file_path || '',
+        file_name: file_name || (analysisMode === 'manual' ? 'manual-entry.txt' : ''),
+        file_size,
+        notes: notes || null,
+        uploaded_by: user?.user?.id || null,
+      });
+      if (error) throw error;
+      toast({ title: 'Сохранено', description: 'Анализ добавлен в медкарту' });
+      resetAnalysisForm();
+      await loadAnalyses(form.pet_id);
+    } catch (e) {
+      toast({ title: 'Ошибка', description: getUserFriendlyError(e), variant: 'destructive' });
+    } finally {
+      setUploadingAnalysis(false);
+    }
+  };
+
+  const openAnalysisFile = async (path: string) => {
+    if (!path) return;
+    const { data } = await supabase.storage.from('medical-record-files').createSignedUrl(path, 60);
+    if (data?.signedUrl) window.open(data.signedUrl, '_blank', 'noopener,noreferrer');
+  };
+
+  const deleteAnalysis = async (a: any) => {
+    if (!confirm('Удалить эту запись анализа?')) return;
+    try {
+      if (a.file_path) await supabase.storage.from('medical-record-files').remove([a.file_path]);
+      const { error } = await supabase.from('medical_record_files').delete().eq('id', a.id);
+      if (error) throw error;
+      await loadAnalyses(form.pet_id);
+      toast({ title: 'Удалено' });
+    } catch (e) {
+      toast({ title: 'Ошибка', description: getUserFriendlyError(e), variant: 'destructive' });
+    }
   };
 
   const addService = () => setVisitServices(s => [...s, { description: '', quantity: 1, unit_price: 0 }]);
@@ -658,6 +776,7 @@ export function VisitDialog({ open, onClose, visitId, initialPetId, initialAppoi
               <TabsTrigger value="soap"><FileText className="h-4 w-4 mr-1" />SOAP</TabsTrigger>
               <TabsTrigger value="services"><Stethoscope className="h-4 w-4 mr-1" />Услуги</TabsTrigger>
               <TabsTrigger value="materials"><Package className="h-4 w-4 mr-1" />Материалы</TabsTrigger>
+              <TabsTrigger value="analyses"><FlaskConical className="h-4 w-4 mr-1" />Анализы</TabsTrigger>
               <TabsTrigger value="invoice"><Receipt className="h-4 w-4 mr-1" />Счёт</TabsTrigger>
             </TabsList>
 
@@ -783,6 +902,146 @@ export function VisitDialog({ open, onClose, visitId, initialPetId, initialAppoi
               ))}
               <Button variant="outline" onClick={addMaterial} className="w-full"><Plus className="h-4 w-4 mr-1" />Добавить материал</Button>
             </TabsContent>
+
+            <TabsContent value="analyses" className="pt-3 space-y-3">
+              <Card className="p-3 space-y-3 border-amber-500/30 bg-amber-500/5">
+                <div className="flex items-start gap-2">
+                  <FlaskConical className="h-4 w-4 mt-0.5 text-amber-500 shrink-0" />
+                  <div className="text-xs text-muted-foreground">
+                    <div className="font-medium text-foreground mb-0.5">Два сценария:</div>
+                    <div><b>Клиника делает анализы</b> — выберите режим «Ввод результатов вручную» и впишите показатели (тип, значение, норма, заметки). Можно дополнительно прикрепить PDF протокола.</div>
+                    <div className="mt-1"><b>Клиент принёс готовые анализы</b> — выберите «Загрузка файла», прикрепите PDF/фото и укажите лабораторию.</div>
+                  </div>
+                </div>
+
+                <div className="flex gap-2 flex-wrap">
+                  <Button type="button" size="sm" variant={analysisMode === 'upload' ? 'default' : 'outline'}
+                    onClick={() => setAnalysisMode('upload')}>
+                    <Upload className="h-3.5 w-3.5 mr-1" />Загрузка файла
+                  </Button>
+                  <Button type="button" size="sm" variant={analysisMode === 'manual' ? 'default' : 'outline'}
+                    onClick={() => setAnalysisMode('manual')}>
+                    <FileText className="h-3.5 w-3.5 mr-1" />Ввод результатов вручную
+                  </Button>
+                  <div className="ml-auto flex gap-2">
+                    <Select value={analysisForm.source} onValueChange={(v: any) => setAnalysisForm(f => ({ ...f, source: v }))}>
+                      <SelectTrigger className="h-9 w-[180px]"><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="clinic">Сделано в клинике</SelectItem>
+                        <SelectItem value="external">Принесено клиентом</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
+                  <div className="md:col-span-2">
+                    <Label className="text-xs">Название / показатель</Label>
+                    <Input value={analysisForm.title}
+                      onChange={(e) => setAnalysisForm(f => ({ ...f, title: e.target.value }))}
+                      placeholder="ОАК, биохимия, УЗИ брюшной полости..." />
+                  </div>
+                  <div>
+                    <Label className="text-xs">Тип</Label>
+                    <Select value={analysisForm.study_type} onValueChange={(v) => setAnalysisForm(f => ({ ...f, study_type: v }))}>
+                      <SelectTrigger className="h-9"><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="analysis">Анализ крови/мочи</SelectItem>
+                        <SelectItem value="biochemistry">Биохимия</SelectItem>
+                        <SelectItem value="ultrasound">УЗИ</SelectItem>
+                        <SelectItem value="xray">Рентген</SelectItem>
+                        <SelectItem value="cytology">Цитология</SelectItem>
+                        <SelectItem value="microbiology">Бак. посев</SelectItem>
+                        <SelectItem value="other">Другое</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <Label className="text-xs">Дата</Label>
+                    <Input type="date" value={analysisForm.study_date}
+                      onChange={(e) => setAnalysisForm(f => ({ ...f, study_date: e.target.value }))} />
+                  </div>
+                  <div className="md:col-span-2">
+                    <Label className="text-xs">Лаборатория / источник</Label>
+                    <Input value={analysisForm.laboratory_name}
+                      onChange={(e) => setAnalysisForm(f => ({ ...f, laboratory_name: e.target.value }))}
+                      placeholder="Например: ИДЕКС, своя лаборатория..." />
+                  </div>
+                </div>
+
+                {analysisMode === 'manual' && (
+                  <div>
+                    <Label className="text-xs">Результаты (показатели / норма / заметки)</Label>
+                    <Textarea rows={5} value={analysisForm.result_text}
+                      onChange={(e) => setAnalysisForm(f => ({ ...f, result_text: e.target.value }))}
+                      placeholder={'Гемоглобин 145 г/л (норма 120-180)\nЛейкоциты 9.2 (норма 6-17)\nКреатинин 78 мкмоль/л\n...'} />
+                  </div>
+                )}
+
+                {analysisMode === 'upload' && (
+                  <div>
+                    <Label className="text-xs">Файл (PDF / JPG / PNG)</Label>
+                    <Input type="file" accept="application/pdf,image/*"
+                      onChange={(e) => setAnalysisFile(e.target.files?.[0] || null)} />
+                    {analysisFile && (
+                      <div className="text-xs text-muted-foreground mt-1">
+                        {analysisFile.name} · {(analysisFile.size / 1024).toFixed(0)} КБ
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                <div>
+                  <Label className="text-xs">Комментарий врача</Label>
+                  <Input value={analysisForm.notes}
+                    onChange={(e) => setAnalysisForm(f => ({ ...f, notes: e.target.value }))}
+                    placeholder="Интерпретация, рекомендации..." />
+                </div>
+
+                <Button onClick={saveAnalysis} disabled={uploadingAnalysis || !form.pet_id} className="w-full">
+                  <Save className="h-4 w-4 mr-1" />
+                  {uploadingAnalysis ? 'Сохранение...' : 'Сохранить анализ'}
+                </Button>
+              </Card>
+
+              <div>
+                <div className="text-xs uppercase tracking-wider text-muted-foreground font-medium mb-2">
+                  История анализов питомца ({analyses.length})
+                </div>
+                {analyses.length === 0 ? (
+                  <p className="text-sm text-muted-foreground italic">Анализов пока нет</p>
+                ) : (
+                  <div className="space-y-2">
+                    {analyses.map((a) => (
+                      <Card key={a.id} className="p-3">
+                        <div className="flex items-start justify-between gap-2">
+                          <div className="min-w-0 flex-1">
+                            <div className="font-medium text-sm">{a.title || a.file_name}</div>
+                            <div className="text-xs text-muted-foreground">
+                              {a.study_type} · {format(new Date(a.study_date), 'd MMM yyyy')}
+                              {a.laboratory_name && ` · ${a.laboratory_name}`}
+                            </div>
+                            {a.notes && <div className="text-xs mt-1 whitespace-pre-wrap">{a.notes}</div>}
+                          </div>
+                          <div className="flex gap-1 shrink-0">
+                            {a.file_path && (
+                              <Button size="sm" variant="outline" className="h-7" onClick={() => openAnalysisFile(a.file_path)}>
+                                <Download className="h-3 w-3 mr-1" />Открыть
+                              </Button>
+                            )}
+                            <Button size="sm" variant="ghost" className="h-7 text-destructive" onClick={() => deleteAnalysis(a)}>
+                              <Trash2 className="h-3 w-3" />
+                            </Button>
+                          </div>
+                        </div>
+                      </Card>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </TabsContent>
+
+
 
             <TabsContent value="invoice" className="pt-3">
               <Card className="p-4 space-y-2">

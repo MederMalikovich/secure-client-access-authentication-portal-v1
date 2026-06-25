@@ -13,9 +13,17 @@ import { ru } from 'date-fns/locale';
 import { supabase } from '@/integrations/supabase/client';
 import { cn } from '@/lib/utils';
 
+export type SummarySection =
+  | 'active_treatment'
+  | 'history_treatment'
+  | 'labs'
+  | 'vaccination'
+  | 'surgery';
+
 interface Props {
   petId: string;
   onOpenVisit: (visitId: string | null) => void;
+  onOpenSection?: (section: SummarySection, searchHint: string) => void;
 }
 
 const speciesLabels: Record<string, string> = {
@@ -37,7 +45,7 @@ const VAX_RE = /(вакцин|прививк|ревакцин|vaccin)/i;
 const SURG_RE = /(операц|хирург|кастрац|стерилизац|удален|резекц|шов|анестез)/i;
 const NEXT_VAX_RE = /(до|до:|до\s|следующ\w*[:\s]+)\s*([0-3]?\d[.\-/][01]?\d[.\-/]\d{2,4})/i;
 
-export function MedicalSummary({ petId, onOpenVisit }: Props) {
+export function MedicalSummary({ petId, onOpenVisit, onOpenSection }: Props) {
   const [loading, setLoading] = useState(false);
   const [pet, setPet] = useState<any>(null);
   const [visits, setVisits] = useState<any[]>([]);
@@ -379,7 +387,8 @@ export function MedicalSummary({ petId, onOpenVisit }: Props) {
         </SectionCard>
 
         {/* Active prescriptions */}
-        <SectionCard icon={<Pill className="h-4 w-4 text-blue-500" />} title="Активное лечение" count={activePrescriptions.length}>
+        <SectionCard icon={<Pill className="h-4 w-4 text-blue-500" />} title="Активное лечение" count={activePrescriptions.length}
+          onOpenAll={onOpenSection ? () => onOpenSection('active_treatment', 'назначен') : undefined}>
           {activePrescriptions.length === 0 ? <Empty text="Нет активных назначений" /> : (
             <ul className="space-y-2">
               {activePrescriptions.map((p) => (
@@ -405,7 +414,8 @@ export function MedicalSummary({ petId, onOpenVisit }: Props) {
         </SectionCard>
 
         {/* Completed treatments */}
-        <SectionCard icon={<CheckCircle2 className="h-4 w-4 text-muted-foreground" />} title="История лечения" count={completedPrescriptions.length}>
+        <SectionCard icon={<CheckCircle2 className="h-4 w-4 text-muted-foreground" />} title="История лечения" count={completedPrescriptions.length}
+          onOpenAll={onOpenSection ? () => onOpenSection('history_treatment', 'назначен') : undefined}>
           {completedPrescriptions.length === 0 ? <Empty text="Завершённых назначений нет" /> : (
             <ul className="divide-y max-h-64 overflow-y-auto">
               {completedPrescriptions.map((p) => (
@@ -426,7 +436,8 @@ export function MedicalSummary({ petId, onOpenVisit }: Props) {
         </SectionCard>
 
         {/* Labs */}
-        <SectionCard icon={<FlaskConical className="h-4 w-4 text-amber-500" />} title="Анализы и исследования" count={files.length}>
+        <SectionCard icon={<FlaskConical className="h-4 w-4 text-amber-500" />} title="Анализы и исследования" count={files.length}
+          onOpenAll={onOpenSection ? () => onOpenSection('labs', 'анализ') : undefined}>
           {files.length === 0 ? <Empty text="Файлов исследований нет" /> : (
             <ul className="divide-y max-h-64 overflow-y-auto">
               {files.map((f) => (
@@ -448,7 +459,8 @@ export function MedicalSummary({ petId, onOpenVisit }: Props) {
         </SectionCard>
 
         {/* Vaccinations */}
-        <SectionCard icon={<Syringe className="h-4 w-4 text-emerald-500" />} title="Вакцинация" count={vaccinations.length}>
+        <SectionCard icon={<Syringe className="h-4 w-4 text-emerald-500" />} title="Вакцинация" count={vaccinations.length}
+          onOpenAll={onOpenSection ? () => onOpenSection('vaccination', 'вакцин') : undefined}>
           {vaccinations.length === 0 ? <Empty text="Записей о вакцинации нет" /> : (
             <ul className="divide-y max-h-64 overflow-y-auto">
               {vaccinations.map((v, i) => {
@@ -473,7 +485,8 @@ export function MedicalSummary({ petId, onOpenVisit }: Props) {
         </SectionCard>
 
         {/* Surgeries */}
-        <SectionCard icon={<Scissors className="h-4 w-4 text-rose-500" />} title="Хирургические вмешательства" count={surgeries.length}>
+        <SectionCard icon={<Scissors className="h-4 w-4 text-rose-500" />} title="Хирургические вмешательства" count={surgeries.length}
+          onOpenAll={onOpenSection ? () => onOpenSection('surgery', 'операц') : undefined}>
           {surgeries.length === 0 ? <Empty text="Хирургических вмешательств нет" /> : (
             <ul className="divide-y max-h-64 overflow-y-auto">
               {surgeries.map((s, i) => (
@@ -496,6 +509,7 @@ export function MedicalSummary({ petId, onOpenVisit }: Props) {
           )}
         </SectionCard>
       </div>
+
 
       {/* Diagnosis detail dialog */}
       <Dialog open={!!detail} onOpenChange={(o) => !o && setDetail(null)}>
@@ -534,15 +548,22 @@ function VitalCard({ icon, label, value, extra }: { icon: React.ReactNode; label
   );
 }
 
-function SectionCard({ icon, title, count, children }: { icon: React.ReactNode; title: string; count?: number; children: React.ReactNode }) {
+function SectionCard({ icon, title, count, children, onOpenAll }: { icon: React.ReactNode; title: string; count?: number; children: React.ReactNode; onOpenAll?: () => void }) {
   return (
     <Card className="p-4">
-      <div className="flex items-center justify-between mb-3">
-        <div className="flex items-center gap-2">
+      <div className="flex items-center justify-between mb-3 gap-2">
+        <div className="flex items-center gap-2 min-w-0">
           {icon}
-          <h3 className="font-semibold text-sm uppercase tracking-wider">{title}</h3>
+          <h3 className="font-semibold text-sm uppercase tracking-wider truncate">{title}</h3>
         </div>
-        {count != null && <Badge variant="outline" className="text-[10px]">{count}</Badge>}
+        <div className="flex items-center gap-1 shrink-0">
+          {count != null && <Badge variant="outline" className="text-[10px]">{count}</Badge>}
+          {onOpenAll && (
+            <Button variant="ghost" size="sm" className="h-6 px-2 text-[11px] text-primary hover:text-primary" onClick={onOpenAll}>
+              В журнал →
+            </Button>
+          )}
+        </div>
       </div>
       {children}
     </Card>

@@ -19,6 +19,7 @@ interface Props {
   petId: string;
   onOpenVisit: (visitId: string | null) => void;
   hideHeader?: boolean;
+  initialSearch?: string;
 }
 
 
@@ -37,15 +38,19 @@ function getAge(birthDate?: string | null) {
   return `${months} мес.`;
 }
 
-export function VisitTimeline({ petId, onOpenVisit, hideHeader }: Props) {
+export function VisitTimeline({ petId, onOpenVisit, hideHeader, initialSearch }: Props) {
   const [pet, setPet] = useState<any>(null);
   const [visits, setVisits] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [filterStatus, setFilterStatus] = useState<string>('all');
   const [filterVet, setFilterVet] = useState<string>('all');
-  const [search, setSearch] = useState('');
+  const [search, setSearch] = useState(initialSearch || '');
   const [vets, setVets] = useState<any[]>([]);
   const [collapsed, setCollapsed] = useState<Set<string>>(new Set());
+
+  useEffect(() => {
+    if (initialSearch !== undefined) setSearch(initialSearch);
+  }, [initialSearch]);
 
   useEffect(() => {
     if (!petId) return;
@@ -91,7 +96,11 @@ export function VisitTimeline({ petId, onOpenVisit, hideHeader }: Props) {
     if (filterVet !== 'all' && v.veterinarian_id !== filterVet) return false;
     if (search) {
       const q = search.toLowerCase();
-      const hay = `${v.assessment || ''} ${v.chief_complaint || ''} ${v.subjective || ''} ${v.objective || ''} ${v.plan || ''} ${v.recommendations || ''}`.toLowerCase();
+      const presText = (v.prescriptions || []).map((p: any) =>
+        `${p.medication_name || ''} ${p.instructions || ''}`).join(' ');
+      const filesText = (v.files || []).map((f: any) =>
+        `${f.title || ''} ${f.study_type || ''} ${f.file_name || ''}`).join(' ');
+      const hay = `${v.assessment || ''} ${v.chief_complaint || ''} ${v.subjective || ''} ${v.objective || ''} ${v.plan || ''} ${v.recommendations || ''} ${presText} ${filesText}`.toLowerCase();
       if (!hay.includes(q)) return false;
     }
     return true;

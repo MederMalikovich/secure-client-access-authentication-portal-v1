@@ -776,6 +776,7 @@ export function VisitDialog({ open, onClose, visitId, initialPetId, initialAppoi
               <TabsTrigger value="soap"><FileText className="h-4 w-4 mr-1" />SOAP</TabsTrigger>
               <TabsTrigger value="services"><Stethoscope className="h-4 w-4 mr-1" />Услуги</TabsTrigger>
               <TabsTrigger value="materials"><Package className="h-4 w-4 mr-1" />Материалы</TabsTrigger>
+              <TabsTrigger value="analyses"><FlaskConical className="h-4 w-4 mr-1" />Анализы</TabsTrigger>
               <TabsTrigger value="invoice"><Receipt className="h-4 w-4 mr-1" />Счёт</TabsTrigger>
             </TabsList>
 

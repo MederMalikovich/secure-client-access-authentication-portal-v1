@@ -903,6 +903,146 @@ export function VisitDialog({ open, onClose, visitId, initialPetId, initialAppoi
               <Button variant="outline" onClick={addMaterial} className="w-full"><Plus className="h-4 w-4 mr-1" />Добавить материал</Button>
             </TabsContent>
 
+            <TabsContent value="analyses" className="pt-3 space-y-3">
+              <Card className="p-3 space-y-3 border-amber-500/30 bg-amber-500/5">
+                <div className="flex items-start gap-2">
+                  <FlaskConical className="h-4 w-4 mt-0.5 text-amber-500 shrink-0" />
+                  <div className="text-xs text-muted-foreground">
+                    <div className="font-medium text-foreground mb-0.5">Два сценария:</div>
+                    <div><b>Клиника делает анализы</b> — выберите режим «Ввод результатов вручную» и впишите показатели (тип, значение, норма, заметки). Можно дополнительно прикрепить PDF протокола.</div>
+                    <div className="mt-1"><b>Клиент принёс готовые анализы</b> — выберите «Загрузка файла», прикрепите PDF/фото и укажите лабораторию.</div>
+                  </div>
+                </div>
+
+                <div className="flex gap-2 flex-wrap">
+                  <Button type="button" size="sm" variant={analysisMode === 'upload' ? 'default' : 'outline'}
+                    onClick={() => setAnalysisMode('upload')}>
+                    <Upload className="h-3.5 w-3.5 mr-1" />Загрузка файла
+                  </Button>
+                  <Button type="button" size="sm" variant={analysisMode === 'manual' ? 'default' : 'outline'}
+                    onClick={() => setAnalysisMode('manual')}>
+                    <FileText className="h-3.5 w-3.5 mr-1" />Ввод результатов вручную
+                  </Button>
+                  <div className="ml-auto flex gap-2">
+                    <Select value={analysisForm.source} onValueChange={(v: any) => setAnalysisForm(f => ({ ...f, source: v }))}>
+                      <SelectTrigger className="h-9 w-[180px]"><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="clinic">Сделано в клинике</SelectItem>
+                        <SelectItem value="external">Принесено клиентом</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
+                  <div className="md:col-span-2">
+                    <Label className="text-xs">Название / показатель</Label>
+                    <Input value={analysisForm.title}
+                      onChange={(e) => setAnalysisForm(f => ({ ...f, title: e.target.value }))}
+                      placeholder="ОАК, биохимия, УЗИ брюшной полости..." />
+                  </div>
+                  <div>
+                    <Label className="text-xs">Тип</Label>
+                    <Select value={analysisForm.study_type} onValueChange={(v) => setAnalysisForm(f => ({ ...f, study_type: v }))}>
+                      <SelectTrigger className="h-9"><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="analysis">Анализ крови/мочи</SelectItem>
+                        <SelectItem value="biochemistry">Биохимия</SelectItem>
+                        <SelectItem value="ultrasound">УЗИ</SelectItem>
+                        <SelectItem value="xray">Рентген</SelectItem>
+                        <SelectItem value="cytology">Цитология</SelectItem>
+                        <SelectItem value="microbiology">Бак. посев</SelectItem>
+                        <SelectItem value="other">Другое</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <Label className="text-xs">Дата</Label>
+                    <Input type="date" value={analysisForm.study_date}
+                      onChange={(e) => setAnalysisForm(f => ({ ...f, study_date: e.target.value }))} />
+                  </div>
+                  <div className="md:col-span-2">
+                    <Label className="text-xs">Лаборатория / источник</Label>
+                    <Input value={analysisForm.laboratory_name}
+                      onChange={(e) => setAnalysisForm(f => ({ ...f, laboratory_name: e.target.value }))}
+                      placeholder="Например: ИДЕКС, своя лаборатория..." />
+                  </div>
+                </div>
+
+                {analysisMode === 'manual' && (
+                  <div>
+                    <Label className="text-xs">Результаты (показатели / норма / заметки)</Label>
+                    <Textarea rows={5} value={analysisForm.result_text}
+                      onChange={(e) => setAnalysisForm(f => ({ ...f, result_text: e.target.value }))}
+                      placeholder={'Гемоглобин 145 г/л (норма 120-180)\nЛейкоциты 9.2 (норма 6-17)\nКреатинин 78 мкмоль/л\n...'} />
+                  </div>
+                )}
+
+                {analysisMode === 'upload' && (
+                  <div>
+                    <Label className="text-xs">Файл (PDF / JPG / PNG)</Label>
+                    <Input type="file" accept="application/pdf,image/*"
+                      onChange={(e) => setAnalysisFile(e.target.files?.[0] || null)} />
+                    {analysisFile && (
+                      <div className="text-xs text-muted-foreground mt-1">
+                        {analysisFile.name} · {(analysisFile.size / 1024).toFixed(0)} КБ
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                <div>
+                  <Label className="text-xs">Комментарий врача</Label>
+                  <Input value={analysisForm.notes}
+                    onChange={(e) => setAnalysisForm(f => ({ ...f, notes: e.target.value }))}
+                    placeholder="Интерпретация, рекомендации..." />
+                </div>
+
+                <Button onClick={saveAnalysis} disabled={uploadingAnalysis || !form.pet_id} className="w-full">
+                  <Save className="h-4 w-4 mr-1" />
+                  {uploadingAnalysis ? 'Сохранение...' : 'Сохранить анализ'}
+                </Button>
+              </Card>
+
+              <div>
+                <div className="text-xs uppercase tracking-wider text-muted-foreground font-medium mb-2">
+                  История анализов питомца ({analyses.length})
+                </div>
+                {analyses.length === 0 ? (
+                  <p className="text-sm text-muted-foreground italic">Анализов пока нет</p>
+                ) : (
+                  <div className="space-y-2">
+                    {analyses.map((a) => (
+                      <Card key={a.id} className="p-3">
+                        <div className="flex items-start justify-between gap-2">
+                          <div className="min-w-0 flex-1">
+                            <div className="font-medium text-sm">{a.title || a.file_name}</div>
+                            <div className="text-xs text-muted-foreground">
+                              {a.study_type} · {format(new Date(a.study_date), 'd MMM yyyy')}
+                              {a.laboratory_name && ` · ${a.laboratory_name}`}
+                            </div>
+                            {a.notes && <div className="text-xs mt-1 whitespace-pre-wrap">{a.notes}</div>}
+                          </div>
+                          <div className="flex gap-1 shrink-0">
+                            {a.file_path && (
+                              <Button size="sm" variant="outline" className="h-7" onClick={() => openAnalysisFile(a.file_path)}>
+                                <Download className="h-3 w-3 mr-1" />Открыть
+                              </Button>
+                            )}
+                            <Button size="sm" variant="ghost" className="h-7 text-destructive" onClick={() => deleteAnalysis(a)}>
+                              <Trash2 className="h-3 w-3" />
+                            </Button>
+                          </div>
+                        </div>
+                      </Card>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </TabsContent>
+
+
+
             <TabsContent value="invoice" className="pt-3">
               <Card className="p-4 space-y-2">
                 <div className="flex justify-between text-sm"><span>Услуги</span><span className="font-medium">{formatCurrency(totals.svc)}</span></div>
